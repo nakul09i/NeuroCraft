@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <!-- Modern cyber gradient -->
+    <linearGradient id="shieldGrad" x1="8" y1="6" x2="56" y2="58" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0284c7" />
+      <stop offset="50%" stop-color="#06b6d4" />
+      <stop offset="100%" stop-color="#6366f1" />
+    </linearGradient>
+    <linearGradient id="coreGrad" x1="20" y1="16" x2="44" y2="48" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#818cf8" />
+    </linearGradient>
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#06b6d4" flood-opacity="0.35" />
+    </filter>
+  </defs>
+
+  <!-- Base outer shield structure with clean geometric bevel -->
+  <path
+    d="M32 4L54 12V30C54 44.5 44.5 56.5 32 60C19.5 56.5 10 44.5 10 30V12L32 4Z"
+    fill="#0C111C"
+    stroke="url(#shieldGrad)"
+    stroke-width="3.5"
+    stroke-linejoin="round"
+  />
+
+  <!-- Neural inner circuits -->
+  <path
+    d="M32 12V24M22 28L32 24L42 28M32 24V40M20 44L32 40L44 44"
+    stroke="url(#coreGrad)"
+    stroke-width="1.8"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    opacity="0.6"
+  />
+
+  <!-- Stylized Geometric "N" Glyph (NeuroCraft Identity) -->
+  <path
+    d="M23 44V20L41 44V20"
+    stroke="#38bdf8"
+    stroke-width="4"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    filter="url(#softGlow)"
+  />
+
+  <!-- Quantum / Verification Node Dots -->
+  <circle cx="23" cy="20" r="2.5" fill="#38bdf8" />
+  <circle cx="41" cy="44" r="2.5" fill="#818cf8" />
+  <circle cx="32" cy="32" r="3" fill="#ffffff" filter="url(#softGlow)" />
+</svg>

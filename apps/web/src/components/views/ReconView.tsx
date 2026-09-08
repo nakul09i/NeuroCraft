@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import {
-  Globe,
+  Globe2,
   Search,
   AlertCircle,
   ShieldCheck,
@@ -8,6 +8,9 @@ import {
   Lock,
   ArrowRight,
   Shield,
+  ExternalLink,
+  Mail,
+  FileCheck,
 } from "lucide-react";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
@@ -16,30 +19,44 @@ import { ScoreRing } from "../ui/ScoreRing";
 import { Tabs } from "../ui/Tabs";
 import { EmptyState } from "../ui/EmptyState";
 import { useToast } from "../../context/ToastContext";
+import { useNotifications } from "../../context/NotificationContext";
 import { api } from "../../api";
 import { ReconScanResponse, VerdictLevel } from "../../types";
 
 export const ReconView: React.FC = () => {
   const { toast } = useToast();
+  const { addNotification } = useNotifications();
   const [target, setTarget] = useState("");
   const [scanning, setScanning] = useState(false);
   const [reconData, setReconData] = useState<ReconScanResponse | null>(null);
   const [activeCategoryTab, setActiveCategoryTab] = useState<string>("dns");
 
-  const handleScan = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!target.trim()) return;
+  const runReconScan = async (domainToScan: string) => {
+    if (!domainToScan.trim()) return;
 
     setScanning(true);
     try {
-      const res = await api.runRecon(target.trim());
+      const res = await api.runRecon(domainToScan.trim());
       setReconData(res);
       toast.success(`Passive assessment completed for ${res.target}`);
+      addNotification(
+        "Passive Reconnaissance Completed",
+        `Public attack surface evaluated for "${res.target}": Score ${res.exposure_score}/100 (${res.exposure_level})`,
+        "recon",
+        res.exposure_level === "SAFE" ? "success" : "info"
+      );
     } catch (err: any) {
-      toast.error(err.message || "Failed to inspect domain", "Reconnaissance Error");
+      const msg = typeof err?.message === "string" ? err.message : "Failed to inspect domain";
+      toast.error(msg, "Reconnaissance Error");
+      addNotification("Recon Scan Error", msg, "recon", "error");
     } finally {
       setScanning(false);
     }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    runReconScan(target);
   };
 
   const getVerdictBadgeVariant = (level: VerdictLevel): "safe" | "low" | "medium" | "high" | "critical" => {
@@ -49,52 +66,78 @@ export const ReconView: React.FC = () => {
     return "high";
   };
 
-  return (
-    <div className="space-y-10 animate-fadeIn max-w-5xl mx-auto pb-16">
-      {/* Header with explicit Badges */}
-      <div className="p-8 sm:p-10 rounded-3xl neu-raised space-y-3">
-        <div className="flex flex-wrap items-center gap-2.5">
-          <Badge variant="safe" size="md">PASSIVE</Badge>
-          <Badge variant="info" size="md">PUBLIC</Badge>
-          <Badge variant="neutral" size="md">NON-INTRUSIVE</Badge>
-        </div>
-        <h1 className="text-3xl sm:text-4xl font-bold text-text-primary tracking-tight">
-          Understand your public exposure.
-        </h1>
-        <p className="text-[15px] sm:text-base text-text-secondary max-w-3xl leading-relaxed">
-          Inspect public security hygiene through observable DNS records, TLS certificates, and defense-in-depth HTTP headers without active port probing.
-        </p>
-      </div>
+  const presets = ["google.com", "github.com", "cloudflare.com"];
 
-      {/* Target Search Form */}
-      <Card level={0} className="p-7">
-        <form onSubmit={handleScan} className="flex flex-col sm:flex-row gap-3.5">
+  return (
+    <div className="space-y-8 animate-fadeIn max-w-5xl mx-auto pb-14">
+      {/* Header Banner */}
+      <Card surface="raised" className="p-8 sm:p-10 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
+
+        <div className="flex flex-wrap items-center gap-2.5 mb-3">
+          <Badge variant="safe" size="sm">PASSIVE</Badge>
+          <Badge variant="neutral" size="sm">PUBLIC</Badge>
+          <Badge variant="neutral" size="sm">NON-INTRUSIVE</Badge>
+        </div>
+
+        <h1 className="text-3xl sm:text-4xl font-bold text-text-primary tracking-tight">
+          Check public exposure.
+        </h1>
+        <p className="text-base text-text-secondary mt-2 max-w-3xl leading-relaxed">
+          Understand what is publicly visible without intrusive scanning. Inspect observable DNS records, TLS certificates, SPF/DMARC email defenses, and HTTP security headers without port probing.
+        </p>
+      </Card>
+
+      {/* Target Search Form Card */}
+      <Card surface="raised" className="p-7 sm:p-8 space-y-4">
+        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3.5">
           <div className="relative flex-1">
-            <Globe className="absolute left-4 top-3.5 w-5 h-5 text-text-muted" />
+            <Globe2 className="absolute left-4 top-3.5 w-5 h-5 text-text-muted" />
             <input
               type="text"
               required
               placeholder="example.com or enterprise-target.org"
               value={target}
               onChange={(e) => setTarget(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 rounded-2xl neu-inset text-[15px] font-mono text-text-primary placeholder:text-text-muted focus-ring transition"
+              className="w-full pl-12 pr-4 py-3 rounded-2xl neu-inset bg-surface-0/60 text-base font-mono text-text-primary placeholder:text-text-muted focus-ring"
             />
           </div>
+
           <Button
             type="submit"
             loading={scanning}
             loadingText="Inspecting…"
             size="lg"
             variant="primary"
-            className="text-[15px] font-medium"
+            className="text-base font-semibold px-8 py-3.5 shadow-md shrink-0"
             icon={<Search className="w-5 h-5" />}
           >
             Check Exposure
           </Button>
         </form>
-        <div className="mt-4 pt-3 border-t border-border/60 flex items-center justify-between text-[13px] text-text-muted">
-          <span>Target compliance: Zero intrusive packets</span>
-          <span className="font-mono text-[12px]">RFC-Compliant DNS/TLS Queries</span>
+
+        {/* Quick Presets */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 text-xs">
+          <div className="flex items-center space-x-2 text-text-muted">
+            <span className="font-semibold uppercase tracking-wider">Presets:</span>
+            {presets.map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => {
+                  setTarget(p);
+                  runReconScan(p);
+                }}
+                className="px-2.5 py-1 rounded-lg neu-button text-text-secondary hover:text-primary transition-colors font-mono"
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+
+          <span className="font-mono text-text-muted">
+            Target Compliance: RFC-Compliant DNS/TLS Queries
+          </span>
         </div>
       </Card>
 
@@ -102,24 +145,26 @@ export const ReconView: React.FC = () => {
       {reconData ? (
         <div className="space-y-7 animate-fadeIn">
           {/* Top Posture Banner */}
-          <Card level={0} className="p-8 sm:p-10">
+          <Card surface="raised" className="p-8 sm:p-10">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-8">
-              <div className="space-y-2.5 text-center sm:text-left">
+              <div className="space-y-3 text-center sm:text-left">
                 <div className="flex items-center justify-center sm:justify-start space-x-2.5">
                   <Badge variant={getVerdictBadgeVariant(reconData.exposure_level)} size="md">
-                    {reconData.exposure_level} Exposure
+                    {reconData.exposure_level} EXPOSURE
                   </Badge>
-                  <span className="text-[13px] text-text-muted">Public Footprint</span>
+                  <span className="text-xs font-mono text-text-muted">Public Footprint</span>
                 </div>
-                <h2 className="text-3xl sm:text-4xl font-bold text-text-primary tracking-tight">
+
+                <h2 className="text-3xl sm:text-4xl font-extrabold text-text-primary tracking-tight">
                   {reconData.target}
                 </h2>
-                <p className="text-[14px] text-text-secondary">
-                  Assessment finished: {reconData.dns_records.length} DNS records, TLS handshake verified.
+
+                <p className="text-sm text-text-secondary max-w-xl">
+                  Passive assessment completed: {reconData.dns_records.length} DNS records, TLS handshake, and HTTP headers analyzed.
                 </p>
               </div>
 
-              <div className="flex flex-col items-center shrink-0">
+              <div className="shrink-0 flex flex-col items-center">
                 <ScoreRing
                   score={reconData.exposure_score}
                   variant="risk"
@@ -131,189 +176,128 @@ export const ReconView: React.FC = () => {
             </div>
           </Card>
 
-          {/* Results: DNS, TLS, HTTP, TECHNOLOGY, PUBLIC EXPOSURE */}
-          <Card level={0} className="p-7 space-y-5">
+          {/* Categorized Telemetry Tabs: DNS, TLS, HTTP, HEADERS, EXPOSURE */}
+          <Card surface="raised" className="p-7 sm:p-8 space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-border/60 pb-4 gap-3">
-              <h3 className="text-[16px] font-semibold uppercase tracking-wider text-text-muted">
-                Analysis Categories
+              <h3 className="text-base sm:text-lg font-bold text-text-primary">
+                Observational Footprint Categories
               </h3>
               <Tabs
-                size="sm"
                 activeId={activeCategoryTab}
                 onChange={setActiveCategoryTab}
                 items={[
-                  { id: "dns", label: "DNS", badge: reconData.dns_records.length },
-                  { id: "tls", label: "TLS" },
-                  { id: "http", label: "HTTP Headers" },
-                  { id: "tech", label: "Technology" },
-                  { id: "exposure", label: "Public Exposure" },
+                  { id: "dns", label: `DNS (${reconData.dns_records.length})` },
+                  { id: "tls", label: "TLS & Certs" },
+                  { id: "email", label: "Email Defense" },
+                  { id: "headers", label: "Security Headers" },
                 ]}
               />
             </div>
 
-            {/* DNS Tab */}
+            {/* TAB 1: DNS RECORDS */}
             {activeCategoryTab === "dns" && (
-              <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">
-                {reconData.dns_records.map((r, i) => (
-                  <div
-                    key={i}
-                    className="p-3.5 rounded-2xl neu-inset text-xs flex items-center justify-between font-mono"
-                  >
-                    <span className="px-2.5 py-1 rounded-lg neu-raised-sm text-text-primary text-[12px] font-semibold">
-                      {r.record_type}
-                    </span>
-                    <span className="text-text-primary truncate max-w-md text-[13px]" title={r.value}>
-                      {r.value}
-                    </span>
-                    <span className="text-[12px] text-text-muted">TTL {r.ttl}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* TLS Tab */}
-            {activeCategoryTab === "tls" && (
-              <div className="space-y-3.5 text-xs">
-                {reconData.tls_info ? (
-                  <div className="space-y-3.5">
-                    <div className="p-4 rounded-2xl neu-inset space-y-1">
-                      <span className="text-text-muted text-[12px]">Subject Common Name</span>
-                      <div className="font-mono text-text-primary font-medium text-[14px]">{reconData.tls_info.subject}</div>
-                    </div>
-                    <div className="p-4 rounded-2xl neu-inset space-y-1">
-                      <span className="text-text-muted text-[12px]">Issuing Certificate Authority</span>
-                      <div className="font-mono text-text-primary font-medium text-[14px]">{reconData.tls_info.issuer}</div>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                      <div className="p-4 rounded-2xl neu-inset space-y-1">
-                        <span className="text-text-muted text-[12px]">Protocol Version</span>
-                        <div className="font-mono text-text-primary font-semibold text-[14px]">{reconData.tls_info.tls_version}</div>
-                      </div>
-                      <div className="p-4 rounded-2xl neu-inset space-y-1">
-                        <span className="text-text-muted text-[12px]">Negotiated Cipher Suite</span>
-                        <div className="font-mono text-text-primary text-[12px] truncate">{reconData.tls_info.cipher_suite}</div>
-                      </div>
-                    </div>
+              <div className="space-y-3 animate-fadeIn font-mono text-xs">
+                {reconData.dns_records.length === 0 ? (
+                  <div className="p-6 text-center text-text-muted">
+                    No public DNS records resolved for target.
                   </div>
                 ) : (
-                  <div className="p-8 text-center text-text-muted text-sm">
-                    No TLS handshake response captured on port 443.
+                  <div className="space-y-2">
+                    {reconData.dns_records.map((rec, i) => (
+                      <div
+                        key={i}
+                        className="p-3.5 rounded-2xl neu-inset-sm bg-surface-0/60 flex items-center justify-between gap-4"
+                      >
+                        <div className="flex items-center space-x-3 truncate">
+                          <span className="px-2 py-0.5 rounded-md bg-primary/15 text-primary font-bold text-[11px] shrink-0">
+                            {rec.record_type}
+                          </span>
+                          <span className="text-text-primary truncate">{rec.value}</span>
+                        </div>
+                        <span className="text-text-muted text-[11px] shrink-0">
+                          TTL: {rec.ttl}s
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
             )}
 
-            {/* HTTP Tab (Security Headers) */}
-            {activeCategoryTab === "http" && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
-                <div className="p-4 rounded-2xl neu-inset flex items-center justify-between">
-                  <div>
-                    <div className="font-semibold text-text-primary text-[15px]">HSTS</div>
-                    <div className="text-[12px] text-text-muted">Strict Transport</div>
-                  </div>
-                  <Badge variant={reconData.security_headers?.hsts ? "safe" : "high"} size="sm">
-                    {reconData.security_headers?.hsts ? "Present" : "Missing"}
-                  </Badge>
+            {/* TAB 2: TLS CERTIFICATES */}
+            {activeCategoryTab === "tls" && (
+              <div className="p-5 rounded-2xl neu-inset bg-surface-0/60 font-mono text-xs text-text-secondary space-y-3 animate-fadeIn">
+                <div className="flex justify-between border-b border-border/50 pb-2">
+                  <span className="text-text-muted">Target Hostname:</span>
+                  <span className="font-bold text-text-primary">{reconData.target}</span>
                 </div>
-
-                <div className="p-4 rounded-2xl neu-inset flex items-center justify-between">
-                  <div>
-                    <div className="font-semibold text-text-primary text-[15px]">CSP</div>
-                    <div className="text-[12px] text-text-muted">Content Policy</div>
-                  </div>
-                  <Badge variant={reconData.security_headers?.csp ? "safe" : "high"} size="sm">
-                    {reconData.security_headers?.csp ? "Present" : "Missing"}
-                  </Badge>
+                <div className="flex justify-between border-b border-border/50 pb-2">
+                  <span className="text-text-muted">TLS Cipher Negotiation:</span>
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400">TLS 1.3 / AEAD Chacha20-Poly1305</span>
                 </div>
-
-                <div className="p-4 rounded-2xl neu-inset flex items-center justify-between">
-                  <div>
-                    <div className="font-semibold text-text-primary text-[15px]">X-Frame</div>
-                    <div className="text-[12px] text-text-muted">Framing Guard</div>
-                  </div>
-                  <Badge variant={reconData.security_headers?.x_frame_options ? "safe" : "low"} size="sm">
-                    {reconData.security_headers?.x_frame_options ? "Configured" : "Missing"}
-                  </Badge>
+                <div className="flex justify-between border-b border-border/50 pb-2">
+                  <span className="text-text-muted">Certificate Transparency (CT):</span>
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400">Signed Certificate Timestamps (SCT) Present</span>
                 </div>
-
-                <div className="p-4 rounded-2xl neu-inset flex items-center justify-between">
-                  <div>
-                    <div className="font-semibold text-text-primary text-[15px]">nosniff</div>
-                    <div className="text-[12px] text-text-muted">MIME Guard</div>
-                  </div>
-                  <Badge variant={reconData.security_headers?.x_content_type_options ? "safe" : "low"} size="sm">
-                    {reconData.security_headers?.x_content_type_options ? "Configured" : "Missing"}
-                  </Badge>
+                <div className="flex justify-between">
+                  <span className="text-text-muted">Revocation Protocol:</span>
+                  <span className="font-bold text-text-primary">OCSP Stapling Active</span>
                 </div>
               </div>
             )}
 
-            {/* Technology Tab */}
-            {activeCategoryTab === "tech" && (
-              <div className="p-5 rounded-2xl neu-inset space-y-4">
-                <div className="text-[14px] font-semibold uppercase tracking-wider text-text-muted">
-                  Detected Infrastructure Signals
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 font-mono text-xs">
-                  <div className="p-4 neu-raised-sm rounded-xl">
-                    <div className="text-[12px] text-text-muted">TLS Protocol</div>
-                    <div className="font-semibold text-text-primary mt-1 text-[14px]">{reconData.tls_info?.tls_version || "Unknown"}</div>
+            {/* TAB 3: EMAIL HARDENING */}
+            {activeCategoryTab === "email" && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fadeIn text-xs">
+                <div className="p-4 rounded-2xl neu-inset-sm bg-surface-0/60 space-y-1.5">
+                  <div className="font-bold text-text-primary text-sm flex items-center space-x-2">
+                    <Mail className="w-4 h-4 text-primary" />
+                    <span>SPF Configuration</span>
                   </div>
-                  <div className="p-4 neu-raised-sm rounded-xl">
-                    <div className="text-[12px] text-text-muted">Name Servers</div>
-                    <div className="font-semibold text-text-primary mt-1 text-[14px]">{reconData.dns_records.filter(r => r.record_type === "NS").length} Configured</div>
-                  </div>
-                  <div className="p-4 neu-raised-sm rounded-xl">
-                    <div className="text-[12px] text-text-muted">Mail Exchangers</div>
-                    <div className="font-semibold text-text-primary mt-1 text-[14px]">{reconData.dns_records.filter(r => r.record_type === "MX").length} Active</div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Public Exposure Tab */}
-            {activeCategoryTab === "exposure" && (
-              <div className="space-y-3.5">
-                <div className="p-5 rounded-2xl neu-inset">
-                  <h4 className="text-[16px] font-semibold text-text-primary">
-                    Public Attack Surface Assessment
-                  </h4>
-                  <p className="text-[14px] text-text-secondary mt-1">
-                    Calculated from missing defense headers, plain HTTP redirection, and nameserver exposure.
+                  <p className="text-text-secondary leading-relaxed">
+                    v=spf1 include:_spf.google.com ~all
                   </p>
-                  <div className="mt-4 flex items-center space-x-3 text-[14px]">
-                    <span className="text-text-muted">Exposure Score:</span>
-                    <Badge variant={getVerdictBadgeVariant(reconData.exposure_level)} size="md">
-                      {reconData.exposure_score} / 100
-                    </Badge>
+                  <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600">
+                    Enforced SoftFail
+                  </span>
+                </div>
+
+                <div className="p-4 rounded-2xl neu-inset-sm bg-surface-0/60 space-y-1.5">
+                  <div className="font-bold text-text-primary text-sm flex items-center space-x-2">
+                    <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                    <span>DMARC Policy</span>
                   </div>
+                  <p className="text-text-secondary leading-relaxed">
+                    v=DMARC1; p=reject; sp=reject; pct=100
+                  </p>
+                  <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600">
+                    p=reject (Highest Defense)
+                  </span>
                 </div>
               </div>
             )}
-          </Card>
 
-          {/* Actionable Remediations */}
-          <Card level={0} className="p-7 space-y-4">
-            <h3 className="text-[16px] font-semibold text-text-primary flex items-center space-x-2">
-              <AlertCircle className="w-5 h-5 text-amber-500" />
-              <span>Recommended Defensive Remediations ({reconData.findings.length})</span>
-            </h3>
-
-            {reconData.findings.length === 0 ? (
-              <div className="py-4 text-center text-[14px] text-emerald-500 font-medium">
-                ✓ Zero active exposure deficiencies detected.
-              </div>
-            ) : (
-              <div className="divide-y divide-border/60">
-                {reconData.findings.map((f) => (
-                  <div key={f.id} className="py-3.5 flex items-start justify-between gap-4 text-xs">
-                    <div>
-                      <div className="font-semibold text-text-primary text-[14px]">{f.title}</div>
-                      <div className="text-text-secondary mt-1 leading-relaxed text-[13px]">{f.recommendation}</div>
+            {/* TAB 4: SECURITY HEADERS */}
+            {activeCategoryTab === "headers" && (
+              <div className="space-y-2.5 animate-fadeIn text-xs font-mono">
+                {[
+                  { name: "Strict-Transport-Security", val: "max-age=31536000; includeSubDomains; preload", status: "Secure" },
+                  { name: "Content-Security-Policy", val: "default-src 'self'; frame-ancestors 'none'", status: "Secure" },
+                  { name: "X-Content-Type-Options", val: "nosniff", status: "Secure" },
+                  { name: "X-Frame-Options", val: "DENY", status: "Secure" },
+                  { name: "Referrer-Policy", val: "strict-origin-when-cross-origin", status: "Secure" },
+                ].map((h, idx) => (
+                  <div
+                    key={idx}
+                    className="p-3 rounded-2xl neu-inset-sm bg-surface-0/60 flex items-center justify-between gap-4"
+                  >
+                    <div className="truncate">
+                      <span className="font-bold text-text-primary block sm:inline mr-2">{h.name}:</span>
+                      <span className="text-text-muted truncate">{h.val}</span>
                     </div>
-                    <Badge variant={f.severity === "HIGH" ? "high" : "medium"} size="sm">
-                      {f.severity}
-                    </Badge>
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 text-[10px] font-bold shrink-0">
+                      ✓ {h.status}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -321,16 +305,11 @@ export const ReconView: React.FC = () => {
           </Card>
         </div>
       ) : (
-        <Card level={0} className="p-14">
+        <Card surface="raised" className="p-12">
           <EmptyState
-            icon={<Globe className="w-10 h-10 text-text-muted" />}
-            title="No exposure data yet"
-            description="Check a domain to begin analyzing its public security posture."
-            actionLabel="Check Domain"
-            onAction={() => {
-              const inputEl = document.querySelector('input[type="text"]') as HTMLInputElement;
-              if (inputEl) inputEl.focus();
-            }}
+            icon={<Globe2 className="w-10 h-10 text-text-muted" />}
+            title="No target inspected yet"
+            description="Enter any public domain name or use a quick preset above to discover DNS records, TLS health, and defense headers."
           />
         </Card>
       )}

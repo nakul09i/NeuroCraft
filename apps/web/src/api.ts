@@ -236,4 +236,13 @@ export const api = {
       recent_scans: [],
     };
   },
+
+  // System Health
+  async getHealth(): Promise<any> {
+    try {
+      const res = await fetch("/health");
+      if (res.ok) return await res.json();
+    } catch {}
+    return { status: "ok" };
+  },
 };

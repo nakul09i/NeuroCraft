@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { ThemeProvider } from "./context/ThemeContext";
 import { ToastProvider, useToast } from "./context/ToastContext";
+import { NotificationProvider } from "./context/NotificationContext";
 import { Sidebar } from "./components/layout/Sidebar";
 import { Header } from "./components/layout/Header";
 import { BottomNav } from "./components/layout/BottomNav";
@@ -14,6 +15,7 @@ import { HistoryView } from "./components/views/HistoryView";
 import { SettingsView } from "./components/views/SettingsView";
 import { ErrorBoundary } from "./components/ui/ErrorBoundary";
 import { AuthModal } from "./components/AuthModal";
+import { HelpModal } from "./components/ui/HelpModal";
 import { api } from "./api";
 import { UserProfile } from "./types";
 
@@ -23,7 +25,23 @@ const MainApp: React.FC = () => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [helpModalOpen, setHelpModalOpen] = useState(false);
   const [selectedScanId, setSelectedScanId] = useState<string | undefined>(undefined);
+
+  // Dynamic document title update per active route
+  const pageTitles: Record<string, string> = {
+    dashboard: "NeuroCraft — Dashboard",
+    scanner: "NeuroCraft — File Analysis",
+    recon: "NeuroCraft — Passive Recon",
+    quantum: "NeuroCraft — Quantum Trust",
+    reports: "NeuroCraft — Security Reports",
+    history: "NeuroCraft — History",
+    settings: "NeuroCraft — Settings",
+  };
+
+  useEffect(() => {
+    document.title = pageTitles[activeTab] || "NeuroCraft — Detect. Verify. Prove.";
+  }, [activeTab]);
 
   useEffect(() => {
     api.getMe().then((profile) => {
@@ -47,7 +65,7 @@ const MainApp: React.FC = () => {
     setActiveTab("reports");
   };
 
-  const tabTitles: Record<string, string> = {
+  const tabBreadcrumbs: Record<string, string> = {
     dashboard: "Security Command Center",
     scanner: "File Analysis & Digital Signatures",
     recon: "Defensive Passive Reconnaissance",
@@ -59,23 +77,26 @@ const MainApp: React.FC = () => {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-bg text-text-primary calm-ambient-bg">
-      {/* Collapsible Desktop Sidebar */}
+      {/* Collapsible Desktop Sidebar with Favorites */}
       <Sidebar
         activeTab={activeTab}
         onSelectTab={setActiveTab}
         user={user}
         onOpenAuth={() => setAuthModalOpen(true)}
         onLogout={handleLogout}
+        onOpenHelp={() => setHelpModalOpen(true)}
       />
 
       {/* Main Content Viewport */}
       <div className="flex-1 flex flex-col h-full overflow-hidden">
         {/* Top Header */}
         <Header
-          activeTabTitle={tabTitles[activeTab] || "NeuroCraft"}
+          activeTabTitle={tabBreadcrumbs[activeTab] || "NeuroCraft"}
           onOpenCommand={() => setCommandPaletteOpen(true)}
+          onNavigate={setActiveTab}
           user={user}
           onOpenAuth={() => setAuthModalOpen(true)}
+          onOpenHelp={() => setHelpModalOpen(true)}
         />
 
         {/* Scrollable View Area wrapped in ErrorBoundary */}
@@ -116,6 +137,12 @@ const MainApp: React.FC = () => {
         onNavigate={setActiveTab}
       />
 
+      {/* Help & Shortcuts Modal */}
+      <HelpModal
+        isOpen={helpModalOpen}
+        onClose={() => setHelpModalOpen(false)}
+      />
+
       {/* Authentication Modal */}
       <AuthModal
         isOpen={authModalOpen}
@@ -133,7 +160,9 @@ export const App: React.FC = () => {
   return (
     <ThemeProvider>
       <ToastProvider>
-        <MainApp />
+        <NotificationProvider>
+          <MainApp />
+        </NotificationProvider>
       </ToastProvider>
     </ThemeProvider>
   );
