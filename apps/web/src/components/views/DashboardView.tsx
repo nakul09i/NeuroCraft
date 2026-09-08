@@ -14,7 +14,18 @@ import {
   ExternalLink,
   ChevronRight,
   Sparkles,
+  TrendingUp,
+  Activity,
 } from "lucide-react";
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+} from "recharts";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
 import { Badge } from "../ui/Badge";
@@ -91,66 +102,100 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
 
   const postureScore = calculatePostureScore();
 
-  return (
-    <div className="space-y-8 max-w-7xl mx-auto pb-12">
-      {/* =========================================================================
-          1. HERO & SECURITY POSTURE (Stagger: 0ms / 100ms)
-          ========================================================================= */}
-      <div className="space-y-6">
-        {/* Dynamic Greeting */}
-        <div
-          className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-fadeUp"
-          style={{ animationDelay: "0ms" }}
-        >
-          <div>
-            <div className="flex items-center space-x-2 text-xs font-mono font-semibold tracking-wider text-text-muted uppercase mb-1">
-              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              <span>Security Command Center</span>
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight">
-              {getGreeting()}, {displayName}.
-            </h2>
-            <p className="text-xs sm:text-sm text-text-secondary mt-1">
-              {getSecondaryHeroLine()}
-            </p>
-          </div>
+  // Real scan activity data for Recharts (no fabricated trends)
+  const chartData = stats.recent_scans.map((scan, idx) => {
+    const timeLabel = scan.created_at
+      ? new Date(scan.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+      : `Scan #${idx + 1}`;
+    return {
+      name: scan.filename.length > 12 ? `${scan.filename.substring(0, 10)}...` : scan.filename,
+      risk: Math.round(scan.risk_score),
+      time: timeLabel,
+      level: scan.risk_level,
+    };
+  }).reverse();
 
-          <div className="flex items-center space-x-2.5">
-            <Button
-              size="sm"
-              onClick={() => onNavigate("scanner")}
-              icon={<Plus className="w-4 h-4" />}
-            >
-              Analyze File
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => onNavigate("recon")}
-              icon={<Globe className="w-3.5 h-3.5" />}
-            >
-              Check Domain
-            </Button>
-            <button
-              onClick={loadData}
-              title="Refresh Telemetry"
-              className="p-2 rounded-lg bg-surface-1 hover:bg-surface-2 border border-border text-text-muted hover:text-text-primary transition focus-ring"
-              aria-label="Refresh Dashboard Data"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-primary" : ""}`} />
-            </button>
+  const CustomChartTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div className="p-2.5 rounded-lg bg-surface-0 border border-border shadow-lg text-xs font-mono">
+          <div className="font-bold text-text-primary">{data.name}</div>
+          <div className="text-text-muted text-[11px]">{data.time}</div>
+          <div className="mt-1 flex items-center space-x-1.5">
+            <span className="text-text-secondary">Risk Score:</span>
+            <span className="font-bold text-primary">{data.risk} / 100</span>
           </div>
         </div>
+      );
+    }
+    return null;
+  };
 
-        {/* Security Posture Command Card */}
+  return (
+    <div className="space-y-8 max-w-[1440px] mx-auto pb-12">
+      {/* =========================================================================
+          TOP COMMAND HEADER (Stagger: 0ms)
+          ========================================================================= */}
+      <div
+        className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-fadeUp"
+        style={{ animationDelay: "0ms" }}
+      >
+        <div>
+          <div className="flex items-center space-x-2 text-xs font-mono font-semibold tracking-wider text-text-muted uppercase mb-1">
+            <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+            <span>Security Command Center · 4 Verification Engines Ready</span>
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight">
+            {getGreeting()}, {displayName}.
+          </h2>
+          <p className="text-xs sm:text-sm text-text-secondary mt-1">
+            {getSecondaryHeroLine()}
+          </p>
+        </div>
+
+        <div className="flex items-center space-x-2.5">
+          <Button
+            size="sm"
+            onClick={() => onNavigate("scanner")}
+            icon={<Plus className="w-4 h-4" />}
+          >
+            + New Scan
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onNavigate("recon")}
+            icon={<Globe className="w-3.5 h-3.5" />}
+          >
+            Check Exposure
+          </Button>
+          <button
+            onClick={loadData}
+            title="Refresh Telemetry"
+            className="p-2 rounded-lg bg-surface-1 hover:bg-surface-2 border border-border text-text-muted hover:text-text-primary transition focus-ring"
+            aria-label="Refresh Dashboard Data"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-primary" : ""}`} />
+          </button>
+        </div>
+      </div>
+
+      {/* =========================================================================
+          ROW 1: 12-COLUMN POSTURE (8 cols) & SCORE (4 cols) SPLIT (Stagger: 100ms)
+          ========================================================================= */}
+      <div
+        className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch animate-fadeUp"
+        style={{ animationDelay: "100ms" }}
+      >
+        {/* Large Security Posture Card (8 columns) */}
         <Card
           level={1}
-          className="p-6 sm:p-8 relative overflow-hidden border border-border/80 shadow-md animate-fadeUp"
-          style={{ animationDelay: "100ms" }}
+          className="lg:col-span-8 p-6 sm:p-8 flex flex-col justify-between relative overflow-hidden border border-border/80 shadow-md"
         >
-          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-            <div className="flex-1 space-y-3.5 text-center md:text-left">
-              <div className="flex items-center justify-center md:justify-start space-x-2">
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center space-x-2">
                 <Badge
                   variant={
                     stats.critical_threats > 0
@@ -168,82 +213,129 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
                     : "SECURITY POSTURE STABLE"}
                 </Badge>
                 <span className="text-xs font-mono text-text-muted">
-                  ID: TENANT-PROVENANCE
+                  SESSION TENANT ISOLATED
                 </span>
               </div>
+              <div className="text-[11px] font-mono text-text-muted hidden sm:block">
+                EPR BELL-STATE CHANNELS: ACTIVE
+              </div>
+            </div>
 
+            <div>
               <h3 className="text-xl sm:text-2xl font-black text-text-primary tracking-tight">
                 {stats.total_scans === 0
                   ? "Security Posture Baseline Ready"
                   : stats.critical_threats === 0
                   ? "Consolidated Security Posture Stable"
-                  : `${stats.critical_threats} Security Anomaly Detected Across Artifacts`}
+                  : `${stats.critical_threats} Security Anomaly Detected Across Scanned Artifacts`}
               </h3>
-
-              <p className="text-xs sm:text-sm text-text-secondary max-w-xl leading-relaxed">
-                NeuroCraft continuously verifies file authenticity, parses Authenticode certificate chains, monitors passive external exposure, and validates quantum channel non-repudiation.
+              <p className="text-xs sm:text-sm text-text-secondary max-w-2xl leading-relaxed mt-2">
+                NeuroCraft continuously verifies file authenticity, parses Authenticode certificate chains, monitors passive external exposure, and validates quantum channel non-repudiation without dynamic execution.
               </p>
-
-              {/* 3 Real Evidence Indicators */}
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 pt-1 text-xs text-text-secondary font-mono">
-                <div className="flex items-center space-x-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                  <span>
-                    {stats.total_scans} artifact{stats.total_scans === 1 ? "" : "s"} analyzed
-                  </span>
-                </div>
-                <div className="flex items-center space-x-1.5">
-                  <span className={`w-1.5 h-1.5 rounded-full ${stats.critical_threats > 0 ? "bg-danger" : "bg-theme-success"}`} />
-                  <span>
-                    {stats.critical_threats} critical finding{stats.critical_threats === 1 ? "" : "s"}
-                  </span>
-                </div>
-                <div className="flex items-center space-x-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-accent-cyan" />
-                  <span>
-                    {stats.recon_targets > 0
-                      ? `${stats.recon_targets} domain${stats.recon_targets === 1 ? "" : "s"} checked`
-                      : "Passive exposure checked"}
-                  </span>
-                </div>
-              </div>
-
-              <div className="pt-2">
-                <button
-                  type="button"
-                  onClick={() => onNavigate("reports")}
-                  className="inline-flex items-center space-x-1.5 text-xs font-semibold text-primary hover:text-primary-hover transition group"
-                >
-                  <span>View Security Audit Report</span>
-                  <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
-                </button>
-              </div>
             </div>
 
-            {/* Score Ring with Count-Up and Safe Rendering */}
-            <div className="flex flex-col items-center justify-center shrink-0">
-              <ScoreRing
-                score={postureScore}
-                loading={loading}
-                variant="posture"
-                size={135}
-                strokeWidth={11}
-                label={
-                  stats.total_scans === 0
-                    ? "BASELINE"
-                    : stats.critical_threats > 0
-                    ? "ATTENTION REQUIRED"
-                    : "OPTIMAL POSTURE"
-                }
-                sublabel="Consolidated Trust Metric"
-              />
+            {/* 3 Real Evidence Indicators */}
+            <div className="flex flex-wrap items-center gap-4 sm:gap-6 pt-2 text-xs text-text-secondary font-mono">
+              <div className="flex items-center space-x-2">
+                <span className="w-2 h-2 rounded-full bg-primary" />
+                <span>
+                  {stats.total_scans} artifact{stats.total_scans === 1 ? "" : "s"} analyzed
+                </span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span
+                  className={`w-2 h-2 rounded-full ${stats.critical_threats > 0 ? "bg-danger" : "bg-theme-success"}`}
+                />
+                <span>
+                  {stats.critical_threats} critical finding{stats.critical_threats === 1 ? "" : "s"}
+                </span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="w-2 h-2 rounded-full bg-accent-cyan" />
+                <span>
+                  {stats.recon_targets > 0
+                    ? `${stats.recon_targets} domain${stats.recon_targets === 1 ? "" : "s"} checked`
+                    : "Passive exposure checked"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-6 mt-4 border-t border-border/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center space-x-3 text-xs text-text-muted font-mono">
+              <span>Zero Dynamic Code Execution</span>
+              <span>•</span>
+              <span>FOSS Free-First</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => onNavigate("reports")}
+              className="inline-flex items-center space-x-1.5 text-xs font-bold text-primary hover:text-primary-hover transition group"
+            >
+              <span>View Consolidated Security Report</span>
+              <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+            </button>
+          </div>
+        </Card>
+
+        {/* Dedicated Security Score Card (4 columns) */}
+        <Card
+          level={1}
+          className="lg:col-span-4 p-6 sm:p-7 flex flex-col justify-between items-center text-center relative overflow-hidden border border-border/80 shadow-md"
+        >
+          <div className="w-full flex items-center justify-between border-b border-border/80 pb-3">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted font-mono">
+              CONSOLIDATED TRUST
+            </span>
+            <Badge
+              variant={
+                postureScore !== null && postureScore < 60
+                  ? "high"
+                  : postureScore !== null && postureScore < 80
+                  ? "medium"
+                  : "safe"
+              }
+              size="sm"
+            >
+              {postureScore !== null && postureScore >= 80
+                ? "EXCELLENT"
+                : postureScore !== null && postureScore >= 60
+                ? "MODERATE"
+                : "ELEVATED"}
+            </Badge>
+          </div>
+
+          <div className="my-4">
+            <ScoreRing
+              score={postureScore}
+              loading={loading}
+              variant="posture"
+              size={145}
+              strokeWidth={12}
+              label={stats.total_scans === 0 ? "BASELINE" : "POSTURE SCORE"}
+              sublabel="0–100 Scale"
+            />
+          </div>
+
+          <div className="w-full grid grid-cols-2 gap-2 pt-3 border-t border-border/80 text-left">
+            <div className="p-2.5 rounded-lg bg-surface-0 border border-border/60">
+              <div className="text-[10px] text-text-muted font-mono uppercase">Base Metric</div>
+              <div className="text-xs font-bold text-text-primary mt-0.5">
+                {stats.total_scans === 0 ? "100.0 (Init)" : "Deterministic"}
+              </div>
+            </div>
+            <div className="p-2.5 rounded-lg bg-surface-0 border border-border/60">
+              <div className="text-[10px] text-text-muted font-mono uppercase">Risk Penalty</div>
+              <div className="text-xs font-bold text-text-primary mt-0.5">
+                {stats.critical_threats > 0 ? `-${stats.critical_threats * 30} pts` : "0 pts penalty"}
+              </div>
             </div>
           </div>
         </Card>
       </div>
 
       {/* =========================================================================
-          2. KEY METRICS (Stagger: 150ms)
+          ROW 2: KEY ANALYTICS METRICS (4 CARDS) (Stagger: 150ms)
           ========================================================================= */}
       <div
         className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-fadeUp"
@@ -251,8 +343,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
       >
         <Card level={2} className="p-5 hover:border-border-strong transition-all duration-200">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">
-              Scanned Files
+            <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted font-mono">
+              FILES ANALYZED
             </span>
             <div className="p-2 rounded-lg bg-surface-3 text-primary">
               <FileSearch className="w-4 h-4" />
@@ -274,8 +366,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
 
         <Card level={2} className="p-5 hover:border-border-strong transition-all duration-200">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">
-              Critical Threats
+            <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted font-mono">
+              THREATS FLAGGED
             </span>
             <div className="p-2 rounded-lg bg-surface-3 text-danger">
               <ShieldAlert className="w-4 h-4" />
@@ -299,8 +391,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
 
         <Card level={2} className="p-5 hover:border-border-strong transition-all duration-200">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">
-              Recon Targets
+            <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted font-mono">
+              RECON TARGETS
             </span>
             <div className="p-2 rounded-lg bg-surface-3 text-theme-success">
               <Globe className="w-4 h-4" />
@@ -322,8 +414,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
 
         <Card level={2} className="p-5 hover:border-border-strong transition-all duration-200">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">
-              Quantum Runs
+            <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted font-mono">
+              QUANTUM RUNS
             </span>
             <div className="p-2 rounded-lg bg-surface-3 text-purple-400">
               <Atom className="w-4 h-4" />
@@ -345,21 +437,21 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
       </div>
 
       {/* =========================================================================
-          3. QUICK ACTIONS (Feature Discoverability) (Stagger: 200ms)
+          ROW 3: QUICK ACTIONS (4 CARDS) (Stagger: 200ms)
           ========================================================================= */}
       <div className="space-y-3 animate-fadeUp" style={{ animationDelay: "200ms" }}>
         <div className="flex items-center justify-between">
           <h3 className="text-xs font-bold uppercase tracking-widest text-text-muted font-mono">
             QUICK ACTIONS & CORE CAPABILITIES
           </h3>
-          <span className="text-[11px] text-text-muted font-mono">Select a verification workflow</span>
+          <span className="text-[11px] text-text-muted font-mono">Direct verification shortcuts</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Action 1: File Analysis */}
+          {/* Action 1: Analyze File */}
           <div
             onClick={() => onNavigate("scanner")}
-            className="group cursor-pointer p-5 rounded-xl bg-surface-1 border border-border hover:border-primary/50 hover:bg-surface-2 transition-all duration-200 shadow-sm hover:-translate-y-0.5 space-y-3"
+            className="group cursor-pointer p-5 rounded-xl bg-surface-1 border border-border hover:border-primary/50 hover:bg-surface-2 transition-all duration-200 shadow-sm hover:-translate-y-1 space-y-3"
           >
             <div className="flex items-center justify-between">
               <div className="p-2.5 rounded-lg bg-primary-subtle text-primary group-hover:scale-105 transition-transform">
@@ -369,14 +461,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
             </div>
             <div>
               <h4 className="text-sm font-bold text-text-primary group-hover:text-primary transition-colors">
-                Analyze File
+                ANALYZE FILE
               </h4>
               <p className="text-xs text-text-secondary mt-1 leading-relaxed">
-                Quarantine, extract safe metadata, and verify Authenticode/X.509 chains.
+                Analyze an untrusted artifact safely without code execution.
               </p>
             </div>
             <div className="pt-1 flex items-center text-xs font-semibold text-primary">
-              <span>Start Scan</span>
+              <span>Start Analysis</span>
               <span className="ml-1">&rarr;</span>
             </div>
           </div>
@@ -384,7 +476,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
           {/* Action 2: Passive Recon */}
           <div
             onClick={() => onNavigate("recon")}
-            className="group cursor-pointer p-5 rounded-xl bg-surface-1 border border-border hover:border-theme-success/50 hover:bg-surface-2 transition-all duration-200 shadow-sm hover:-translate-y-0.5 space-y-3"
+            className="group cursor-pointer p-5 rounded-xl bg-surface-1 border border-border hover:border-theme-success/50 hover:bg-surface-2 transition-all duration-200 shadow-sm hover:-translate-y-1 space-y-3"
           >
             <div className="flex items-center justify-between">
               <div className="p-2.5 rounded-lg bg-theme-success-subtle text-theme-success group-hover:scale-105 transition-transform">
@@ -394,10 +486,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
             </div>
             <div>
               <h4 className="text-sm font-bold text-text-primary group-hover:text-theme-success transition-colors">
-                Passive Recon
+                PASSIVE RECON
               </h4>
               <p className="text-xs text-text-secondary mt-1 leading-relaxed">
-                Inspect public DNS records, TLS certificates, and HTTP defense headers.
+                Inspect public security exposure, DNS records, and TLS cipher suites.
               </p>
             </div>
             <div className="pt-1 flex items-center text-xs font-semibold text-theme-success">
@@ -409,7 +501,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
           {/* Action 3: Quantum Trust */}
           <div
             onClick={() => onNavigate("quantum")}
-            className="group cursor-pointer p-5 rounded-xl bg-surface-1 border border-border hover:border-purple-400/50 hover:bg-surface-2 transition-all duration-200 shadow-sm hover:-translate-y-0.5 space-y-3"
+            className="group cursor-pointer p-5 rounded-xl bg-surface-1 border border-border hover:border-purple-400/50 hover:bg-surface-2 transition-all duration-200 shadow-sm hover:-translate-y-1 space-y-3"
           >
             <div className="flex items-center justify-between">
               <div className="p-2.5 rounded-lg bg-purple-500/10 text-purple-400 group-hover:scale-105 transition-transform">
@@ -419,10 +511,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
             </div>
             <div>
               <h4 className="text-sm font-bold text-text-primary group-hover:text-purple-400 transition-colors">
-                Quantum Trust
+                QUANTUM TRUST
               </h4>
               <p className="text-xs text-text-secondary mt-1 leading-relaxed">
-                Simulate Bell-state channel integrity and verify tamper non-repudiation.
+                Run a Bell-State verification simulation across 5 attack scenarios.
               </p>
             </div>
             <div className="pt-1 flex items-center text-xs font-semibold text-purple-400">
@@ -434,7 +526,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
           {/* Action 4: Security Reports */}
           <div
             onClick={() => onNavigate("reports")}
-            className="group cursor-pointer p-5 rounded-xl bg-surface-1 border border-border hover:border-amber-400/50 hover:bg-surface-2 transition-all duration-200 shadow-sm hover:-translate-y-0.5 space-y-3"
+            className="group cursor-pointer p-5 rounded-xl bg-surface-1 border border-border hover:border-amber-400/50 hover:bg-surface-2 transition-all duration-200 shadow-sm hover:-translate-y-1 space-y-3"
           >
             <div className="flex items-center justify-between">
               <div className="p-2.5 rounded-lg bg-amber-500/10 text-amber-500 group-hover:scale-105 transition-transform">
@@ -444,14 +536,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
             </div>
             <div>
               <h4 className="text-sm font-bold text-text-primary group-hover:text-amber-500 transition-colors">
-                Security Reports
+                SECURITY REPORT
               </h4>
               <p className="text-xs text-text-secondary mt-1 leading-relaxed">
-                Synthesize observed physical evidence and generate provenance certificates.
+                Generate an evidence-based audit report with cryptographic provenance.
               </p>
             </div>
             <div className="pt-1 flex items-center text-xs font-semibold text-amber-500">
-              <span>Open Reports</span>
+              <span>Create Report</span>
               <span className="ml-1">&rarr;</span>
             </div>
           </div>
@@ -459,96 +551,97 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
       </div>
 
       {/* =========================================================================
-          4. RECENT ACTIVITY + ENGINE STATUS (Stagger: 250ms / 300ms)
+          ROW 4: ACTIVITY CHART (7 cols) & ENGINE STATUS (5 cols) SPLIT (Stagger: 250ms)
           ========================================================================= */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Activity Timeline */}
+      <div
+        className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch animate-fadeUp"
+        style={{ animationDelay: "250ms" }}
+      >
+        {/* Security Activity Visualization (7 columns) */}
         <Card
           level={1}
-          className="lg:col-span-2 p-6 space-y-4 animate-fadeUp"
-          style={{ animationDelay: "250ms" }}
-        >
-          <div className="flex items-center justify-between border-b border-border pb-3">
-            <div className="flex items-center space-x-2">
-              <Clock className="w-4 h-4 text-text-muted" />
-              <h4 className="text-xs font-bold text-text-primary uppercase tracking-wider">
-                Recent Verification Activity
-              </h4>
-            </div>
-            <button
-              onClick={() => onNavigate("history")}
-              className="text-xs font-semibold text-primary hover:text-primary-hover transition flex items-center space-x-1"
-            >
-              <span>View all</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          {stats.recent_scans.length === 0 ? (
-            <EmptyState
-              icon={<Clock className="w-8 h-8 text-text-muted" />}
-              title="No verification history yet"
-              description="Upload a binary, inspect a domain, or run a quantum simulation to establish your tamper-evident log."
-              actionLabel="Analyze Your First File"
-              onAction={() => onNavigate("scanner")}
-            />
-          ) : (
-            <div className="divide-y divide-border/60">
-              {stats.recent_scans.map((scan) => {
-                let badgeVariant: "safe" | "low" | "medium" | "high" | "critical" = "safe";
-                if (scan.risk_level === "LOW") badgeVariant = "low";
-                else if (scan.risk_level === "MEDIUM") badgeVariant = "medium";
-                else if (scan.risk_level === "HIGH" || scan.risk_level === "CRITICAL") badgeVariant = "high";
-
-                return (
-                  <div
-                    key={scan.scan_id}
-                    onClick={() => onNavigate("history")}
-                    className="py-3.5 flex items-center justify-between hover:bg-surface-2/60 px-2 rounded-xl transition cursor-pointer group"
-                  >
-                    <div className="flex items-center space-x-3 overflow-hidden">
-                      <div className="p-2 rounded-lg bg-surface-2 text-primary group-hover:bg-primary-subtle transition">
-                        <FileSearch className="w-4 h-4" />
-                      </div>
-                      <div className="overflow-hidden">
-                        <div className="text-xs font-bold text-text-primary truncate group-hover:text-primary transition-colors">
-                          {scan.filename}
-                        </div>
-                        <div className="text-[10px] font-mono text-text-muted flex items-center space-x-2">
-                          <span>Static analysis completed</span>
-                          <span>•</span>
-                          <span>{scan.created_at ? new Date(scan.created_at).toLocaleDateString() : "Recent"}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center space-x-3 shrink-0">
-                      <Badge variant={badgeVariant} size="sm">
-                        {scan.risk_level} · {scan.risk_score.toFixed(0)}
-                      </Badge>
-                      <ChevronRight className="w-3.5 h-3.5 text-text-muted group-hover:text-text-primary group-hover:translate-x-0.5 transition-all" />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </Card>
-
-        {/* Engine Readiness Matrix */}
-        <Card
-          level={1}
-          className="p-6 space-y-4 animate-fadeUp"
-          style={{ animationDelay: "300ms" }}
+          className="lg:col-span-7 p-6 flex flex-col justify-between space-y-4 border border-border/80 shadow-md"
         >
           <div className="border-b border-border pb-3 flex items-center justify-between">
-            <h4 className="text-xs font-bold text-text-primary uppercase tracking-wider flex items-center space-x-2">
+            <div className="flex items-center space-x-2">
+              <Activity className="w-4 h-4 text-primary" />
+              <h4 className="text-xs font-bold text-text-primary uppercase tracking-wider font-mono">
+                VERIFICATION TELEMETRY & RISK TIMELINE
+              </h4>
+            </div>
+            <span className="text-[11px] font-mono text-text-muted">
+              {stats.recent_scans.length} Recorded Runs
+            </span>
+          </div>
+
+          {stats.recent_scans.length > 0 ? (
+            <div className="w-full h-56 pt-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="riskGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.4} />
+                      <stop offset="95%" stopColor="var(--primary)" stopOpacity={0.0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.6} />
+                  <XAxis
+                    dataKey="name"
+                    stroke="var(--text-muted)"
+                    fontSize={11}
+                    tickLine={false}
+                    fontFamily="monospace"
+                  />
+                  <YAxis
+                    domain={[0, 100]}
+                    stroke="var(--text-muted)"
+                    fontSize={11}
+                    tickLine={false}
+                    fontFamily="monospace"
+                  />
+                  <Tooltip content={<CustomChartTooltip />} />
+                  <Area
+                    type="monotone"
+                    dataKey="risk"
+                    stroke="var(--primary)"
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#riskGradient)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="py-8">
+              <EmptyState
+                icon={<Activity className="w-8 h-8 text-text-muted" />}
+                title="No activity yet"
+                description="Run your first analysis to establish a security baseline and populate your verification timeline."
+                actionLabel="Analyze First File"
+                onAction={() => onNavigate("scanner")}
+              />
+            </div>
+          )}
+
+          <div className="pt-3 border-t border-border/80 flex items-center justify-between text-[11px] text-text-muted font-mono">
+            <span>Historical baseline tracker</span>
+            <span className="text-primary font-semibold">Live Telemetry</span>
+          </div>
+        </Card>
+
+        {/* Engine Status Panel (5 columns) */}
+        <Card
+          level={1}
+          className="lg:col-span-5 p-6 flex flex-col justify-between space-y-4 border border-border/80 shadow-md"
+        >
+          <div className="border-b border-border pb-3 flex items-center justify-between">
+            <h4 className="text-xs font-bold text-text-primary uppercase tracking-wider flex items-center space-x-2 font-mono">
               <Cpu className="w-4 h-4 text-primary" />
-              <span>Engine Status</span>
+              <span>ENGINE READINESS MATRIX</span>
             </h4>
             <span className="text-[10px] font-mono text-theme-success font-semibold flex items-center space-x-1">
               <span className="w-1.5 h-1.5 rounded-full bg-theme-success animate-pulse" />
-              <span>ONLINE</span>
+              <span>4 READY</span>
             </span>
           </div>
 
@@ -559,7 +652,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
                   <span className="w-2 h-2 rounded-full bg-theme-success animate-pulse" />
                   <span>Static File Quarantine</span>
                 </div>
-                <Badge variant="safe" size="sm">Active</Badge>
+                <Badge variant="safe" size="sm">OPERATIONAL</Badge>
               </div>
               <p className="text-[11px] text-text-muted mt-1">
                 Zero-execution parsing, hash fingerprinting & entropy bounds.
@@ -572,7 +665,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
                   <span className="w-2 h-2 rounded-full bg-theme-success animate-pulse" />
                   <span>Digital Signatures</span>
                 </div>
-                <Badge variant="safe" size="sm">Active</Badge>
+                <Badge variant="safe" size="sm">OPERATIONAL</Badge>
               </div>
               <p className="text-[11px] text-text-muted mt-1">
                 Authenticode PKCS#7 extraction, X.509 chains, self-signed detection.
@@ -585,7 +678,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
                   <span className="w-2 h-2 rounded-full bg-theme-success animate-pulse" />
                   <span>Quantum Trust Simulator</span>
                 </div>
-                <Badge variant="quantum" size="sm">Ready</Badge>
+                <Badge variant="quantum" size="sm">OPERATIONAL</Badge>
               </div>
               <p className="text-[11px] text-text-muted mt-1">
                 Bell-state $|\Phi^+\rangle$ channels across 5 attack scenarios.
@@ -598,7 +691,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
                   <span className="w-2 h-2 rounded-full bg-theme-success animate-pulse" />
                   <span>Defensive Recon</span>
                 </div>
-                <Badge variant="safe" size="sm">Active</Badge>
+                <Badge variant="safe" size="sm">OPERATIONAL</Badge>
               </div>
               <p className="text-[11px] text-text-muted mt-1">
                 Passive DNS hygiene, TLS socket handshakes, HTTP defense headers.
@@ -607,7 +700,81 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
           </div>
         </Card>
       </div>
+
+      {/* =========================================================================
+          ROW 5: RECENT VERIFICATION ACTIVITY TABLE (Stagger: 300ms)
+          ========================================================================= */}
+      <Card
+        level={1}
+        className="p-6 space-y-4 border border-border/80 shadow-md animate-fadeUp"
+        style={{ animationDelay: "300ms" }}
+      >
+        <div className="flex items-center justify-between border-b border-border pb-3">
+          <div className="flex items-center space-x-2">
+            <Clock className="w-4 h-4 text-text-muted" />
+            <h4 className="text-xs font-bold text-text-primary uppercase tracking-wider font-mono">
+              RECENT VERIFICATION ACTIVITY
+            </h4>
+          </div>
+          <button
+            onClick={() => onNavigate("history")}
+            className="text-xs font-semibold text-primary hover:text-primary-hover transition flex items-center space-x-1"
+          >
+            <span>View all</span>
+            <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {stats.recent_scans.length === 0 ? (
+          <EmptyState
+            icon={<Clock className="w-8 h-8 text-text-muted" />}
+            title="No verification history yet"
+            description="Upload a binary, inspect a domain, or run a quantum simulation to establish your tamper-evident log."
+            actionLabel="Analyze Your First File"
+            onAction={() => onNavigate("scanner")}
+          />
+        ) : (
+          <div className="divide-y divide-border/60">
+            {stats.recent_scans.map((scan) => {
+              let badgeVariant: "safe" | "low" | "medium" | "high" | "critical" = "safe";
+              if (scan.risk_level === "LOW") badgeVariant = "low";
+              else if (scan.risk_level === "MEDIUM") badgeVariant = "medium";
+              else if (scan.risk_level === "HIGH" || scan.risk_level === "CRITICAL") badgeVariant = "high";
+
+              return (
+                <div
+                  key={scan.scan_id}
+                  onClick={() => onNavigate("history")}
+                  className="py-3.5 flex items-center justify-between hover:bg-surface-2/60 px-2 rounded-xl transition cursor-pointer group"
+                >
+                  <div className="flex items-center space-x-3 overflow-hidden">
+                    <div className="p-2 rounded-lg bg-surface-2 text-primary group-hover:bg-primary-subtle transition">
+                      <FileSearch className="w-4 h-4" />
+                    </div>
+                    <div className="overflow-hidden">
+                      <div className="text-xs font-bold text-text-primary truncate group-hover:text-primary transition-colors">
+                        {scan.filename}
+                      </div>
+                      <div className="text-[10px] font-mono text-text-muted flex items-center space-x-2">
+                        <span>Static Analysis Completed</span>
+                        <span>•</span>
+                        <span>{scan.created_at ? new Date(scan.created_at).toLocaleDateString() : "Recent"}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-3 shrink-0">
+                    <Badge variant={badgeVariant} size="sm">
+                      {scan.risk_level} · {scan.risk_score.toFixed(0)}
+                    </Badge>
+                    <ChevronRight className="w-3.5 h-3.5 text-text-muted group-hover:text-text-primary group-hover:translate-x-0.5 transition-all" />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </Card>
     </div>
   );
 };
-
