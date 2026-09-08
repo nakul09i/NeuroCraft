@@ -47,6 +47,7 @@ The **Provenance Service** maintains an immutable, tamper-evident audit history 
 ```python
 class ProvenanceService:
     """Maintains tamper-evident audit logs and coordinates optional anchoring."""
+
     async def record_scan(self, receipt: ScanReceipt) -> ProvenanceRecord:
         pass
 

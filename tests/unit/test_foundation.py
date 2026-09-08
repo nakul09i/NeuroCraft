@@ -1,8 +1,8 @@
 """Unit tests for NeuroCraft Phase 0 foundation, shared types, and security controls."""
 
 import sys
-from pathlib import Path
 from contextlib import contextmanager
+from pathlib import Path
 
 try:
     import pytest
@@ -35,22 +35,27 @@ sys.path.insert(0, str(ROOT / "packages" / "shared-security" / "src"))
 sys.path.insert(0, str(ROOT / "packages" / "shared-config" / "src"))
 sys.path.insert(0, str(ROOT / "packages" / "shared-logging" / "src"))
 
-from neurocraft_types import (
-    EvidenceItem,
-    HashDigest,
-    RiskAssessment,
-    ScanResult,
-    SeverityEnum,
-    VerdictEnum,
-)
+from neurocraft_config import get_config
+from neurocraft_logging import redact_sensitive_dict
 from neurocraft_security import (
     SecurityValidationError,
     check_archive_limits,
     sanitize_filename,
     validate_safe_path,
 )
-from neurocraft_config import get_config
-from neurocraft_logging import redact_sensitive_dict
+from neurocraft_types import (
+    ConfidenceEnum,
+    FileTypeEnum,
+    FileTypeInfo,
+    Finding,
+    HashDigest,
+    RiskAssessment,
+    ScanResult,
+    ScanVerdict,
+    SeverityEnum,
+    VerdictEnum,
+    VerdictLevel,
+)
 
 
 def test_shared_types_schema_validation() -> None:
@@ -66,12 +71,24 @@ def test_shared_types_schema_validation() -> None:
         confidence=0.95,
         deterministic_override=False,
     )
-    evidence = EvidenceItem(
-        id="ev-001",
-        engine="magic_detector",
-        rule_or_check_name="pe_header_match",
-        severity=SeverityEnum.INFO,
+    evidence = Finding(
+        id="FIND-PE-001",
+        category="STRUCTURE",
+        title="Standard PE Header",
         description="Standard PE header found",
+        severity=SeverityEnum.INFO,
+        confidence=ConfidenceEnum.HIGH,
+        source_engine="pe_extractor",
+    )
+    ft_info = FileTypeInfo(
+        type=FileTypeEnum.PE,
+        mime="application/x-dosexec",
+        description="Windows PE",
+        is_supported=True,
+    )
+    scan_verdict = ScanVerdict(
+        level=VerdictLevel.SAFE,
+        score=15.5,
     )
     result = ScanResult(
         scan_id="test-scan-001",
@@ -79,13 +96,16 @@ def test_shared_types_schema_validation() -> None:
         file_size_bytes=1024,
         mime_type="application/x-dosexec",
         magic_bytes="4D5A",
+        file_type=ft_info,
         hashes=hashes,
         evidence=[evidence],
+        findings=[evidence],
+        risk_verdict=scan_verdict,
         risk_assessment=risk,
     )
 
     assert result.scan_id == "test-scan-001"
-    assert result.risk_assessment.verdict == VerdictEnum.CLEAN
+    assert result.risk_verdict.level == VerdictLevel.SAFE
     assert result.hashes.sha256.startswith("e3b0")
 
 
@@ -112,7 +132,6 @@ def test_archive_limits() -> None:
 
     # Within limits: 1000 compressed expanding to 5000 is 5:1 (safe)
     check_archive_limits(compressed_size=1000, uncompressed_size=5000, max_ratio=10.0)
-
 
 
 def test_config_free_first_defaults() -> None:

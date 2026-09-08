@@ -50,6 +50,7 @@ The **Explanation Engine** bridges machine-generated forensic telemetry and huma
 ```python
 class ExplanationEngine(ABC):
     """Generates explainable narrative reports grounded in forensic evidence."""
+
     @abstractmethod
     async def generate_explanation(
         self,

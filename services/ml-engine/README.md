@@ -49,13 +49,16 @@ The **ML Engine** provides lightweight, CPU-optimized machine learning inference
 ```python
 class BaseMLEngine(ABC):
     """Abstract interface for machine learning model inference."""
+
     @abstractmethod
     def predict(self, features: dict[str, Any]) -> MLPrediction:
         """Evaluate features and return a calibrated prediction with confidence."""
         pass
 
+
 class ModelRegistry:
     """Manages loaded model versions and metadata manifests."""
+
     def get_model(self, model_id: str) -> BaseMLEngine:
         pass
 ```

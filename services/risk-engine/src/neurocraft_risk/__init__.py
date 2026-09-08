@@ -1,3 +1,5 @@
 """NeuroCraft Risk Engine Package."""
 
-__version__ = "0.1.0"
+from neurocraft_risk.calculator import DeterministicRiskEngine
+
+__all__ = ["DeterministicRiskEngine"]

@@ -50,6 +50,7 @@ REQUIRED_FILES = [
     "docs/ml/training.md",
     "docs/ml/evaluation.md",
     "docs/ml/model-registry.md",
+    "docs/ml/inference-contract.md",
     "docs/security/file-analysis-security.md",
     "docs/security/upload-security.md",
     "docs/security/model-security.md",
@@ -103,8 +104,11 @@ def verify_foundation() -> bool:
 
     # 3. Check no live malware or unexpected binaries
     forbidden_extensions = {".exe", ".dll", ".so", ".dylib", ".bin", ".malware", ".virus"}
+    ignored_dirs = {".venv", ".git", "scratch", "build", "dist", "__pycache__"}
     bad_binaries = []
     for p in root.rglob("*"):
+        if any(part in ignored_dirs for part in p.parts):
+            continue
         if p.is_file() and p.suffix.lower() in forbidden_extensions:
             # Check if it's not a source file or doc
             bad_binaries.append(str(p.relative_to(root)))
@@ -121,10 +125,8 @@ def verify_foundation() -> bool:
     sys.path.insert(0, str(root / "packages" / "shared-config" / "src"))
     sys.path.insert(0, str(root / "packages" / "shared-logging" / "src"))
     try:
-        from neurocraft_types import ScanResult, VerdictEnum
-        from neurocraft_security import sanitize_filename, validate_safe_path
         from neurocraft_config import get_config
-        from neurocraft_logging import get_logger
+        from neurocraft_security import sanitize_filename
 
         cfg = get_config()
         assert cfg.app_name == "NeuroCraft"

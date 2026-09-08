@@ -1,3 +1,5 @@
 """NeuroCraft API Gateway Service Package."""
 
-__version__ = "0.1.0"
+from neurocraft_api.main import app
+
+__all__ = ["app"]

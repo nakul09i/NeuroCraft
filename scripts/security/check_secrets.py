@@ -6,7 +6,10 @@ from pathlib import Path
 
 SECRET_PATTERNS = [
     (r"(?i)api[_-]?key\s*=\s*['\"][a-zA-Z0-9_\-]{16,}['\"]", "High-entropy API key assignment"),
-    (r"(?i)secret[_-]?key\s*=\s*['\"][a-zA-Z0-9_\-]{16,}['\"]", "High-entropy secret key assignment"),
+    (
+        r"(?i)secret[_-]?key\s*=\s*['\"][a-zA-Z0-9_\-]{16,}['\"]",
+        "High-entropy secret key assignment",
+    ),
     (r"-----BEGIN (RSA|EC|OPENSSH|PRIVATE) KEY-----", "Private cryptographic key"),
     (r"(?i)ghp_[a-zA-Z0-9]{36}", "GitHub Personal Access Token"),
     (r"(?i)aws_access_key_id\s*=\s*['\"][A-Z0-9]{20}['\"]", "AWS Access Key"),

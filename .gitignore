@@ -100,6 +100,8 @@ test-fixtures/quarantine/
 *.log
 logs/
 *.sqlite3
+*.sqlite
+*.db
 *.pid
 
 # IDE and OS Artefacts

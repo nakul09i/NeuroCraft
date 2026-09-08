@@ -7,8 +7,7 @@ from typing import Any
 
 # Patterns matching sensitive keys or strings to redact
 SENSITIVE_KEY_PATTERN = re.compile(
-    r"(secret|password|token|api[_-]?key|auth|bearer|private[_-]?key)",
-    re.IGNORECASE
+    r"(secret|password|token|api[_-]?key|auth|bearer|private[_-]?key)", re.IGNORECASE
 )
 
 
@@ -21,9 +20,7 @@ def redact_sensitive_dict(data: dict[str, Any]) -> dict[str, Any]:
         elif isinstance(value, dict):
             redacted[key] = redact_sensitive_dict(value)
         elif isinstance(value, list):
-            redacted[key] = [
-                redact_sensitive_dict(v) if isinstance(v, dict) else v for v in value
-            ]
+            redacted[key] = [redact_sensitive_dict(v) if isinstance(v, dict) else v for v in value]
         else:
             redacted[key] = value
     return redacted
@@ -39,8 +36,9 @@ class JsonFormatter(logging.Formatter):
             "logger": record.name,
             "message": record.getMessage(),
         }
-        if hasattr(record, "extra") and isinstance(record.extra, dict):  # type: ignore[attr-defined]
-            log_entry["context"] = redact_sensitive_dict(record.extra)  # type: ignore[attr-defined]
+        extra = getattr(record, "extra", None)
+        if isinstance(extra, dict):
+            log_entry["context"] = redact_sensitive_dict(extra)
         return json.dumps(log_entry)
 
 

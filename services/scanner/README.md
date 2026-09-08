@@ -52,13 +52,16 @@ The **Scanner Orchestrator** is the core static analysis coordinator of NeuroCra
 ```python
 class BaseScannerModule(ABC):
     """Abstract base class for all static analysis sub-engines."""
+
     @abstractmethod
     async def analyze(self, file_path: Path) -> list[EvidenceItem]:
         """Perform passive analysis and return structured evidence items."""
         pass
 
+
 class ScannerOrchestrator:
     """Coordinates execution across static engines and produces consolidated raw evidence."""
+
     async def run_pipeline(self, file_path: Path, options: ScanOptions) -> RawEvidenceCollection:
         pass
 ```

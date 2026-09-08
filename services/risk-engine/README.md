@@ -49,6 +49,7 @@ The **Risk Engine** acts as the synthesis and decision layer of NeuroCraft. Rath
 ```python
 class RiskEngine:
     """Combines deterministic findings and probabilistic ML scores into a defensible verdict."""
+
     def calculate_risk(
         self,
         evidence: RawEvidenceCollection,

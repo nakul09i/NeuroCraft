@@ -7,6 +7,7 @@ from pathlib import Path
 
 class SecurityValidationError(ValueError):
     """Raised when an untrusted input fails security constraints."""
+
     pass
 
 

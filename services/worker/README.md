@@ -47,6 +47,7 @@ The **Worker Service** executes long-running, CPU-intensive analysis tasks out o
 ```python
 class AnalysisWorker:
     """Consumes background jobs and manages execution lifecycle."""
+
     async def process_job(self, task_id: str, file_path: Path) -> None:
         pass
 ```

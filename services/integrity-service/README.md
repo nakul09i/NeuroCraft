@@ -49,6 +49,7 @@ The **Integrity Service** provides cryptographic verification and proof generati
 ```python
 class IntegrityService:
     """Manages cryptographic verification and Merkle tree generation."""
+
     def compute_file_fingerprint(self, file_path: Path) -> FileFingerprint:
         pass
 

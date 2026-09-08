@@ -2,14 +2,18 @@
 
 import os
 from pathlib import Path
+
 from pydantic import BaseModel, Field
 
 
 class AppConfig(BaseModel):
     """Core application environment configuration."""
+
     app_name: str = Field(default_factory=lambda: os.getenv("APP_NAME", "NeuroCraft"))
     app_env: str = Field(default_factory=lambda: os.getenv("APP_ENV", "development"))
-    app_debug: bool = Field(default_factory=lambda: os.getenv("APP_DEBUG", "true").lower() == "true")
+    app_debug: bool = Field(
+        default_factory=lambda: os.getenv("APP_DEBUG", "true").lower() == "true"
+    )
     app_host: str = Field(default_factory=lambda: os.getenv("APP_HOST", "127.0.0.1"))
     app_port: int = Field(default_factory=lambda: int(os.getenv("APP_PORT", "8000")))
 
@@ -27,10 +31,13 @@ class AppConfig(BaseModel):
     # Free-First Core Services
     database_url: str = Field(
         default_factory=lambda: os.getenv(
-            "DATABASE_URL", "postgresql://neurocraft_user:neurocraft_password@127.0.0.1:5432/neurocraft_dev"
+            "DATABASE_URL",
+            "postgresql://neurocraft_user:neurocraft_password@127.0.0.1:5432/neurocraft_dev",
         )
     )
-    redis_url: str = Field(default_factory=lambda: os.getenv("REDIS_URL", "redis://127.0.0.1:6379/0"))
+    redis_url: str = Field(
+        default_factory=lambda: os.getenv("REDIS_URL", "redis://127.0.0.1:6379/0")
+    )
 
     # ClamAV
     clamav_enabled: bool = Field(
