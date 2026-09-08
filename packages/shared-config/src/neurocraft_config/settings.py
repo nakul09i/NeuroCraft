@@ -57,6 +57,25 @@ class AppConfig(BaseModel):
         default_factory=lambda: float(os.getenv("ML_DECISION_THRESHOLD", "0.75"))
     )
 
+    # Authentication & Supabase
+    supabase_url: str = Field(default_factory=lambda: os.getenv("SUPABASE_URL", ""))
+    supabase_anon_key: str = Field(default_factory=lambda: os.getenv("SUPABASE_ANON_KEY", ""))
+    supabase_service_role_key: str = Field(
+        default_factory=lambda: os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
+    )
+    supabase_jwt_secret: str = Field(
+        default_factory=lambda: os.getenv(
+            "SUPABASE_JWT_SECRET", "neurocraft-default-local-jwt-secret-for-dev-only"
+        )
+    )
+    jwt_algorithm: str = Field(default_factory=lambda: os.getenv("JWT_ALGORITHM", "HS256"))
+    allowed_origins: str = Field(
+        default_factory=lambda: os.getenv(
+            "ALLOWED_ORIGINS",
+            "http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173",
+        )
+    )
+
     # Optional Decentralized & External Services
     threat_intel_enabled: bool = Field(
         default_factory=lambda: os.getenv("THREAT_INTEL_ENABLED", "false").lower() == "true"

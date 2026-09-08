@@ -23,15 +23,21 @@ from neurocraft_scanner.extractors.pdf import extract_pdf_features
 from neurocraft_scanner.extractors.pe import extract_pe_features
 from neurocraft_scanner.file_type import detect_file_type
 from neurocraft_scanner.fingerprint import compute_fingerprint
+from neurocraft_scanner.signature import SignatureAnalyzer
 
 logger = get_logger("neurocraft.scanner")
 
 
 class ScannerOrchestrator:
-    """Coordinates file ingestion, static inspection, capability mapping, and risk evaluation."""
+    """Coordinates file ingestion, static inspection, capability mapping, signature analysis, and risk evaluation."""
 
-    def __init__(self, risk_engine: DeterministicRiskEngine | None = None):
+    def __init__(
+        self,
+        risk_engine: DeterministicRiskEngine | None = None,
+        signature_analyzer: SignatureAnalyzer | None = None,
+    ):
         self.risk_engine = risk_engine or DeterministicRiskEngine()
+        self.signature_analyzer = signature_analyzer or SignatureAnalyzer()
 
     def scan_file(
         self,
@@ -106,19 +112,27 @@ class ScannerOrchestrator:
 
         ext_duration = round((time.perf_counter() - ext_start) * 1000, 2)
 
-        # 5. Consolidate Findings
-        all_findings = generic_findings + format_findings
+        # 5. Digital Signature Analysis (Safe, Evidence-Based)
+        sig_start = time.perf_counter()
+        sig_info, sig_findings = self.signature_analyzer.analyze(file_path, file_type_info.type)
+        sig_duration = round((time.perf_counter() - sig_start) * 1000, 2)
 
-        # 6. Behavioral Capability Mapping
+        # 6. Consolidate Findings
+        all_findings = generic_findings + format_findings + sig_findings
+
+        # 7. Behavioral Capability Mapping
         capabilities = map_capabilities(file_type_info, generic_features, specific_features)
 
-        # 7. Initial Deterministic Risk Verdict
+        # 8. Initial Deterministic Risk Verdict
         risk_verdict = self.risk_engine.calculate_verdict(all_findings, capabilities)
 
-        # 8. Engine Status Reporting (Mandatory: Never show Clean if an engine did not run)
+        # 9. Engine Status Reporting (Mandatory: Never show Clean if an engine did not run)
         engine_statuses: dict[str, EngineStatusEnum] = {
             "static_analysis": EngineStatusEnum.COMPLETED,
             "format_analysis": format_engine_status,
+            "signature_analysis": (
+                EngineStatusEnum.COMPLETED if sig_info.is_signed else EngineStatusEnum.NOT_APPLICABLE
+            ),
             "yara": EngineStatusEnum.NOT_CONFIGURED,
             "clamav": EngineStatusEnum.NOT_CONFIGURED,
             "ml": EngineStatusEnum.NOT_CONFIGURED,
@@ -129,6 +143,7 @@ class ScannerOrchestrator:
             "fingerprint_time_ms": fp_duration,
             "file_type_time_ms": ft_duration,
             "extraction_time_ms": ext_duration,
+            "signature_time_ms": sig_duration,
             "total_scan_time_ms": total_duration,
         }
 
@@ -148,6 +163,7 @@ class ScannerOrchestrator:
             evidence=all_findings,
             findings=all_findings,
             capabilities=capabilities,
+            signature_info=sig_info,
             engines=engine_statuses,
             risk_verdict=risk_verdict,
             diagnostics=diagnostics,
