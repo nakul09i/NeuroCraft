@@ -42,23 +42,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 animate-fadeIn">
-      <div className="relative w-full max-w-md bg-surface-0 border-2 border-border rounded-xl shadow-brutal-lg p-6 overflow-hidden animate-scaleIn">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fadeIn">
+      <div className="relative w-full max-w-md bg-surface-0/95 backdrop-blur-xl border border-border/80 rounded-2xl shadow-xl p-7 overflow-hidden animate-scaleIn">
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-text-primary p-1 rounded-md border-2 border-border bg-surface-1 hover:bg-surface-2 hover:shadow-brutal-sm active:translate-x-0.5 active:translate-y-0.5 transition"
+          className="absolute top-5 right-5 text-text-muted hover:text-text-primary p-1.5 rounded-lg hover:bg-surface-1 transition-colors"
           aria-label="Close dialog"
         >
-          <X className="w-4 h-4 stroke-[2.5]" />
+          <X className="w-4 h-4" />
         </button>
 
         {/* Title */}
-        <div className="text-center mb-6 pt-2">
-          <h2 className="text-xl sm:text-2xl font-black font-display text-text-primary tracking-tight uppercase">
-            {isLogin ? "SIGN IN TO NEUROCRAFT" : "CREATE SECURITY ACCOUNT"}
+        <div className="text-center mb-6 pt-1">
+          <h2 className="text-xl sm:text-2xl font-semibold text-text-primary tracking-tight">
+            {isLogin ? "Sign in to NeuroCraft" : "Create Security Account"}
           </h2>
-          <p className="text-xs text-text-secondary mt-1 font-sans">
+          <p className="text-xs text-text-secondary mt-1">
             {isLogin
               ? "Access persistent private scans, telemetry, and threat history"
               : "Isolated user tenant with cryptographic ownership"}
@@ -66,8 +66,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
         </div>
 
         {error && (
-          <div className="mb-4 p-3 rounded-lg bg-danger/10 border-2 border-danger flex items-center space-x-2 text-danger text-xs font-mono font-bold">
-            <ShieldAlert className="w-4 h-4 shrink-0 stroke-[2.5]" />
+          <div className="mb-4 p-3 rounded-xl bg-danger/10 border border-danger/30 flex items-center space-x-2 text-danger text-xs">
+            <ShieldAlert className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
         )}
@@ -75,53 +75,53 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
         <form onSubmit={handleSubmit} className="space-y-4">
           {!isLogin && (
             <div>
-              <label className="block text-xs font-mono font-extrabold uppercase text-text-primary mb-1">
-                DISPLAY NAME
+              <label className="block text-xs font-medium text-text-secondary mb-1.5">
+                Display Name
               </label>
               <div className="relative">
-                <UserIcon className="absolute left-3 top-3 w-4 h-4 text-text-primary stroke-[2.2]" />
+                <UserIcon className="absolute left-3.5 top-3 w-4 h-4 text-text-muted" />
                 <input
                   type="text"
                   required
                   placeholder="Security Analyst"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2.5 rounded-lg bg-surface-1 border-2 border-border text-xs font-bold font-mono text-text-primary placeholder:text-text-muted focus-ring shadow-[2px_2px_0px_var(--border)] transition"
+                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-surface-1/60 border border-border/70 text-xs text-text-primary placeholder:text-text-muted focus-ring shadow-xs transition"
                 />
               </div>
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-mono font-extrabold uppercase text-text-primary mb-1">
-              EMAIL ADDRESS
+            <label className="block text-xs font-medium text-text-secondary mb-1.5">
+              Email Address
             </label>
             <div className="relative">
-              <Mail className="absolute left-3 top-3 w-4 h-4 text-text-primary stroke-[2.2]" />
+              <Mail className="absolute left-3.5 top-3 w-4 h-4 text-text-muted" />
               <input
                 type="email"
                 required
                 placeholder="analyst@enterprise.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-9 pr-3 py-2.5 rounded-lg bg-surface-1 border-2 border-border text-xs font-bold font-mono text-text-primary placeholder:text-text-muted focus-ring shadow-[2px_2px_0px_var(--border)] transition"
+                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-surface-1/60 border border-border/70 text-xs text-text-primary placeholder:text-text-muted focus-ring shadow-xs transition"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-mono font-extrabold uppercase text-text-primary mb-1">
-              PASSWORD
+            <label className="block text-xs font-medium text-text-secondary mb-1.5">
+              Password
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-3 w-4 h-4 text-text-primary stroke-[2.2]" />
+              <Lock className="absolute left-3.5 top-3 w-4 h-4 text-text-muted" />
               <input
                 type="password"
                 required
                 placeholder="••••••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-9 pr-3 py-2.5 rounded-lg bg-surface-1 border-2 border-border text-xs font-bold font-mono text-text-primary placeholder:text-text-muted focus-ring shadow-[2px_2px_0px_var(--border)] transition"
+                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-surface-1/60 border border-border/70 text-xs text-text-primary placeholder:text-text-muted focus-ring shadow-xs transition"
               />
             </div>
           </div>
@@ -131,14 +131,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
               type="submit"
               disabled={loading}
               variant="primary"
-              className="w-full text-xs font-black uppercase tracking-wider py-3 shadow-brutal"
+              className="w-full text-xs font-medium py-2.5 shadow-xs"
             >
-              {loading ? "PROCESSING..." : isLogin ? "SIGN IN →" : "REGISTER →"}
+              {loading ? "Processing…" : isLogin ? "Sign In" : "Register"}
             </Button>
           </div>
         </form>
 
-        <div className="mt-6 text-center text-xs font-mono text-text-secondary">
+        <div className="mt-5 text-center text-xs text-text-secondary">
           {isLogin ? "Need an account?" : "Already registered?"}{" "}
           <button
             type="button"
@@ -146,7 +146,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
               setIsLogin(!isLogin);
               setError(null);
             }}
-            className="text-primary hover:underline font-extrabold uppercase ml-1"
+            className="text-primary hover:underline font-medium ml-1"
           >
             {isLogin ? "Sign Up" : "Sign In"}
           </button>

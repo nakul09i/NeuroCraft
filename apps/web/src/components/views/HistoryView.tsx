@@ -83,21 +83,21 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ onNavigateToScan }) =>
   });
 
   return (
-    <div className="space-y-8 animate-fadeIn max-w-5xl mx-auto pb-12">
+    <div className="space-y-8 animate-fadeIn max-w-5xl mx-auto pb-14">
       {/* Header Banner */}
-      <div className="p-6 sm:p-7 rounded-xl border-2 border-border bg-surface-0 shadow-brutal flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="p-7 rounded-2xl border border-border/70 bg-surface-0/70 backdrop-blur-sm shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center space-x-2">
-            <Badge variant="neutral" size="sm">AUDIT LOG</Badge>
-            <span className="text-[10px] font-mono font-bold text-text-muted uppercase">
-              TAMPER-EVIDENT TIMELINE
+            <Badge variant="neutral" size="sm">Audit Log</Badge>
+            <span className="text-xs text-text-muted">
+              Tamper-Evident Timeline
             </span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-black text-text-primary tracking-tight font-display uppercase mt-1">
-            SECURITY AUDIT TRAIL & HISTORY
+          <h2 className="text-2xl sm:text-3xl font-semibold text-text-primary tracking-tight mt-1">
+            Security Audit Trail
           </h2>
           <p className="text-xs sm:text-sm text-text-secondary mt-1">
-            Search, filter, and inspect previous file scans, reconnaissance runs, and quantum trust experiments.
+            Search, filter, and inspect previous file scans, reconnaissance assessments, and quantum runs.
           </p>
         </div>
 
@@ -108,34 +108,34 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ onNavigateToScan }) =>
           loading={loading}
           icon={<RefreshCw className="w-3.5 h-3.5" />}
         >
-          REFRESH
+          Refresh
         </Button>
       </div>
 
       {/* Filter and Search Bar */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3.5 top-2.5 w-4 h-4 text-text-primary stroke-[2.2]" />
+          <Search className="absolute left-3.5 top-2.5 w-4 h-4 text-text-muted" />
           <input
             type="text"
-            placeholder="Search by file name or target domain..."
+            placeholder="Search by file name or domain…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 rounded-lg bg-surface-0 border-2 border-border text-xs font-bold text-text-primary placeholder:text-text-muted focus-ring shadow-[2px_2px_0px_var(--border)] font-mono"
+            className="w-full pl-10 pr-4 py-2 rounded-xl bg-surface-1/60 border border-border/70 text-xs font-mono text-text-primary placeholder:text-text-muted focus-ring shadow-xs"
           />
         </div>
 
-        <div className="border-2 border-border rounded-lg shadow-brutal-sm bg-surface-0 p-0.5">
+        <div className="rounded-xl border border-border/70 bg-surface-0 p-0.5">
           <Tabs
             size="sm"
             activeId={activeFilter}
             onChange={setActiveFilter}
             items={[
-              { id: "ALL", label: "ALL RECORDS" },
-              { id: "SAFE", label: "SAFE" },
-              { id: "LOW", label: "LOW" },
-              { id: "MEDIUM", label: "MEDIUM" },
-              { id: "HIGH", label: "HIGH" },
+              { id: "ALL", label: "All Records" },
+              { id: "SAFE", label: "Safe" },
+              { id: "LOW", label: "Low" },
+              { id: "MEDIUM", label: "Medium" },
+              { id: "HIGH", label: "High" },
             ]}
           />
         </div>
@@ -145,13 +145,13 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ onNavigateToScan }) =>
       {filteredRecords.length === 0 ? (
         <Card level={0} className="p-12">
           <EmptyState
-            icon={<History className="w-8 h-8 text-text-muted stroke-[2.2]" />}
-            title="NO AUDIT RECORDS FOUND."
+            icon={<History className="w-8 h-8 text-text-muted" />}
+            title="No audit records found"
             description="Your previous file scans, recon assessments, and quantum tests will appear here."
           />
         </Card>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           {filteredRecords.map((rec) => {
             let Icon = FileSearch;
             if (rec.type === "RECON_SCAN") Icon = Globe;
@@ -172,27 +172,27 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ onNavigateToScan }) =>
                     onNavigateToScan(rec.id);
                   }
                 }}
-                className="p-4 flex items-center justify-between"
+                className="p-4 flex items-center justify-between hover:bg-surface-1/50 transition-colors"
               >
                 <div className="flex items-center space-x-3.5 overflow-hidden">
-                  <div className="p-2.5 rounded-lg border-2 border-border bg-surface-1 text-text-primary shrink-0 shadow-[2px_2px_0px_var(--border)]">
-                    <Icon className="w-4 h-4 stroke-[2.2]" />
+                  <div className="p-2.5 rounded-xl bg-surface-1/80 border border-border/60 text-text-secondary shrink-0">
+                    <Icon className="w-4 h-4" />
                   </div>
                   <div className="overflow-hidden">
-                    <div className="text-xs font-black font-display text-text-primary truncate">
+                    <div className="text-xs font-medium text-text-primary truncate">
                       {rec.title}
                     </div>
-                    <div className="text-[10px] font-mono text-text-muted mt-0.5 flex items-center space-x-2">
-                      <span className="font-bold text-text-secondary">{rec.type.replace("_", " ")}</span>
+                    <div className="text-[11px] text-text-muted mt-0.5 flex items-center space-x-2">
+                      <span className="capitalize">{rec.type.toLowerCase().replace("_", " ")}</span>
                       <span>·</span>
-                      <span>ID: {rec.id.substring(0, 14)}...</span>
+                      <span className="font-mono text-[10px]">ID: {rec.id.substring(0, 14)}…</span>
                     </div>
                   </div>
                 </div>
 
                 <div className="flex items-center space-x-4 shrink-0">
                   <div className="text-right hidden sm:block">
-                    <div className="text-[10px] font-mono font-bold text-text-muted">
+                    <div className="text-[11px] text-text-muted">
                       {rec.date ? new Date(rec.date).toLocaleDateString() : "Just now"}
                     </div>
                   </div>

@@ -9,7 +9,6 @@ import {
   ChevronDown,
   ChevronUp,
   Cpu,
-  Layers,
 } from "lucide-react";
 import {
   BarChart,
@@ -41,14 +40,14 @@ export const QuantumView: React.FC = () => {
   const scenariosList = [
     {
       id: "LEGITIMATE",
-      name: "Legitimate Baseline",
-      desc: "Clean quantum channel transmitting maximally entangled Bell-state pairs |Φ+>",
+      name: "Legitimate Channel",
+      desc: "Clean quantum channel transmitting maximally entangled Bell-state pairs |Φ⁺⟩",
       badge: "EPR Entangled",
     },
     {
       id: "FORGERY",
       name: "Signature Forgery",
-      desc: "Adversary applied unauthorized Ry(π/4) unitary transformation tampering with encoded state",
+      desc: "Unauthorized Ry(π/4) unitary transformation applied to tamper with encoded state",
       badge: "Unitary Anomaly",
     },
     {
@@ -60,7 +59,7 @@ export const QuantumView: React.FC = () => {
     {
       id: "IMPERSONATION",
       name: "Impersonation",
-      desc: "Classical unentangled separable state |0>⊗|0> submitted without EPR correlation",
+      desc: "Classical unentangled separable state |0⟩⊗|0⟩ submitted without correlation",
       badge: "Zero Entanglement",
     },
     {
@@ -110,27 +109,27 @@ export const QuantumView: React.FC = () => {
   const verdict = getVerdictLabel();
 
   return (
-    <div className="space-y-8 animate-fadeIn max-w-5xl mx-auto pb-12">
-      {/* Violet-Accented Neo-Brutalist Banner */}
-      <div className="p-6 sm:p-7 rounded-xl border-2 border-border bg-surface-0 shadow-brutal space-y-3 relative overflow-hidden">
+    <div className="space-y-8 animate-fadeIn max-w-5xl mx-auto pb-14">
+      {/* Violet-Accented Apple-Style Banner */}
+      <div className="p-7 rounded-2xl border border-border/70 bg-surface-0/70 backdrop-blur-sm shadow-sm space-y-3 relative overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center space-x-2">
-            <span className="p-1 rounded bg-accent-purple text-white border border-border">
-              <Atom className="w-4 h-4 stroke-[2.5]" />
+            <span className="p-1.5 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
+              <Atom className="w-4 h-4" />
             </span>
-            <span className="text-[10px] font-mono font-extrabold uppercase tracking-widest text-accent-purple">
-              BELL-STATE VERIFICATION SIMULATOR
+            <span className="text-xs font-medium text-purple-600 dark:text-purple-400">
+              Bell-State Verification Simulator
             </span>
           </div>
-          <Badge variant="quantum" size="sm">EPR CHANNEL ACTIVE</Badge>
+          <Badge variant="quantum" size="sm">EPR Channel Active</Badge>
         </div>
 
         <div>
-          <h2 className="text-2xl sm:text-3xl font-black text-text-primary tracking-tight font-display uppercase">
-            QUANTUM TRUST SIMULATION
+          <h2 className="text-2xl sm:text-3xl font-semibold text-text-primary tracking-tight">
+            Quantum Trust Simulation
           </h2>
           <p className="text-xs sm:text-sm text-text-secondary mt-1 max-w-3xl leading-relaxed">
-            Verify whether observed communication behavior matches the expected Bell-state entanglement distribution.
+            Verify whether observed communication telemetry matches expected Bell-state entanglement distributions.
             Detects forgery, replay attacks, and channel interception by measuring Total Variation Distance (TVD).
           </p>
         </div>
@@ -139,11 +138,11 @@ export const QuantumView: React.FC = () => {
       {/* Scenario Configuration Card */}
       <Card level={0} className="p-6 space-y-6">
         <div>
-          <div className="flex items-center justify-between mb-3 border-b-2 border-border pb-2">
-            <label className="text-xs font-mono font-extrabold text-text-primary uppercase tracking-wider">
-              CONFIGURE ATTACK / CHANNEL SCENARIO
+          <div className="flex items-center justify-between mb-3.5 border-b border-border/60 pb-3">
+            <label className="text-xs font-semibold uppercase tracking-wider text-text-muted">
+              Channel / Attack Scenario
             </label>
-            <span className="text-[10px] font-mono text-text-muted font-bold">5 SIMULATED VECTORS</span>
+            <span className="text-xs text-text-muted">5 simulated attack vectors</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
@@ -154,29 +153,25 @@ export const QuantumView: React.FC = () => {
                   key={sc.id}
                   type="button"
                   onClick={() => setScenario(sc.id as QuantumScenario)}
-                  className={`p-3.5 rounded-lg text-left transition-all border-2 ${
+                  className={`p-3.5 rounded-xl text-left transition-all border ${
                     isSelected
-                      ? "bg-accent-purple text-white border-border shadow-brutal-sm -translate-x-0.5 -translate-y-0.5 font-bold"
-                      : "bg-surface-1 border-border text-text-primary hover:bg-surface-2"
+                      ? "bg-purple-500/10 border-purple-500/40 text-text-primary shadow-xs"
+                      : "bg-surface-1/40 border-border/60 text-text-secondary hover:bg-surface-1/80 hover:text-text-primary"
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-extrabold font-display truncate">{sc.name}</span>
+                  <div className="text-xs font-semibold text-text-primary truncate mb-1">
+                    {sc.name}
                   </div>
                   <span
-                    className={`text-[9px] font-mono uppercase px-1.5 py-0.5 rounded border font-extrabold ${
+                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-medium ${
                       isSelected
-                        ? "bg-black text-white border-black"
-                        : "bg-surface-0 text-accent-purple border-accent-purple"
+                        ? "bg-purple-500/20 text-purple-600 dark:text-purple-300"
+                        : "bg-surface-2 text-text-muted"
                     }`}
                   >
                     {sc.badge}
                   </span>
-                  <p
-                    className={`text-[10px] mt-2 line-clamp-2 leading-tight ${
-                      isSelected ? "text-white/90" : "text-text-muted"
-                    }`}
-                  >
+                  <p className="text-[11px] mt-2 line-clamp-2 leading-relaxed text-text-muted">
                     {sc.desc}
                   </p>
                 </button>
@@ -186,11 +181,11 @@ export const QuantumView: React.FC = () => {
         </div>
 
         {/* Sliders and Run Simulation CTA */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t-2 border-border items-center">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-border/60 items-center">
           <div>
-            <div className="flex items-center justify-between text-xs font-mono font-bold text-text-primary mb-1.5">
-              <span>PROJECTIVE SHOTS</span>
-              <span className="text-accent-purple font-extrabold">{shots}</span>
+            <div className="flex items-center justify-between text-xs font-medium text-text-primary mb-1.5">
+              <span>Projective Shots</span>
+              <span className="font-mono text-purple-600 dark:text-purple-400 font-semibold">{shots}</span>
             </div>
             <input
               type="range"
@@ -204,9 +199,9 @@ export const QuantumView: React.FC = () => {
           </div>
 
           <div>
-            <div className="flex items-center justify-between text-xs font-mono font-bold text-text-primary mb-1.5">
-              <span>THERMAL NOISE LEVEL</span>
-              <span className="text-accent-purple font-extrabold">
+            <div className="flex items-center justify-between text-xs font-medium text-text-primary mb-1.5">
+              <span>Thermal Noise Level</span>
+              <span className="font-mono text-purple-600 dark:text-purple-400 font-semibold">
                 {(noiseLevel * 100).toFixed(0)}%
               </span>
             </div>
@@ -225,12 +220,12 @@ export const QuantumView: React.FC = () => {
             <Button
               onClick={handleRunSimulation}
               loading={loading}
-              loadingText="SIMULATING..."
+              loadingText="Simulating…"
               variant="quantum"
-              className="w-full sm:w-auto text-xs font-black uppercase tracking-wider shadow-brutal"
-              icon={<Play className="w-4 h-4 stroke-[2.5]" />}
+              className="w-full sm:w-auto text-xs font-medium shadow-xs"
+              icon={<Play className="w-4 h-4" />}
             >
-              RUN SIMULATION →
+              Run Simulation
             </Button>
           </div>
         </div>
@@ -239,68 +234,68 @@ export const QuantumView: React.FC = () => {
       {/* Simulation Results & Visualizations */}
       {simResult && (
         <div className="space-y-6 animate-fadeIn">
-          {/* Verdict Banner: PASS / FAIL / INCONCLUSIVE */}
+          {/* Verdict Banner */}
           <Card
             level={0}
-            className={`p-6 sm:p-7 border-2 border-border ${
+            className={`p-6 sm:p-7 border ${
               verdict.startsWith("PASS")
-                ? "bg-theme-success-subtle shadow-brutal"
+                ? "bg-emerald-500/10 border-emerald-500/30"
                 : verdict === "INCONCLUSIVE"
-                ? "bg-theme-warning-subtle shadow-brutal"
-                : "bg-theme-danger-subtle shadow-brutal"
+                ? "bg-amber-500/10 border-amber-500/30"
+                : "bg-rose-500/10 border-rose-500/30"
             }`}
           >
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-center space-x-4">
                 <div
-                  className={`p-3.5 rounded-lg border-2 border-border shadow-brutal-sm ${
+                  className={`p-3 rounded-xl ${
                     verdict.startsWith("PASS")
-                      ? "bg-theme-success text-black"
+                      ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
                       : verdict === "INCONCLUSIVE"
-                      ? "bg-warning text-black"
-                      : "bg-danger text-white"
+                      ? "bg-amber-500/20 text-amber-600 dark:text-amber-400"
+                      : "bg-rose-500/20 text-rose-600 dark:text-rose-400"
                   }`}
                 >
                   {verdict.startsWith("PASS") ? (
-                    <ShieldCheck className="w-8 h-8 stroke-[2.5]" />
+                    <ShieldCheck className="w-7 h-7" />
                   ) : verdict === "INCONCLUSIVE" ? (
-                    <HelpCircle className="w-8 h-8 stroke-[2.5]" />
+                    <HelpCircle className="w-7 h-7" />
                   ) : (
-                    <ShieldAlert className="w-8 h-8 stroke-[2.5]" />
+                    <ShieldAlert className="w-7 h-7" />
                   )}
                 </div>
 
                 <div>
-                  <div className="flex items-center space-x-2 text-[10px] font-mono font-extrabold uppercase text-text-muted">
-                    <span>EPR VERIFICATION RESULT</span>
+                  <div className="flex items-center space-x-2 text-xs font-medium text-text-muted">
+                    <span>EPR Verification Result</span>
                     <span>·</span>
-                    <span className="text-text-primary font-bold">{simResult.environment_badge}</span>
+                    <span className="text-text-primary font-semibold">{simResult.environment_badge}</span>
                   </div>
-                  <h3 className="text-3xl sm:text-4xl font-black font-display text-text-primary tracking-tight mt-0.5">
+                  <h3 className="text-2xl sm:text-3xl font-semibold text-text-primary tracking-tight mt-0.5">
                     {verdict}
                   </h3>
-                  <div className="text-xs font-mono font-bold text-text-secondary mt-1">
+                  <div className="text-xs text-text-secondary mt-1">
                     {simResult.verdict}
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-6 border-t-2 sm:border-t-0 sm:border-l-2 border-border pt-4 sm:pt-0 sm:pl-6 text-center">
-                <div className="p-3 bg-surface-0 border-2 border-border rounded-lg shadow-[2px_2px_0px_var(--border)]">
-                  <div className="text-2xl font-black font-mono text-text-primary">
+              <div className="flex items-center space-x-4 border-t sm:border-t-0 sm:border-l border-border/60 pt-4 sm:pt-0 sm:pl-6 text-center">
+                <div className="p-3 bg-surface-0 border border-border/60 rounded-xl">
+                  <div className="text-xl font-semibold font-mono text-text-primary">
                     {(simResult.deviation * 100).toFixed(2)}%
                   </div>
-                  <div className="text-[9px] font-mono uppercase font-bold text-text-muted mt-0.5">
-                    OBSERVED TVD
+                  <div className="text-[11px] text-text-muted mt-0.5">
+                    Observed TVD
                   </div>
                 </div>
 
-                <div className="p-3 bg-surface-0 border-2 border-border rounded-lg shadow-[2px_2px_0px_var(--border)]">
-                  <div className="text-2xl font-black font-mono text-text-muted">
+                <div className="p-3 bg-surface-0 border border-border/60 rounded-xl">
+                  <div className="text-xl font-semibold font-mono text-text-muted">
                     {(simResult.threshold * 100).toFixed(1)}%
                   </div>
-                  <div className="text-[9px] font-mono uppercase font-bold text-text-muted mt-0.5">
-                    TOLERANCE BOUND
+                  <div className="text-[11px] text-text-muted mt-0.5">
+                    Tolerance Bound
                   </div>
                 </div>
               </div>
@@ -309,41 +304,41 @@ export const QuantumView: React.FC = () => {
 
           {/* Side-by-Side Distribution Chart: Expected vs Observed */}
           <Card level={0} className="p-6 space-y-4">
-            <div className="flex items-center justify-between border-b-2 border-border pb-3">
+            <div className="flex items-center justify-between border-b border-border/60 pb-3">
               <div>
-                <h4 className="text-xs font-mono font-extrabold text-text-primary uppercase tracking-wider">
-                  BELL-STATE COMPUTATIONAL BASIS PROJECTION: EXPECTED VS OBSERVED
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-text-muted">
+                  Computational Basis Projection: Expected vs Observed
                 </h4>
                 <p className="text-xs text-text-secondary mt-0.5">
-                  Expected Bell State |Φ+⟩ = (|00⟩ + |11⟩)/√2 vs Observed Projective Measurement
+                  Expected Bell State |Φ⁺⟩ = (|00⟩ + |11⟩)/√2 vs Observed Measurement
                 </p>
               </div>
               <Badge variant="quantum" size="sm">
-                {shots} SHOTS
+                {shots} Shots
               </Badge>
             </div>
 
             <div className="h-64 w-full pt-4 font-mono">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis dataKey="state" stroke="var(--text-muted)" />
-                  <YAxis stroke="var(--text-muted)" tickFormatter={(v) => `${(v * 100).toFixed(0)}%`} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.5} />
+                  <XAxis dataKey="state" stroke="var(--text-muted)" fontSize={12} />
+                  <YAxis stroke="var(--text-muted)" fontSize={12} tickFormatter={(v) => `${(v * 100).toFixed(0)}%`} />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: "var(--surface-0)",
                       borderColor: "var(--border)",
-                      borderWidth: "2px",
-                      boxShadow: "4px 4px 0px var(--border)",
+                      borderRadius: "12px",
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
                       fontSize: "11px",
                       fontFamily: "monospace",
                       color: "var(--text-primary)",
                     }}
                     formatter={(val: number) => [`${(val * 100).toFixed(2)}%`, ""]}
                   />
-                  <Legend wrapperStyle={{ fontSize: "11px", fontFamily: "monospace" }} />
-                  <Bar dataKey="Expected" fill="var(--primary)" name="Expected (|Φ+⟩)" />
-                  <Bar dataKey="Observed" fill="#a855f7" name="Observed Projection" />
+                  <Legend wrapperStyle={{ fontSize: "11px", paddingTop: "8px" }} />
+                  <Bar dataKey="Expected" fill="var(--primary)" radius={[4, 4, 0, 0]} name="Expected (|Φ⁺⟩)" />
+                  <Bar dataKey="Observed" fill="#a855f7" radius={[4, 4, 0, 0]} name="Observed Projection" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -355,18 +350,18 @@ export const QuantumView: React.FC = () => {
               onClick={() => setShowWhyResult(!showWhyResult)}
               className="flex items-center justify-between cursor-pointer select-none"
             >
-              <h4 className="text-xs font-mono font-extrabold text-text-primary uppercase tracking-wider flex items-center space-x-2">
-                <Info className="w-4 h-4 text-accent-purple stroke-[2.5]" />
-                <span>WHY THIS RESULT?</span>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-text-muted flex items-center space-x-2">
+                <Info className="w-4 h-4 text-purple-500" />
+                <span>Why this result?</span>
               </h4>
-              <button className="p-1 rounded border border-border text-text-primary hover:bg-surface-2">
-                {showWhyResult ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              <button className="p-1 rounded-lg text-text-muted hover:text-text-primary">
+                {showWhyResult ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
               </button>
             </div>
 
             {showWhyResult && (
-              <div className="p-4 rounded-lg bg-surface-1 border-2 border-border text-xs leading-relaxed text-text-secondary font-sans animate-fadeIn">
-                <div className="font-bold text-text-primary mb-1 font-display text-sm">
+              <div className="p-4 rounded-xl bg-surface-1/40 border border-border/60 text-xs leading-relaxed text-text-secondary animate-fadeIn">
+                <div className="font-semibold text-text-primary mb-1">
                   {verdict.startsWith("PASS")
                     ? "Channel Intact: Quantum Non-Locality Preserved"
                     : "Channel Perturbation Detected: Entanglement Collapsed"}
@@ -376,34 +371,34 @@ export const QuantumView: React.FC = () => {
             )}
           </Card>
 
-          {/* Expandable: TECHNICAL EXPLANATION (Understandable for Hackathon Judges) */}
+          {/* Expandable: TECHNICAL EXPLANATION (Understandable for Hackathon Evaluators) */}
           <Card level={0} className="p-6 space-y-3">
             <div
               onClick={() => setShowTechnicalDetails(!showTechnicalDetails)}
               className="flex items-center justify-between cursor-pointer select-none"
             >
-              <h4 className="text-xs font-mono font-extrabold text-text-primary uppercase tracking-wider flex items-center space-x-2">
-                <Cpu className="w-4 h-4 text-primary stroke-[2.5]" />
-                <span>TECHNICAL EXPLANATION (FOR HACKATHON EVALUATORS)</span>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-text-muted flex items-center space-x-2">
+                <Cpu className="w-4 h-4 text-primary" />
+                <span>Technical Explanation (Cryptographic & Physical Foundation)</span>
               </h4>
-              <button className="p-1 rounded border border-border text-text-primary hover:bg-surface-2">
-                {showTechnicalDetails ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              <button className="p-1 rounded-lg text-text-muted hover:text-text-primary">
+                {showTechnicalDetails ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
               </button>
             </div>
 
             {showTechnicalDetails && (
-              <div className="p-4 rounded-lg bg-surface-1 border-2 border-border font-mono text-[11px] text-text-secondary space-y-2 animate-fadeIn">
-                <div className="font-bold text-text-primary border-b border-border pb-1">
-                  1. MATHEMATICAL FORMULATION
+              <div className="p-4 rounded-xl bg-surface-1/40 border border-border/60 font-mono text-[11px] text-text-secondary space-y-2 animate-fadeIn">
+                <div className="font-semibold text-text-primary border-b border-border/60 pb-1">
+                  1. Mathematical Formulation
                 </div>
                 <div>Bell Entangled Statevector: |ψ⟩ = 1/√2 (|00⟩ + |11⟩)</div>
                 <div>{"Total Variation Distance (TVD): δ(P, Q) = 1/2 ∑_{x} |P(x) - Q(x)| = " + (simResult.deviation * 100).toFixed(3) + "%"}</div>
                 <div>{"Hypothesis Threshold ε: " + (simResult.threshold * 100).toFixed(1) + "%"}</div>
 
-                <div className="font-bold text-text-primary border-b border-border pt-2 pb-1">
-                  2. CYBERSECURITY RELEVANCE
+                <div className="font-semibold text-text-primary border-b border-border/60 pt-2 pb-1">
+                  2. Cybersecurity Relevance
                 </div>
-                <div>
+                <div className="font-sans text-xs leading-relaxed text-text-secondary">
                   Classical digital signature keys and hashes can be stolen or intercepted in-transit.
                   NeuroCraft binds certificate validation with Bell-state quantum telemetry.
                   According to the No-Cloning Theorem, an adversary cannot intercept, clone, or tamper with an EPR pair without collapsing the superposition and exponentially increasing TVD beyond ε.

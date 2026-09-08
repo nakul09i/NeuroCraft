@@ -25,30 +25,30 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles =
-      "inline-flex items-center justify-center font-bold tracking-tight rounded-lg select-none transition-all duration-150 focus-ring disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none";
+      "inline-flex items-center justify-center font-medium select-none transition-all duration-150 focus-ring disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none btn-interactive";
 
-    let sizeStyles = "px-4 py-2 text-xs gap-2";
-    if (size === "sm") sizeStyles = "px-3 py-1.5 text-[11px] gap-1.5";
-    if (size === "lg") sizeStyles = "px-6 py-3 text-sm gap-2.5";
+    let sizeStyles = "px-3.5 py-1.5 text-xs gap-2 rounded-lg";
+    if (size === "sm") sizeStyles = "px-2.5 py-1 text-[11px] gap-1.5 rounded-md";
+    if (size === "lg") sizeStyles = "px-5 py-2.5 text-sm gap-2 rounded-xl font-semibold";
 
     let variantStyles =
-      "bg-primary text-black border-2 border-border shadow-brutal-sm hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal active:translate-x-0.5 active:translate-y-0.5 active:shadow-brutal-active";
+      "bg-primary text-text-inverse hover:bg-primary-hover shadow-xs hover:shadow-sm";
 
     if (variant === "secondary") {
       variantStyles =
-        "bg-surface-2 text-text-primary border-2 border-border shadow-brutal-sm hover:bg-surface-3 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal active:translate-x-0.5 active:translate-y-0.5 active:shadow-brutal-active";
+        "bg-surface-1 text-text-primary border border-border hover:bg-surface-2 hover:border-border-strong shadow-xs";
     } else if (variant === "outline") {
       variantStyles =
-        "bg-surface-0 text-text-primary border-2 border-border shadow-brutal-sm hover:bg-surface-1 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal active:translate-x-0.5 active:translate-y-0.5 active:shadow-brutal-active";
+        "bg-transparent text-text-primary border border-border hover:bg-surface-1 hover:border-border-strong";
     } else if (variant === "ghost") {
       variantStyles =
-        "bg-transparent text-text-secondary hover:text-text-primary hover:bg-surface-2 border-2 border-transparent";
+        "bg-transparent text-text-secondary hover:text-text-primary hover:bg-surface-1";
     } else if (variant === "destructive") {
       variantStyles =
-        "bg-danger text-white border-2 border-border shadow-brutal-sm hover:opacity-95 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal active:translate-x-0.5 active:translate-y-0.5 active:shadow-brutal-active";
+        "bg-danger text-white hover:opacity-95 shadow-xs";
     } else if (variant === "quantum") {
       variantStyles =
-        "bg-accent-purple text-white border-2 border-border shadow-brutal-sm hover:opacity-95 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-violet active:translate-x-0.5 active:translate-y-0.5 active:shadow-brutal-active";
+        "bg-accent-purple text-white hover:opacity-95 shadow-xs hover:shadow-sm";
     }
 
     return (

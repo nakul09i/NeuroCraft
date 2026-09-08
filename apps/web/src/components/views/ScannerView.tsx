@@ -1,28 +1,18 @@
 import React, { useState } from "react";
 import {
   Upload,
-  FileCheck,
   ShieldCheck,
   ShieldAlert,
-  AlertTriangle,
-  Key,
-  Calendar,
-  Hash,
   FileCode,
   ArrowRight,
-  RefreshCw,
-  Cpu,
-  Layers,
-  CheckCircle2,
   ChevronDown,
   ChevronUp,
   Sliders,
-  Sparkles,
   Info,
-  ExternalLink,
   FileText,
+  CheckCircle2,
 } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../ui/Card";
+import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
 import { Badge } from "../ui/Badge";
 import { ScoreRing } from "../ui/ScoreRing";
@@ -72,10 +62,10 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
     if (!selectedFile) return;
 
     setAnalyzing(true);
-    setAnalysisStep(1); // Uploading
+    setAnalysisStep(1); // Uploading / Quarantining
     setScanResult(null);
 
-    // Step progression simulation for user delight
+    // Progressive step simulation for smooth pacing
     const stepTimer1 = setTimeout(() => setAnalysisStep(2), 300); // Identifying
     const stepTimer2 = setTimeout(() => setAnalysisStep(3), 700); // Analyzing
     const stepTimer3 = setTimeout(() => setAnalysisStep(4), 1100); // Verifying signatures
@@ -107,32 +97,32 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
   };
 
   const steps = [
-    { label: "QUARANTINED", id: 1 },
-    { label: "METADATA", id: 2 },
-    { label: "STATIC ANALYSIS", id: 3 },
-    { label: "SIGNATURE", id: 4 },
-    { label: "RISK ASSESSMENT", id: 5 },
+    { label: "Quarantined", id: 1 },
+    { label: "Metadata", id: 2 },
+    { label: "Static Analysis", id: 3 },
+    { label: "Signatures", id: 4 },
+    { label: "Risk Verdict", id: 5 },
   ];
 
   return (
-    <div className="space-y-8 animate-fadeIn max-w-5xl mx-auto">
+    <div className="space-y-8 animate-fadeIn max-w-5xl mx-auto pb-14">
       {/* Title & Assurance Header */}
-      <div>
-        <div className="inline-flex items-center space-x-2 px-2.5 py-1 rounded-full bg-primary-subtle text-primary text-[11px] font-mono font-bold mb-2">
+      <div className="space-y-1.5">
+        <div className="inline-flex items-center space-x-2 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-medium border border-emerald-500/20">
           <ShieldCheck className="w-3.5 h-3.5" />
-          <span>ZERO DYNAMIC CODE EXECUTION GUARANTEE</span>
+          <span>Zero Dynamic Code Execution Guarantee</span>
         </div>
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight">
-          File Analysis & Digital Signature Verification
+        <h2 className="text-2xl sm:text-3xl font-semibold text-text-primary tracking-tight">
+          File Analysis & Digital Signatures
         </h2>
-        <p className="text-xs sm:text-sm text-text-secondary mt-1 max-w-3xl leading-relaxed">
-          Quarantined inspection of portable executables, PDFs, Android packages, and documents. Uploaded binaries are never executed.
+        <p className="text-xs sm:text-sm text-text-secondary max-w-3xl leading-relaxed">
+          Quarantined static inspection of portable executables, PDFs, Android packages, and scripts. Binaries are never executed.
         </p>
       </div>
 
       {/* Upload & Selection Card */}
       {!scanResult && (
-        <Card level={0} className="p-6 sm:p-10 space-y-6">
+        <Card level={0} className="p-6 sm:p-8 space-y-6">
           <div
             onDragOver={(e) => {
               e.preventDefault();
@@ -140,10 +130,10 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
             }}
             onDragLeave={() => setDragOver(false)}
             onDrop={handleFileDrop}
-            className={`border-2 border-dashed rounded-xl p-8 sm:p-12 text-center transition-all ${
+            className={`border border-dashed rounded-2xl p-8 sm:p-14 text-center transition-all ${
               dragOver
-                ? "border-primary bg-primary/10 shadow-brutal"
-                : "border-border bg-surface-1 hover:bg-surface-2 hover:border-text-primary"
+                ? "border-primary bg-primary/5 shadow-md"
+                : "border-border/80 bg-surface-1/30 hover:bg-surface-1/60 hover:border-text-secondary/50"
             }`}
           >
             <input
@@ -153,86 +143,79 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
               className="hidden"
             />
             <div className="flex flex-col items-center justify-center">
-              <div className="w-14 h-14 rounded-lg bg-primary border-2 border-border flex items-center justify-center text-black mb-4 shadow-brutal-sm">
-                <Upload className="w-7 h-7 stroke-[2.5]" />
+              <div className="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-4 transition-transform group-hover:scale-105">
+                <Upload className="w-6 h-6" />
               </div>
-              <h3 className="text-xl sm:text-2xl font-black font-display text-text-primary tracking-tight uppercase">
-                ANALYZE AN UNTRUSTED ARTIFACT
+              <h3 className="text-lg sm:text-xl font-semibold text-text-primary tracking-tight">
+                Analyze an untrusted artifact
               </h3>
-              <p className="text-xs sm:text-sm text-text-secondary mt-1 font-sans">
-                Drop file here or choose from your filesystem
+              <p className="text-xs sm:text-sm text-text-secondary mt-1">
+                Drop a file here or browse your filesystem
               </p>
-              <div className="mt-4">
+              <div className="mt-5">
                 <label
                   htmlFor="file-scanner-input"
-                  className="inline-flex items-center px-4 py-2 rounded-lg bg-surface-0 border-2 border-border text-xs font-black uppercase tracking-wider text-text-primary shadow-brutal-sm hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition cursor-pointer"
+                  className="inline-flex items-center px-4 py-2 rounded-xl bg-surface-0 hover:bg-surface-1 border border-border/80 text-xs font-medium text-text-primary shadow-xs hover:-translate-y-0.5 active:scale-[0.98] transition-all cursor-pointer"
                 >
-                  [ CHOOSE FILE ]
+                  Choose File
                 </label>
               </div>
 
-              {/* Supported Format Badges */}
-              <div className="mt-6 pt-4 border-t-2 border-border flex flex-wrap items-center justify-center gap-2">
-                <span className="text-[10px] font-mono font-extrabold uppercase text-text-muted mr-1">
-                  SUPPORTED:
+              {/* Supported Format Chips */}
+              <div className="mt-7 pt-5 border-t border-border/60 flex flex-wrap items-center justify-center gap-2">
+                <span className="text-xs text-text-muted mr-1">
+                  Supported formats:
                 </span>
-                <span className="px-2 py-0.5 rounded border-2 border-border bg-surface-0 text-[10px] font-mono font-bold">
-                  PE (.EXE/.DLL)
-                </span>
-                <span className="px-2 py-0.5 rounded border-2 border-border bg-surface-0 text-[10px] font-mono font-bold">
-                  PDF
-                </span>
-                <span className="px-2 py-0.5 rounded border-2 border-border bg-surface-0 text-[10px] font-mono font-bold">
-                  APK
-                </span>
-                <span className="px-2 py-0.5 rounded border-2 border-border bg-surface-0 text-[10px] font-mono font-bold">
-                  SCRIPT (.PS1/.SH/.PY)
-                </span>
-                <span className="px-2 py-0.5 rounded border-2 border-border bg-surface-0 text-[10px] font-mono font-bold">
-                  ARCHIVE (.ZIP/.TAR)
-                </span>
+                {["PE (.exe/.dll)", "PDF", "APK", "Scripts (.ps1/.sh/.py)", "Archives (.zip/.tar)"].map((fmt) => (
+                  <span
+                    key={fmt}
+                    className="px-2.5 py-1 rounded-full border border-border/60 bg-surface-0/60 text-[11px] text-text-secondary font-mono"
+                  >
+                    {fmt}
+                  </span>
+                ))}
               </div>
             </div>
           </div>
 
           {/* Selected File Preview & Analysis Trigger */}
           {selectedFile && !analyzing && (
-            <div className="p-4 rounded-xl bg-surface-2 border border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-fadeIn">
+            <div className="p-4 rounded-xl bg-surface-1/50 border border-border/70 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-fadeIn">
               <div className="flex items-center space-x-3">
-                <div className="p-2.5 rounded-lg bg-surface-0 text-primary">
+                <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
                   <FileCode className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-text-primary">
+                  <div className="text-xs font-medium text-text-primary">
                     {selectedFile.name}
                   </div>
-                  <div className="text-[11px] font-mono text-text-muted mt-0.5">
-                    {(selectedFile.size / 1024).toFixed(1)} KB • {selectedFile.type || "binary"}
+                  <div className="text-[11px] text-text-muted mt-0.5">
+                    {(selectedFile.size / 1024).toFixed(1)} KB · {selectedFile.type || "binary payload"}
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-2.5 w-full sm:w-auto">
-                <Button
-                  onClick={executeAnalysis}
-                  className="w-full sm:w-auto"
-                  icon={<ArrowRight className="w-4 h-4" />}
-                >
-                  Analyze File
-                </Button>
-              </div>
+              <Button
+                onClick={executeAnalysis}
+                size="md"
+                variant="primary"
+                className="w-full sm:w-auto"
+                icon={<ArrowRight className="w-4 h-4" />}
+              >
+                Analyze File
+              </Button>
             </div>
           )}
 
           {/* Multi-Step Analysis Journey */}
           {analyzing && (
-            <div className="p-6 rounded-xl bg-surface-2 border border-border space-y-6 animate-fadeIn">
+            <div className="p-6 rounded-2xl bg-surface-1/50 border border-border/70 space-y-6 animate-fadeIn">
               <div className="space-y-1 text-center sm:text-left">
-                <h4 className="text-sm font-bold text-text-primary">
-                  Analyzing {selectedFile?.name}...
+                <h4 className="text-sm font-semibold text-text-primary">
+                  Analyzing {selectedFile?.name}…
                 </h4>
                 <p className="text-xs text-text-secondary">
-                  Parsing static structures in isolated quarantine without dynamic execution.
+                  Parsing static binary structures in isolated quarantine without execution.
                 </p>
               </div>
 
@@ -245,18 +228,18 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
                   return (
                     <div
                       key={step.id}
-                      className={`p-2.5 rounded-lg border-2 text-center transition-all ${
+                      className={`p-3 rounded-xl border text-center transition-all ${
                         isDone
-                          ? "bg-theme-success-subtle border-theme-success text-theme-success-text shadow-[2px_2px_0px_var(--border)] font-bold"
+                          ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-medium"
                           : isCurrent
-                          ? "bg-primary text-black border-border shadow-brutal-sm font-extrabold animate-pulse"
-                          : "bg-surface-0 border-border text-text-muted opacity-75"
+                          ? "bg-primary/10 border-primary/40 text-primary font-semibold shadow-xs"
+                          : "bg-surface-0/60 border-border/60 text-text-muted"
                       }`}
                     >
-                      <div className="text-[10px] font-mono mb-0.5">
-                        {isDone ? "✓ COMPLETED" : isCurrent ? "→ IN PROGRESS" : "○ PENDING"}
+                      <div className="text-[10px] mb-1">
+                        {isDone ? "✓ Done" : isCurrent ? "● Running" : "○ Pending"}
                       </div>
-                      <div className="text-xs truncate font-display font-black">{step.label}</div>
+                      <div className="text-xs truncate">{step.label}</div>
                     </div>
                   );
                 })}
@@ -266,16 +249,16 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
               <div>
                 <button
                   onClick={() => setShowTechActivity(!showTechActivity)}
-                  className="text-[11px] font-mono text-text-muted hover:text-text-primary flex items-center space-x-1"
+                  className="text-xs text-text-muted hover:text-text-primary flex items-center space-x-1.5 transition-colors"
                 >
-                  <span>{showTechActivity ? "Hide" : "View"} Technical Activity Details</span>
-                  {showTechActivity ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                  <span>{showTechActivity ? "Hide" : "Show"} Technical Stream</span>
+                  {showTechActivity ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                 </button>
 
                 {showTechActivity && (
-                  <div className="mt-2 p-3 rounded-lg bg-surface-0 font-mono text-[11px] text-text-secondary space-y-1 max-h-36 overflow-y-auto">
-                    <div>[00:00.01] Ingested stream to quarantine context</div>
-                    <div>[00:00.04] SHA-256 fingerprinting computed</div>
+                  <div className="mt-2.5 p-3 rounded-xl bg-surface-0 border border-border/60 font-mono text-[11px] text-text-secondary space-y-1 max-h-36 overflow-y-auto">
+                    <div>[00:00.01] Stream quarantined in isolated memory context</div>
+                    <div>[00:00.04] SHA-256 cryptographic digest verified</div>
                     <div>[00:00.08] Magic bytes inspection: {selectedFile?.name.split(".").pop()?.toUpperCase()}</div>
                     <div>[00:00.12] Authenticode directory header evaluated</div>
                     <div>[00:00.16] Parsing X.509 PKCS#7 certificate chain structures</div>
@@ -290,16 +273,16 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
       {/* Scan Results — 4 Progressive Disclosure Levels */}
       {scanResult && (
         <div className="space-y-6">
-          {/* Back Action */}
+          {/* Back Action & Report Generator */}
           <div className="flex items-center justify-between">
             <button
               onClick={() => {
                 setScanResult(null);
                 setSelectedFile(null);
               }}
-              className="text-xs font-semibold text-text-secondary hover:text-text-primary flex items-center space-x-1"
+              className="text-xs font-medium text-text-secondary hover:text-text-primary flex items-center space-x-1.5 transition-colors"
             >
-              <span>&larr; Scan another file</span>
+              <span>← Scan another file</span>
             </button>
 
             {onGenerateReport && (
@@ -322,25 +305,25 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
               <div className="space-y-2 text-center md:text-left">
                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
                   <Badge variant={getVerdictBadgeVariant(scanResult.verdict.level)} size="md">
-                    {scanResult.verdict.level} RISK
+                    {scanResult.verdict.level} Risk
                   </Badge>
                   <span className="text-xs font-mono text-text-muted">
                     {scanResult.file.type} Binary
                   </span>
                 </div>
 
-                <h3 className="text-xl sm:text-2xl font-black text-text-primary tracking-tight">
+                <h3 className="text-xl sm:text-2xl font-semibold text-text-primary tracking-tight">
                   {scanResult.file.name}
                 </h3>
                 <p className="text-xs font-mono text-text-muted break-all">
                   SHA-256: {scanResult.file.sha256}
                 </p>
 
-                <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 pt-1 text-xs text-text-secondary font-mono">
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 pt-1 text-xs text-text-secondary">
                   <span>Size: {(scanResult.file.size / 1024).toFixed(1)} KB</span>
-                  <span>•</span>
+                  <span>·</span>
                   <span>MIME: {scanResult.file.mime}</span>
-                  <span>•</span>
+                  <span>·</span>
                   <span>Findings: {scanResult.findings.length}</span>
                 </div>
               </div>
@@ -349,9 +332,9 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
                 <ScoreRing
                   score={scanResult.verdict.score}
                   variant="risk"
-                  size={120}
-                  strokeWidth={10}
-                  label="RISK SCORE"
+                  size={128}
+                  strokeWidth={9}
+                  label="Risk Score"
                 />
               </div>
             </div>
@@ -361,48 +344,48 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
               LEVEL 2: "Why this score?" Transparent Explanation
               ========================================================================= */}
           <Card level={2} className="p-6 space-y-4">
-            <div className="border-b border-border/80 pb-3">
-              <h4 className="text-xs font-bold text-text-primary uppercase tracking-wider flex items-center space-x-2">
+            <div className="border-b border-border/60 pb-3">
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-text-muted flex items-center space-x-2">
                 <Info className="w-4 h-4 text-primary" />
                 <span>Why this score? — Score Contributors</span>
               </h4>
               <p className="text-xs text-text-secondary mt-0.5">
-                Transparent score calculation. Points are added strictly based on verified static observations.
+                Deterministic score calculation. Points are added strictly based on verified static observations.
               </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-              <div className="p-3 rounded-xl bg-surface-0 border border-border">
+              <div className="p-3.5 rounded-xl bg-surface-1/40 border border-border/60">
                 <div className="text-text-muted text-[11px]">Digital Signature</div>
-                <div className="font-bold text-text-primary mt-1 flex items-center justify-between">
+                <div className="font-medium text-text-primary mt-1 flex items-center justify-between">
                   <span>{scanResult.signature_info?.is_signed ? scanResult.signature_info.status : "Unsigned"}</span>
-                  <span className="font-mono text-text-muted">
+                  <span className="font-mono text-text-muted text-[11px]">
                     {scanResult.signature_info?.is_signed ? "0 pts" : "+15 pts"}
                   </span>
                 </div>
               </div>
 
-              <div className="p-3 rounded-xl bg-surface-0 border border-border">
+              <div className="p-3.5 rounded-xl bg-surface-1/40 border border-border/60">
                 <div className="text-text-muted text-[11px]">Entropy Assessment</div>
-                <div className="font-bold text-text-primary mt-1 flex items-center justify-between">
+                <div className="font-medium text-text-primary mt-1 flex items-center justify-between">
                   <span>Normal Distribution</span>
-                  <span className="font-mono text-text-muted">+0 pts</span>
+                  <span className="font-mono text-text-muted text-[11px]">+0 pts</span>
                 </div>
               </div>
 
-              <div className="p-3 rounded-xl bg-surface-0 border border-border">
+              <div className="p-3.5 rounded-xl bg-surface-1/40 border border-border/60">
                 <div className="text-text-muted text-[11px]">Capabilities Flagged</div>
-                <div className="font-bold text-text-primary mt-1 flex items-center justify-between">
+                <div className="font-medium text-text-primary mt-1 flex items-center justify-between">
                   <span>{scanResult.capabilities.length} Detected</span>
-                  <span className="font-mono text-text-muted">+{scanResult.capabilities.length * 5} pts</span>
+                  <span className="font-mono text-text-muted text-[11px]">+{scanResult.capabilities.length * 5} pts</span>
                 </div>
               </div>
 
-              <div className="p-3 rounded-xl bg-surface-0 border border-border">
+              <div className="p-3.5 rounded-xl bg-surface-1/40 border border-border/60">
                 <div className="text-text-muted text-[11px]">Total Calibrated Score</div>
-                <div className="font-black text-text-primary mt-1 flex items-center justify-between">
+                <div className="font-semibold text-text-primary mt-1 flex items-center justify-between">
                   <span className="text-primary font-mono">{scanResult.verdict.score.toFixed(1)} / 100</span>
-                  <span className="font-mono text-xs">{scanResult.verdict.level}</span>
+                  <span className="text-xs font-mono">{scanResult.verdict.level}</span>
                 </div>
               </div>
             </div>
@@ -412,10 +395,10 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
               LEVEL 3: Evidence-Based Findings (WHAT, WHY, SOURCE, CONFIDENCE)
               ========================================================================= */}
           <Card level={1} className="p-6 space-y-4">
-            <div className="border-b border-border/80 pb-3 flex items-center justify-between">
+            <div className="border-b border-border/60 pb-3 flex items-center justify-between">
               <div>
-                <h4 className="text-xs font-bold text-text-primary uppercase tracking-wider flex items-center space-x-2">
-                  <ShieldAlert className="w-4 h-4 text-theme-warning" />
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-text-muted flex items-center space-x-2">
+                  <ShieldAlert className="w-4 h-4 text-amber-500" />
                   <span>Evidence-Based Findings ({scanResult.findings.length})</span>
                 </h4>
                 <p className="text-xs text-text-secondary mt-0.5">
@@ -426,11 +409,11 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
 
             {scanResult.findings.length === 0 ? (
               <div className="py-8 text-center text-xs text-text-muted">
-                <ShieldCheck className="w-8 h-8 text-theme-success mx-auto mb-2" />
+                <ShieldCheck className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
                 No suspicious static artifacts or structural anomalies detected.
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {scanResult.findings.map((f) => {
                   const isExpanded = !!expandedFindings[f.id];
                   let badgeVariant: "safe" | "low" | "medium" | "high" | "critical" = "low";
@@ -440,18 +423,18 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
                   return (
                     <div
                       key={f.id}
-                      className="border border-border rounded-xl bg-surface-0 overflow-hidden transition"
+                      className="border border-border/60 rounded-xl bg-surface-0 overflow-hidden transition-all"
                     >
                       <button
                         onClick={() => toggleFinding(f.id)}
-                        className="w-full p-4 flex items-center justify-between text-left hover:bg-surface-1 transition"
+                        className="w-full p-4 flex items-center justify-between text-left hover:bg-surface-1/40 transition-colors"
                       >
                         <div className="flex items-center space-x-3">
                           <Badge variant={badgeVariant} size="sm">
                             {f.severity}
                           </Badge>
                           <div>
-                            <div className="text-xs font-bold text-text-primary">{f.title}</div>
+                            <div className="text-xs font-medium text-text-primary">{f.title}</div>
                             <div className="text-[11px] text-text-muted mt-0.5 line-clamp-1">
                               {f.description}
                             </div>
@@ -459,7 +442,7 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
                         </div>
 
                         <div className="flex items-center space-x-3 shrink-0 ml-3">
-                          <span className="text-[10px] font-mono text-text-muted">
+                          <span className="text-[11px] font-mono text-text-muted">
                             Confidence: {f.confidence}
                           </span>
                           {isExpanded ? (
@@ -471,27 +454,27 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
                       </button>
 
                       {isExpanded && (
-                        <div className="p-4 border-t border-border bg-surface-1/50 space-y-3 text-xs">
+                        <div className="p-4 border-t border-border/60 bg-surface-1/30 space-y-3 text-xs">
                           <div>
-                            <span className="font-bold text-text-primary">WHAT WAS OBSERVED:</span>
+                            <span className="font-semibold text-text-primary">What was observed:</span>
                             <p className="text-text-secondary mt-0.5 leading-relaxed">{f.description}</p>
                           </div>
 
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                            <div className="p-2.5 rounded-lg bg-surface-0 border border-border">
-                              <span className="text-[11px] font-bold text-text-muted uppercase">Engine Source</span>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                            <div className="p-3 rounded-xl bg-surface-0 border border-border/60">
+                              <span className="text-[11px] text-text-muted">Engine Source</span>
                               <div className="font-mono text-text-primary mt-0.5">{f.source_engine}</div>
                             </div>
-                            <div className="p-2.5 rounded-lg bg-surface-0 border border-border">
-                              <span className="text-[11px] font-bold text-text-muted uppercase">Confidence</span>
+                            <div className="p-3 rounded-xl bg-surface-0 border border-border/60">
+                              <span className="text-[11px] text-text-muted">Confidence</span>
                               <div className="font-mono text-text-primary mt-0.5">{f.confidence}</div>
                             </div>
                           </div>
 
                           {Object.keys(f.evidence || {}).length > 0 && (
                             <div>
-                              <span className="font-bold text-text-primary">EVIDENCE TRACE:</span>
-                              <pre className="mt-1 p-2.5 rounded-lg bg-surface-0 border border-border font-mono text-[11px] overflow-x-auto">
+                              <span className="font-semibold text-text-primary">Evidence Trace:</span>
+                              <pre className="mt-1 p-3 rounded-xl bg-surface-0 border border-border/60 font-mono text-[11px] overflow-x-auto text-text-secondary">
                                 {JSON.stringify(f.evidence, null, 2)}
                               </pre>
                             </div>
@@ -506,17 +489,17 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
           </Card>
 
           {/* =========================================================================
-              LEVEL 4: Technical Deep Dive (Certificates, Hashes, Metadata)
+              LEVEL 4: Technical Deep Dive (Certificates, Hashes, Capabilities)
               ========================================================================= */}
           <Card level={1} className="p-6 space-y-4">
-            <div className="border-b border-border/80 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="border-b border-border/60 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h4 className="text-xs font-bold text-text-primary uppercase tracking-wider flex items-center space-x-2">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-text-muted flex items-center space-x-2">
                   <Sliders className="w-4 h-4 text-primary" />
-                  <span>Technical Deep Dive (Level 4)</span>
+                  <span>Technical Deep Dive</span>
                 </h4>
                 <p className="text-xs text-text-secondary mt-0.5">
-                  Raw cryptographic parameters, X.509 chains, and structural parameters.
+                  Raw cryptographic digests, X.509 chains, and capability structures.
                 </p>
               </div>
 
@@ -534,12 +517,12 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
 
             {/* Hashes Tab */}
             {activeTechTab === "hashes" && (
-              <div className="space-y-2 text-xs font-mono">
-                <div className="p-3 rounded-xl bg-surface-0 border border-border space-y-1">
+              <div className="space-y-2.5 text-xs font-mono">
+                <div className="p-3.5 rounded-xl bg-surface-1/40 border border-border/60 space-y-1">
                   <span className="text-text-muted text-[11px] uppercase">SHA-256</span>
                   <div className="text-text-primary break-all">{scanResult.file.sha256}</div>
                 </div>
-                <div className="p-3 rounded-xl bg-surface-0 border border-border space-y-1">
+                <div className="p-3.5 rounded-xl bg-surface-1/40 border border-border/60 space-y-1">
                   <span className="text-text-muted text-[11px] uppercase">File Name & Size</span>
                   <div className="text-text-primary">{scanResult.file.name} ({scanResult.file.size} bytes)</div>
                 </div>
@@ -551,16 +534,16 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
               <div className="space-y-3 text-xs">
                 {scanResult.signature_info?.is_signed ? (
                   <div className="space-y-3">
-                    <div className="p-3 rounded-xl bg-surface-0 border border-border space-y-1">
+                    <div className="p-3.5 rounded-xl bg-surface-1/40 border border-border/60 space-y-1">
                       <span className="text-text-muted text-[11px]">Signer Common Name (CN)</span>
                       <div className="font-mono text-text-primary">{scanResult.signature_info.signer_name || "Unknown"}</div>
                     </div>
-                    <div className="p-3 rounded-xl bg-surface-0 border border-border space-y-1">
+                    <div className="p-3.5 rounded-xl bg-surface-1/40 border border-border/60 space-y-1">
                       <span className="text-text-muted text-[11px]">Issuer Authority</span>
                       <div className="font-mono text-text-primary">{scanResult.signature_info.issuer_name || "Direct Signer"}</div>
                     </div>
                     {scanResult.signature_info.certificates.map((c, i) => (
-                      <div key={i} className="p-3 rounded-xl bg-surface-0 border border-border space-y-1 font-mono text-[11px]">
+                      <div key={i} className="p-3.5 rounded-xl bg-surface-1/40 border border-border/60 space-y-1 font-mono text-[11px]">
                         <span className="text-text-muted">Certificate #{i + 1} Serial: {c.serial_number}</span>
                         <div>Subject: {c.subject}</div>
                         <div>Issuer: {c.issuer}</div>
@@ -569,7 +552,7 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
                     ))}
                   </div>
                 ) : (
-                  <div className="p-4 rounded-xl bg-surface-0 border border-border text-text-secondary text-xs">
+                  <div className="p-4 rounded-xl bg-surface-1/40 border border-border/60 text-text-secondary text-xs">
                     No embedded Authenticode or PKCS#7 certificate structure detected. Unsigned binary.
                   </div>
                 )}
@@ -585,9 +568,9 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
                   </div>
                 ) : (
                   scanResult.capabilities.map((cap, i) => (
-                    <div key={i} className="p-3 rounded-xl bg-surface-0 border border-border flex items-center justify-between">
+                    <div key={i} className="p-3.5 rounded-xl bg-surface-1/40 border border-border/60 flex items-center justify-between">
                       <div>
-                        <div className="font-bold text-text-primary">{cap.capability}</div>
+                        <div className="font-medium text-text-primary">{cap.capability}</div>
                         <div className="text-[11px] text-text-muted mt-0.5">Status: {cap.status}</div>
                       </div>
                       <Badge variant="info" size="sm">{cap.confidence}</Badge>

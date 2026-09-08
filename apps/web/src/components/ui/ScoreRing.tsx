@@ -4,7 +4,7 @@ export interface ScoreRingProps {
   score?: number | null; // 0 to 100, or null/undefined
   loading?: boolean;
   error?: boolean;
-  size?: number; // diameter in px (default 120)
+  size?: number; // diameter in px (default 130)
   strokeWidth?: number; // stroke width in px (default 10)
   label?: string;
   sublabel?: string;
@@ -16,18 +16,18 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
   score,
   loading = false,
   error = false,
-  size = 120,
+  size = 130,
   strokeWidth = 10,
   label,
   sublabel,
   variant = "posture",
   className = "",
 }) => {
-  // Safe number verification — NEVER allow NaN, undefined, or Infinity to pass through
+  // Safe number verification — NEVER allow NaN, undefined, null, or Infinity to pass through
   const isNumeric = typeof score === "number" && !isNaN(score) && isFinite(score);
   const targetScore = isNumeric ? Math.max(0, Math.min(100, Math.round(score!))) : null;
 
-  // Animated score counter
+  // Calm animated score counter (0 -> targetScore)
   const [displayScore, setDisplayScore] = useState<number>(0);
 
   useEffect(() => {
@@ -37,13 +37,13 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
     }
 
     let start = 0;
-    const duration = 650; // ms
+    const duration = 600; // ms
     const startTime = performance.now();
 
     const animate = (currentTime: number) => {
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      // easeOutCubic
+      // Clean easeOutCubic
       const ease = 1 - Math.pow(1 - progress, 3);
       const currentVal = Math.round(start + (targetScore - start) * ease);
       setDisplayScore(currentVal);
@@ -65,7 +65,7 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
     ? circumference - (validScore / 100) * circumference
     : circumference;
 
-  // Compute stroke color based on mode
+  // Compute elegant semantic stroke color
   let strokeColor = "var(--border-strong)";
 
   if (targetScore !== null) {
@@ -80,7 +80,7 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
       }
     } else {
       // Risk: lower is better
-      if (validScore <= 20) {
+      if (validScore <= 25) {
         strokeColor = "var(--success)";
       } else if (validScore <= 60) {
         strokeColor = "var(--warning)";
@@ -100,7 +100,7 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
       className={`relative inline-flex flex-col items-center justify-center select-none ${className}`}
     >
       <svg width={size} height={size} className="rotate-[-90deg] transition-all">
-        {/* Background Track */}
+        {/* Ambient Background Track */}
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -110,7 +110,7 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
           fill="transparent"
         />
 
-        {/* Animated Value Ring */}
+        {/* Animated Active Value Ring */}
         {targetScore !== null && (
           <circle
             cx={size / 2}
@@ -120,7 +120,7 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
             strokeWidth={strokeWidth}
             strokeDasharray={circumference}
             strokeDashoffset={strokeDashoffset}
-            strokeLinecap="butt"
+            strokeLinecap="round"
             fill="transparent"
             style={{ transition: "stroke-dashoffset 0.1s linear, stroke 0.3s ease" }}
           />
@@ -135,49 +135,49 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
             stroke="var(--primary)"
             strokeWidth={strokeWidth}
             strokeDasharray={`${circumference * 0.25} ${circumference * 0.75}`}
-            strokeLinecap="butt"
+            strokeLinecap="round"
             fill="transparent"
-            className="animate-spin origin-center"
+            className="animate-spin origin-center opacity-50"
           />
         )}
       </svg>
 
       {/* Center Label Display */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none px-2 text-center">
         {loading ? (
-          <span className="text-xl font-mono text-text-muted animate-pulse">...</span>
+          <div className="w-8 h-8 rounded-full bg-surface-2 animate-pulse" />
         ) : error ? (
-          <span className="text-sm font-black font-display text-danger">ERR</span>
+          <span className="text-xs font-semibold text-danger">Unavailable</span>
         ) : targetScore !== null ? (
           <>
-            <span className="text-3xl sm:text-4xl font-black font-display tracking-tight text-text-primary">
+            <span className="text-3xl sm:text-4xl font-bold tracking-tight text-text-primary leading-none">
               {validScore}
             </span>
-            <span className="text-[10px] uppercase font-bold font-mono tracking-widest text-text-muted">
+            <span className="text-[11px] font-medium text-text-muted mt-1">
               / 100
             </span>
           </>
         ) : (
           <>
-            <span className="text-3xl font-black font-display text-text-muted">
+            <span className="text-2xl font-bold text-text-muted leading-none">
               —
             </span>
-            <span className="text-[9px] uppercase font-bold font-mono tracking-widest text-text-muted">
-              Awaiting Analysis
+            <span className="text-[10px] text-text-muted mt-1 leading-tight">
+              No security score yet
             </span>
           </>
         )}
       </div>
 
       {(label || sublabel) && (
-        <div className="mt-2.5 text-center">
+        <div className="mt-3 text-center">
           {label && (
-            <div className="text-xs font-bold uppercase tracking-wider text-text-primary">
+            <div className="text-xs font-semibold text-text-primary tracking-tight">
               {label}
             </div>
           )}
           {sublabel && (
-            <div className="text-[11px] text-text-muted mt-0.5 font-mono">
+            <div className="text-[11px] text-text-muted mt-0.5">
               {sublabel}
             </div>
           )}

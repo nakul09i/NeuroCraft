@@ -58,7 +58,7 @@ const MainApp: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-bg text-text-primary cyber-grid-bg">
+    <div className="flex h-screen w-screen overflow-hidden bg-bg text-text-primary calm-ambient-bg">
       {/* Collapsible Desktop Sidebar */}
       <Sidebar
         activeTab={activeTab}

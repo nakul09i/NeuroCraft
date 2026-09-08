@@ -1,14 +1,9 @@
 import React from "react";
 import {
-  Settings,
   Sun,
   Moon,
   Laptop,
   ShieldCheck,
-  Lock,
-  User,
-  Cpu,
-  Info,
 } from "lucide-react";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
@@ -29,56 +24,53 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 }) => {
   const { theme, setTheme } = useTheme();
 
-  const themeOptions: Array<{ id: ThemeMode; label: string; symbol: string; desc: string; icon: any }> = [
+  const themeOptions: Array<{ id: ThemeMode; label: string; desc: string; icon: any }> = [
     {
       id: "light",
-      label: "Light Mode",
-      symbol: "☀",
-      desc: "Warm cream background (#F5F4EF) with high-contrast black borders",
+      label: "Light",
+      desc: "Warm neutral light theme with soft layered shadows and charcoal text",
       icon: Sun,
     },
     {
       id: "dark",
-      label: "Dark Mode",
-      symbol: "☾",
-      desc: "Deep near-black background (#08090A) with electric cyan accents",
+      label: "Dark",
+      desc: "Deep navy near-black theme with subtle cyan and violet accents",
       icon: Moon,
     },
     {
       id: "system",
-      label: "System Mode",
-      symbol: "◐",
-      desc: "Synchronize automatically with your operating system preference",
+      label: "System",
+      desc: "Synchronize automatically with your operating system appearance",
       icon: Laptop,
     },
   ];
 
   return (
-    <div className="space-y-8 animate-fadeIn max-w-4xl mx-auto pb-12">
+    <div className="space-y-8 animate-fadeIn max-w-4xl mx-auto pb-14">
       {/* Header Banner */}
-      <div className="p-6 sm:p-7 rounded-xl border-2 border-border bg-surface-0 shadow-brutal space-y-2">
+      <div className="p-7 rounded-2xl border border-border/70 bg-surface-0/70 backdrop-blur-sm shadow-sm space-y-2">
         <div className="flex items-center space-x-2">
-          <Badge variant="neutral" size="sm">SYSTEM PREFERENCES</Badge>
-          <span className="text-[10px] font-mono font-bold text-text-muted uppercase">
-            PERSISTED CONFIGURATION
+          <Badge variant="neutral" size="sm">System Preferences</Badge>
+          <span className="text-xs text-text-muted">
+            Persisted Configuration
           </span>
         </div>
-        <h2 className="text-2xl sm:text-3xl font-black text-text-primary tracking-tight font-display uppercase">
-          APPLICATION SETTINGS
+        <h2 className="text-2xl sm:text-3xl font-semibold text-text-primary tracking-tight">
+          Application Settings
         </h2>
         <p className="text-xs sm:text-sm text-text-secondary mt-1">
-          Customize your visual interface theme, manage authenticated identity, and review security invariants.
+          Customize your interface appearance, manage session credentials, and inspect security guarantees.
         </p>
       </div>
 
       {/* Theme Selection */}
       <Card level={0} className="p-6 space-y-4">
-        <div className="border-b-2 border-border pb-3">
-          <h3 className="text-xs font-mono font-extrabold text-text-primary uppercase tracking-wider">
-            APPEARANCE & INTERFACE THEME
+        <div className="border-b border-border/60 pb-3">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-text-muted">
+            Appearance & Interface Theme
           </h3>
           <p className="text-xs text-text-secondary mt-0.5">
-            Persisted automatically across browser sessions.
+            Persisted across browser sessions.
           </p>
         </div>
 
@@ -91,19 +83,19 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <button
                 key={opt.id}
                 onClick={() => setTheme(opt.id)}
-                className={`p-4 rounded-lg text-left border-2 transition-all focus-ring ${
+                className={`p-4 rounded-xl text-left border transition-all focus-ring ${
                   isSelected
-                    ? "bg-primary text-black border-border shadow-brutal-sm -translate-x-0.5 -translate-y-0.5 font-bold"
-                    : "bg-surface-1 border-border text-text-primary hover:bg-surface-2"
+                    ? "bg-primary/10 border-primary/40 text-text-primary shadow-xs"
+                    : "bg-surface-1/40 border-border/60 text-text-secondary hover:bg-surface-1/80 hover:text-text-primary"
                 }`}
               >
                 <div className="flex items-center space-x-2.5 mb-2">
-                  <span className="text-base font-mono font-black">{opt.symbol}</span>
-                  <span className="text-xs font-black font-display uppercase">
+                  <Icon className="w-4 h-4 text-primary" />
+                  <span className="text-xs font-semibold text-text-primary">
                     {opt.label}
                   </span>
                 </div>
-                <p className={`text-[11px] leading-relaxed ${isSelected ? "text-black/80 font-medium" : "text-text-muted"}`}>
+                <p className="text-[11px] leading-relaxed text-text-muted">
                   {opt.desc}
                 </p>
               </button>
@@ -114,39 +106,39 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
       {/* Account & Profile */}
       <Card level={0} className="p-6 space-y-4">
-        <div className="border-b-2 border-border pb-3 flex items-center justify-between">
+        <div className="border-b border-border/60 pb-3 flex items-center justify-between">
           <div>
-            <h3 className="text-xs font-mono font-extrabold text-text-primary uppercase tracking-wider">
-              ACCOUNT & TENANT IDENTITY
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-text-muted">
+              Account & Identity
             </h3>
             <p className="text-xs text-text-secondary mt-0.5">
-              Isolated audit session credentials and profile privileges.
+              Audit session credentials and tenant privileges.
             </p>
           </div>
-          <Badge variant="safe" size="sm">ISOLATED</Badge>
+          <Badge variant="safe" size="sm">Isolated</Badge>
         </div>
 
         {user ? (
-          <div className="p-4 rounded-lg bg-surface-1 border-2 border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-[2px_2px_0px_var(--border)]">
+          <div className="p-4 rounded-xl bg-surface-1/40 border border-border/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="space-y-1 text-xs">
-              <div className="font-extrabold text-text-primary text-sm font-display">
+              <div className="font-semibold text-text-primary text-sm">
                 {user.display_name || user.email}
               </div>
-              <div className="text-text-muted font-mono font-bold">{user.email}</div>
-              <div className="text-[10px] font-mono text-text-muted">SESSION ID: {user.id}</div>
+              <div className="text-text-muted font-mono">{user.email}</div>
+              <div className="text-[11px] font-mono text-text-muted">Session ID: {user.id}</div>
             </div>
 
             <Button size="sm" variant="destructive" onClick={onLogout}>
-              SIGN OUT
+              Sign Out
             </Button>
           </div>
         ) : (
-          <div className="p-4 rounded-lg bg-surface-1 border-2 border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-[2px_2px_0px_var(--border)]">
+          <div className="p-4 rounded-xl bg-surface-1/40 border border-border/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="text-xs text-text-secondary">
-              Currently operating in anonymous guest mode. Sign in to tie scans to your persistent identity.
+              Operating in guest mode. Sign in to link security audit scans to your identity.
             </div>
             <Button size="sm" variant="primary" onClick={onOpenAuth}>
-              SIGN IN / REGISTER
+              Sign In / Register
             </Button>
           </div>
         )}
@@ -154,37 +146,37 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
       {/* Architectural Guarantees */}
       <Card level={0} className="p-6 space-y-4">
-        <div className="border-b-2 border-border pb-3">
-          <h3 className="text-xs font-mono font-extrabold text-text-primary uppercase tracking-wider flex items-center space-x-2">
-            <ShieldCheck className="w-4 h-4 text-theme-success stroke-[2.5]" />
-            <span>ARCHITECTURAL & PRIVACY INVARIANTS</span>
+        <div className="border-b border-border/60 pb-3">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-text-muted flex items-center space-x-2">
+            <ShieldCheck className="w-4 h-4 text-emerald-500" />
+            <span>Architectural & Privacy Invariants</span>
           </h3>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-          <div className="p-3.5 rounded-lg bg-surface-1 border-2 border-border space-y-1 shadow-[2px_2px_0px_var(--border)]">
-            <div className="font-extrabold text-text-primary font-display">Zero Dynamic Execution</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+          <div className="p-3.5 rounded-xl bg-surface-1/40 border border-border/60 space-y-1">
+            <div className="font-medium text-text-primary">Zero Dynamic Execution</div>
             <p className="text-text-secondary text-[11px] leading-relaxed">
               Files uploaded to NeuroCraft are quarantined in memory and inspected strictly with deterministic parsers. Binaries are never executed.
             </p>
           </div>
 
-          <div className="p-3.5 rounded-lg bg-surface-1 border-2 border-border space-y-1 shadow-[2px_2px_0px_var(--border)]">
-            <div className="font-extrabold text-text-primary font-display">Quantum Channel Non-Locality</div>
+          <div className="p-3.5 rounded-xl bg-surface-1/40 border border-border/60 space-y-1">
+            <div className="font-medium text-text-primary">Quantum Channel Non-Locality</div>
             <p className="text-text-secondary text-[11px] leading-relaxed">
               All quantum trust calculations simulate Bell-state density matrix projections locally without relying on external cloud APIs.
             </p>
           </div>
 
-          <div className="p-3.5 rounded-lg bg-surface-1 border-2 border-border space-y-1 shadow-[2px_2px_0px_var(--border)]">
-            <div className="font-extrabold text-text-primary font-display">Free-First FOSS Stack</div>
+          <div className="p-3.5 rounded-xl bg-surface-1/40 border border-border/60 space-y-1">
+            <div className="font-medium text-text-primary">Free-First Open Source Stack</div>
             <p className="text-text-secondary text-[11px] leading-relaxed">
               Zero mandatory paid vendor dependencies. Runs entirely self-contained with Python 3.11+ and standard cryptographic libraries.
             </p>
           </div>
 
-          <div className="p-3.5 rounded-lg bg-surface-1 border-2 border-border space-y-1 shadow-[2px_2px_0px_var(--border)]">
-            <div className="font-extrabold text-text-primary font-display">Evidence Transparency</div>
+          <div className="p-3.5 rounded-xl bg-surface-1/40 border border-border/60 space-y-1">
+            <div className="font-medium text-text-primary">Evidence Transparency</div>
             <p className="text-text-secondary text-[11px] leading-relaxed">
               Unsigned binaries are flagged for absence of Authenticode certificates, never blindly marked as malware without supporting evidence.
             </p>
