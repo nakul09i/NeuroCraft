@@ -126,7 +126,7 @@ export const QuantumView: React.FC = () => {
     ? (simResult.threshold * 100).toFixed(1)
     : "15.0";
 
-  const isEveActive = scenario === "CHANNEL_MANIPULATION" || scenario === "FORGERY" || scenario === "IMPERSONATION";
+  const isEveActive = scenario !== "LEGITIMATE";
 
   return (
     <div className="space-y-8 animate-fadeIn max-w-5xl mx-auto pb-14">
@@ -198,10 +198,10 @@ export const QuantumView: React.FC = () => {
             </div>
 
             {/* Middle: Quantum Channel Waveguide with Eve Interception Node */}
-            <div className="lg:col-span-6 flex flex-col items-center justify-center space-y-4 px-2">
+            <div className="lg:col-span-6 flex flex-col items-center justify-center space-y-3 px-2 relative">
               {/* Optional Eve Node */}
               <div
-                className={`px-4 py-2.5 rounded-2xl border transition-all duration-300 flex items-center space-x-2.5 ${
+                className={`px-4 py-2 rounded-2xl border transition-all duration-300 flex items-center space-x-2.5 z-10 ${
                   isEveActive
                     ? "neu-inset bg-rose-500/15 border-rose-500/40 text-rose-600 dark:text-rose-400 font-bold animate-pulse shadow-md"
                     : "neu-button bg-surface-0 border-border/60 text-text-muted"
@@ -210,34 +210,68 @@ export const QuantumView: React.FC = () => {
                 <Eye className="w-4 h-4" />
                 <div className="text-xs">
                   {isEveActive ? (
-                    <span>Eve: Active Eavesdropper Intercepting States</span>
+                    <span>Eve: Active Eavesdropper Intercepting Bell States</span>
                   ) : (
                     <span>Eve: Quiescent (Zero Interception)</span>
                   )}
                 </div>
               </div>
 
+              {/* Eve Disturbance Laser Conduit (when active) */}
+              <div className="relative w-full h-8 flex flex-col items-center justify-center pointer-events-none">
+                {isEveActive ? (
+                  <div className="flex flex-col items-center h-full justify-between">
+                    <div className="w-0.5 flex-1 bg-gradient-to-b from-rose-500 via-amber-400 to-rose-600 animate-pulse relative">
+                      <span className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+                    </div>
+                    <div className="text-[9px] font-mono text-rose-500 uppercase tracking-wider font-bold">
+                      Interference Vector
+                    </div>
+                  </div>
+                ) : (
+                  <div className="w-px h-full border-l border-dashed border-border/40" />
+                )}
+              </div>
+
               {/* Animated Optical Waveguide */}
-              <div className="w-full relative h-10 flex items-center justify-center">
+              <div className="w-full relative h-12 flex items-center justify-center">
                 {/* Horizontal Channel Line */}
                 <div
-                  className={`w-full h-2 rounded-full transition-colors duration-300 ${
+                  className={`w-full h-2.5 rounded-full relative overflow-hidden transition-colors duration-300 shadow-inner ${
                     scenario === "LEGITIMATE"
                       ? "bg-gradient-to-r from-primary via-purple-500 to-emerald-500"
                       : "bg-gradient-to-r from-primary via-rose-500 to-rose-600"
                   }`}
-                />
+                >
+                  {/* Traveling optical conduit flow */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent conduit-flow" />
+                </div>
 
                 {/* Flowing Quantum Particle Dots */}
                 <div className="absolute inset-0 flex items-center justify-around pointer-events-none">
-                  <span className="w-3.5 h-3.5 rounded-full bg-cyan-400 shadow-[0_0_8px_#38bdf8] animate-ping" />
-                  <span className="w-3.5 h-3.5 rounded-full bg-purple-400 shadow-[0_0_8px_#c084fc] animate-pulse" />
-                  <span className="w-3.5 h-3.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399] animate-ping" />
+                  {scenario === "LEGITIMATE" ? (
+                    <>
+                      <span className="w-3.5 h-3.5 rounded-full bg-cyan-400 shadow-[0_0_10px_#38bdf8] animate-ping" />
+                      <span className="w-4 h-4 rounded-full bg-purple-400 shadow-[0_0_12px_#c084fc] animate-pulse" />
+                      <span className="w-3.5 h-3.5 rounded-full bg-emerald-400 shadow-[0_0_10px_#34d399] animate-ping" />
+                    </>
+                  ) : (
+                    <>
+                      <span className="w-3.5 h-3.5 rounded-full bg-cyan-400 shadow-[0_0_8px_#38bdf8] opacity-60" />
+                      {/* Disturbance / Collapse Point */}
+                      <div className="relative flex items-center justify-center">
+                        <span className="w-5 h-5 rounded-full bg-rose-500 shadow-[0_0_16px_#f43f5e] animate-ping" />
+                        <span className="absolute w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" />
+                      </div>
+                      <span className="w-3.5 h-3.5 rounded-full bg-rose-400 shadow-[0_0_10px_#fb7185] animate-pulse" />
+                    </>
+                  )}
                 </div>
               </div>
 
-              <div className="text-[11px] font-mono text-text-muted text-center">
-                Quantum Optical Waveguide · Coherence Length 100 km
+              <div className="flex items-center justify-between w-full text-[11px] font-mono text-text-muted px-1">
+                <span>Coherence: {scenario === "LEGITIMATE" ? "99.4% (Optimal)" : "21.0% (Collapsed)"}</span>
+                <span>Length: 100 km</span>
               </div>
             </div>
 

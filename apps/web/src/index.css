@@ -139,6 +139,135 @@
   background: var(--text-muted);
 }
 
+/* ==============================================================================
+   ADVANCED SAAS ANIMATIONS & DYNAMIC MICROINTERACTIONS
+   ============================================================================== */
+
+/* Hero Typography Word Stagger */
+@keyframes wordReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(14px);
+    filter: blur(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+.animate-word-1 {
+  animation: wordReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-word-2 {
+  animation: wordReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.18s forwards;
+  opacity: 0;
+}
+.animate-word-3 {
+  animation: wordReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.36s forwards;
+  opacity: 0;
+}
+.animate-subhead {
+  animation: wordReveal 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.52s forwards;
+  opacity: 0;
+}
+
+/* Laser Scan Sweep for File Analysis Cards */
+@keyframes laserSweep {
+  0% {
+    top: 0%;
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.9;
+  }
+  80% {
+    opacity: 0.9;
+  }
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
+}
+
+.laser-sweep-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--primary), #38bdf8, transparent);
+  box-shadow: 0 0 8px #38bdf8;
+  opacity: 0;
+}
+
+.group:hover .laser-sweep-line {
+  animation: laserSweep 1.2s ease-in-out infinite;
+}
+
+/* Status Beacon Pulsing */
+@keyframes statusBeacon {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 7px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.beacon-pulse {
+  animation: statusBeacon 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Ambient Gradient Mesh Float */
+@keyframes meshFloat {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  50% {
+    transform: translate(20px, -15px) scale(1.06);
+  }
+}
+
+.animate-mesh {
+  animation: meshFloat 12s ease-in-out infinite;
+}
+
+/* Data Conduit Pulse */
+@keyframes conduitPulse {
+  0% {
+    stroke-dashoffset: 60;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.conduit-flow {
+  stroke-dasharray: 6 6;
+  animation: conduitPulse 1.4s linear infinite;
+}
+
+/* Orbit Animation */
+@keyframes orbitSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-orbit {
+  animation: orbitSpin 20s linear infinite;
+}
+
 /* Reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -149,3 +278,4 @@
     transform: none !important;
   }
 }
+

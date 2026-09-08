@@ -15,6 +15,7 @@ import {
   Info,
   ChevronDown,
   ChevronUp,
+  Sparkles,
 } from "lucide-react";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
@@ -33,13 +34,28 @@ export const ReconView: React.FC = () => {
   const { addNotification } = useNotifications();
   const [target, setTarget] = useState("");
   const [scanning, setScanning] = useState(false);
+  const [reconStep, setReconStep] = useState<number>(0);
   const [reconData, setReconData] = useState<ReconScanResponse | null>(null);
   const [activeCategoryTab, setActiveCategoryTab] = useState<string>("dns");
+
+  const reconStages = [
+    { id: 1, label: "DOMAIN", sub: "Root Syntax", icon: Globe2 },
+    { id: 2, label: "DNS", sub: "Authoritative NS", icon: Server },
+    { id: 3, label: "TLS", sub: "X.509 Handshake", icon: Lock },
+    { id: 4, label: "EMAIL", sub: "MX & SPF Records", icon: Mail },
+    { id: 5, label: "EXPOSURE", sub: "Surface Verdict", icon: ShieldCheck },
+  ];
 
   const runReconScan = async (domainToScan: string) => {
     if (!domainToScan.trim()) return;
 
     setScanning(true);
+    setReconStep(1);
+    const t1 = setTimeout(() => setReconStep(2), 250);
+    const t2 = setTimeout(() => setReconStep(3), 550);
+    const t3 = setTimeout(() => setReconStep(4), 850);
+    const t4 = setTimeout(() => setReconStep(5), 1150);
+
     try {
       const res = await api.runRecon(domainToScan.trim());
       setReconData(res);
@@ -55,7 +71,12 @@ export const ReconView: React.FC = () => {
       toast.error(msg, "Reconnaissance Error");
       addNotification("Recon Scan Error", msg, "recon", "error");
     } finally {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      clearTimeout(t4);
       setScanning(false);
+      setReconStep(0);
     }
   };
 
@@ -157,6 +178,75 @@ export const ReconView: React.FC = () => {
             Target Compliance: Standard Public Resolvers
           </span>
         </div>
+
+        {/* Dynamic Progressive Recon Discovery Pipeline */}
+        {scanning && (
+          <div className="p-6 rounded-2xl neu-inset bg-surface-0/70 space-y-4 animate-fadeIn border border-border/70">
+            <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center space-x-2">
+                <Sparkles className="w-4 h-4 text-emerald-500 animate-spin" />
+                <span className="font-bold text-text-primary">
+                  Probing {target || "domain"} via RFC-Compliant Passive Resolvers…
+                </span>
+              </div>
+              <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+                STAGE {reconStep} of 5: {reconStages[reconStep - 1]?.label || "Resolving"}
+              </span>
+            </div>
+
+            {/* Pipeline Conduit Flow */}
+            <div className="flex items-center justify-between gap-1 sm:gap-2 overflow-x-auto py-2">
+              {reconStages.map((stg, i) => {
+                const isCompleted = reconStep > stg.id;
+                const isActive = reconStep === stg.id;
+                const StageIcon = stg.icon;
+
+                return (
+                  <React.Fragment key={stg.id}>
+                    <div className="flex flex-col items-center min-w-[70px] sm:min-w-[84px] shrink-0">
+                      <div
+                        className={`w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center transition-all duration-300 relative ${
+                          isCompleted
+                            ? "neu-raised-sm bg-emerald-500/15 border border-emerald-500/40 text-emerald-600 dark:text-emerald-400 shadow-sm"
+                            : isActive
+                            ? "neu-inset bg-emerald-500/20 border border-emerald-500 text-emerald-500 shadow-[0_0_14px_rgba(16,185,129,0.35)] scale-105"
+                            : "neu-button bg-surface-0 border border-border/50 text-text-muted opacity-50"
+                        }`}
+                      >
+                        <StageIcon className={`w-5 h-5 ${isActive ? "animate-pulse" : ""}`} />
+                        {isActive && (
+                          <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
+                        )}
+                      </div>
+                      <span
+                        className={`text-[10px] sm:text-xs font-mono font-bold mt-1.5 ${
+                          isCompleted
+                            ? "text-emerald-600 dark:text-emerald-400"
+                            : isActive
+                            ? "text-emerald-500"
+                            : "text-text-muted"
+                        }`}
+                      >
+                        {stg.label}
+                      </span>
+                      <span className="text-[9px] font-sans text-text-muted truncate max-w-[74px]">
+                        {stg.sub}
+                      </span>
+                    </div>
+
+                    {i < reconStages.length - 1 && (
+                      <div className="flex-1 h-1 min-w-[14px] sm:min-w-[24px] rounded-full relative overflow-hidden bg-surface-2 self-center -mt-5">
+                        {(isCompleted || isActive) && (
+                          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-500 conduit-flow" />
+                        )}
+                      </div>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </Card>
 
       {/* Results View */}
@@ -224,7 +314,8 @@ export const ReconView: React.FC = () => {
                     {reconData.dns_records.map((rec, i) => (
                       <div
                         key={i}
-                        className="p-3.5 rounded-2xl neu-inset-sm bg-surface-0/60 flex items-center justify-between gap-4"
+                        style={{ animationDelay: `${i * 45}ms` }}
+                        className="p-3.5 rounded-2xl neu-inset-sm bg-surface-0/60 flex items-center justify-between gap-4 animate-fadeIn"
                       >
                         <div className="flex items-center space-x-3 truncate">
                           <span className={`px-2 py-0.5 rounded-md font-bold text-[11px] shrink-0 ${

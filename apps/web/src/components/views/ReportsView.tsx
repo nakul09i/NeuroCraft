@@ -79,10 +79,10 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ initialScanId }) => {
   ];
 
   const stages = [
-    "Collecting Evidence",
-    "Analyzing Findings",
-    "Building Report",
-    "Finalizing",
+    { label: "Collecting Evidence", desc: "Aggregating memory quarantine and hash digests" },
+    { label: "Analyzing Findings", desc: "Parsing heuristic signals, cert chains & entropy" },
+    { label: "Building Report", desc: "Formulating risk scores and executive summaries" },
+    { label: "Finalizing", desc: "Generating tamper-evident cryptographic provenance seal" },
   ];
 
   const handleGenerate = async (e?: React.FormEvent) => {
@@ -251,29 +251,68 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ initialScanId }) => {
 
           {/* Loading Sequence Indicator */}
           {loading && (
-            <div className="p-5 rounded-2xl neu-inset-sm bg-surface-0/60 space-y-4 animate-fadeIn">
+            <div className="p-6 rounded-2xl neu-inset bg-surface-0/70 space-y-5 animate-fadeIn border border-border/70">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-primary font-bold flex items-center space-x-2">
-                  <Sparkles className="w-4 h-4 animate-spin" />
-                  <span>{stages[genStage]}…</span>
+                  <Sparkles className="w-4 h-4 animate-spin text-primary" />
+                  <span>{stages[genStage]?.label || "Synthesizing"}…</span>
                 </span>
-                <span className="text-text-muted font-mono font-medium">Stage {genStage + 1} of 4</span>
+                <span className="text-text-muted font-mono font-medium text-xs">
+                  Stage {genStage + 1} of {stages.length}
+                </span>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                {stages.map((stg, i) => (
-                  <div
-                    key={stg}
-                    className={`p-3 text-center text-xs rounded-xl border transition-all duration-200 ${
-                      genStage > i
-                        ? "neu-inset-sm bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 font-semibold"
-                        : genStage === i
-                        ? "neu-inset-sm bg-primary/20 text-primary border-primary/40 font-bold"
-                        : "neu-button bg-surface-0 border-border/50 text-text-muted"
-                    }`}
-                  >
-                    {stg}
-                  </div>
-                ))}
+
+              {/* Progress bar */}
+              <div className="w-full bg-surface-2 rounded-full h-1.5 overflow-hidden neu-inset-sm">
+                <div
+                  className="bg-primary h-1.5 rounded-full transition-all duration-300 ease-out"
+                  style={{ width: `${((genStage + 1) / stages.length) * 100}%` }}
+                />
+              </div>
+
+              {/* Step-by-Step Synthesis Checklist */}
+              <div className="space-y-2 font-mono text-xs">
+                {stages.map((stg, i) => {
+                  const isDone = genStage > i;
+                  const isCurrent = genStage === i;
+
+                  return (
+                    <div
+                      key={stg.label}
+                      className={`p-3 rounded-xl border flex items-center justify-between transition-all duration-200 ${
+                        isDone
+                          ? "neu-inset-sm bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+                          : isCurrent
+                          ? "neu-inset bg-primary/15 border-primary/40 text-primary font-bold shadow-sm"
+                          : "neu-button bg-surface-0 border-border/40 text-text-muted opacity-60"
+                      }`}
+                    >
+                      <div className="flex items-center space-x-3">
+                        {isDone ? (
+                          <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center shrink-0">
+                            <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                          </div>
+                        ) : isCurrent ? (
+                          <div className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0">
+                            <span className="w-2 h-2 rounded-full bg-primary animate-ping" />
+                          </div>
+                        ) : (
+                          <div className="w-5 h-5 rounded-full border border-border/70 flex items-center justify-center text-[10px] text-text-muted shrink-0">
+                            {i + 1}
+                          </div>
+                        )}
+                        <div>
+                          <div className="font-semibold text-text-primary text-xs">{stg.label}</div>
+                          <div className="text-[10px] font-sans text-text-muted">{stg.desc}</div>
+                        </div>
+                      </div>
+
+                      <span className="text-[10px] uppercase font-bold shrink-0">
+                        {isDone ? "Completed" : isCurrent ? "Processing" : "Pending"}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}

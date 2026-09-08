@@ -29,9 +29,11 @@ import { Button } from "../ui/Button";
 import { Badge } from "../ui/Badge";
 import { Skeleton } from "../ui/Skeleton";
 import { EmptyState } from "../ui/EmptyState";
+import { HeroBackground } from "../ui/HeroBackground";
 import { api } from "../../api";
 import { DashboardStats, UserProfile } from "../../types";
 import { formatMetric, safeNumber } from "../../utils/error";
+import { useCountUp } from "../../hooks/useCountUp";
 
 export interface DashboardViewProps {
   onNavigate: (tab: string) => void;
@@ -50,6 +52,22 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
   const [loading, setLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
 
+  // Rotating supporting value statements (Requirement 19)
+  const rotatingSubtitles = [
+    "Analyze files. Verify trust. Discover exposure.",
+    "Zero dynamic code execution. Mathematical non-repudiation.",
+    "Turn static cryptographic evidence into actionable insight.",
+    "Bell-state quantum simulation and Authenticode verification.",
+  ];
+  const [subtitleIndex, setSubtitleIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSubtitleIndex((prev) => (prev + 1) % rotatingSubtitles.length);
+    }, 4200);
+    return () => clearInterval(interval);
+  }, []);
+
   const loadData = async () => {
     setLoading(true);
     setHasError(false);
@@ -66,6 +84,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
   useEffect(() => {
     loadData();
   }, []);
+
+  // Smooth Count-Up animated metrics (Requirement 7)
+  const animatedScans = useCountUp(safeNumber(stats.total_scans, 0));
+  const animatedThreats = useCountUp(safeNumber(stats.critical_threats, 0));
+  const animatedRecon = useCountUp(safeNumber(stats.recon_targets, 0));
+  const animatedQuantum = useCountUp(safeNumber(stats.quantum_simulations, 0));
 
   const displayName = user?.display_name || user?.email?.split("@")[0] || "Analyst";
 
@@ -146,35 +170,52 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
   return (
     <div className="space-y-8 max-w-[1360px] mx-auto pb-14">
       {/* =========================================================================
-          HERO BANNER: "Know what you can trust."
+          HERO BANNER: ANIMATED "Detect. Verify. Prove." WITH DYNAMIC ROTATING SUBHEAD
           ========================================================================= */}
-      <Card surface="raised" className="p-8 sm:p-10 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
+      <Card surface="raised" className="p-8 sm:p-10 relative overflow-hidden group">
+        {/* Subtle Animated Security Mesh Background */}
+        <HeroBackground />
 
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-          <div className="space-y-2.5 max-w-2xl">
-            <div className="flex items-center space-x-2.5 text-xs font-semibold uppercase tracking-wider text-text-muted">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Security Command Center · NeuroCraft</span>
+        <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
+          <div className="space-y-3 max-w-2xl">
+            {/* Live Security System Status Element (Requirement 8) */}
+            <div className="inline-flex items-center space-x-2.5 px-3 py-1 rounded-full neu-inset-sm bg-surface-0/80 text-xs font-semibold uppercase tracking-wider">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 beacon-pulse" />
+              <span className="text-emerald-600 dark:text-emerald-400 font-bold">All Systems Operational</span>
+              <span className="text-text-muted">·</span>
+              <span className="text-text-secondary font-mono text-[11px]">Multi-Engine Ready</span>
             </div>
 
-            <h1 className="text-4xl sm:text-5xl font-extrabold text-text-primary tracking-tight">
-              Know what you can trust.
+            {/* Animated Sequential Headline: Detect. Verify. Prove. (Requirement 1) */}
+            <h1 className="text-4xl sm:text-6xl font-extrabold text-text-primary tracking-tight flex flex-wrap items-center gap-x-3.5 gap-y-1">
+              <span className="animate-word-1 inline-block">Detect.</span>
+              <span className="animate-word-2 inline-block">Verify.</span>
+              <span className="animate-word-3 inline-block bg-gradient-to-r from-primary via-cyan-400 to-purple-500 bg-clip-text text-transparent drop-shadow-sm">
+                Prove.
+              </span>
             </h1>
 
-            <p className="text-base sm:text-lg text-text-secondary leading-relaxed font-normal">
-              Verify executable provenance, extract static entropy and X.509 signatures, perform passive reconnaissance, and simulate quantum cryptographic trust — with zero dynamic code execution.
-            </p>
+            {/* Dynamic Rotating Subtitle (Requirement 2 & 19) */}
+            <div className="h-14 sm:h-12 flex items-center overflow-hidden">
+              <p
+                key={subtitleIndex}
+                className="text-base sm:text-lg text-text-secondary leading-relaxed font-normal animate-subhead"
+              >
+                {rotatingSubtitles[subtitleIndex]}
+              </p>
+            </div>
           </div>
 
-          {/* Primary, Secondary, and Tertiary CTAs */}
-          <div className="flex flex-wrap items-center gap-3 shrink-0">
+          {/* Primary, Secondary, and Tertiary CTAs with Microinteractions */}
+          <div className="flex flex-wrap items-center gap-3.5 shrink-0 relative z-10">
             <Button
               size="lg"
               variant="primary"
               onClick={() => onNavigate("scanner")}
-              className="text-base font-semibold shadow-md px-6 py-3.5"
-              icon={<Plus className="w-5 h-5" />}
+              className="text-base font-semibold shadow-md px-6 py-3.5 group/cta hover:shadow-glow transition-all"
+              icon={
+                <ArrowRight className="w-5 h-5 transition-transform duration-200 group-hover/cta:translate-x-1" />
+              }
             >
               Analyze File
             </Button>
@@ -182,8 +223,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
               size="lg"
               variant="secondary"
               onClick={() => onNavigate("recon")}
-              className="neu-button text-base font-semibold px-6 py-3.5"
-              icon={<Globe2 className="w-5 h-5 text-text-secondary" />}
+              className="neu-button text-base font-semibold px-6 py-3.5 group/recon transition-all"
+              icon={<Globe2 className="w-5 h-5 text-text-secondary group-hover/recon:rotate-12 transition-transform" />}
             >
               Run Passive Recon
             </Button>
@@ -191,15 +232,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
               size="md"
               variant="secondary"
               onClick={() => onNavigate("quantum")}
-              className="neu-button text-sm font-semibold"
-              icon={<Atom className="w-4 h-4 text-purple-500" />}
+              className="neu-button text-sm font-semibold group/q transition-all"
+              icon={<Atom className="w-4 h-4 text-purple-500 group-hover/q:rotate-180 transition-transform duration-700" />}
             >
               Quantum Trust
             </Button>
             <button
               onClick={loadData}
               title="Refresh Telemetry"
-              className="p-3 rounded-2xl neu-button text-text-secondary hover:text-text-primary transition focus-ring"
+              className="p-3 rounded-2xl neu-button text-text-secondary hover:text-text-primary transition focus-ring active:scale-95"
               aria-label="Refresh Dashboard Data"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-primary" : ""}`} />
@@ -419,7 +460,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
           </div>
           <div className="mt-3">
             <span className="text-4xl font-extrabold font-mono text-text-primary tracking-tight">
-              {loading ? <Skeleton width={48} height={36} /> : formatMetric(stats.total_scans, "0")}
+              {loading ? <Skeleton width={48} height={36} /> : formatMetric(animatedScans, "0")}
             </span>
           </div>
           <p className="text-xs text-text-secondary mt-1.5 leading-snug">
@@ -430,7 +471,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
               <span>Verified static</span>
             </span>
-            <span className="text-primary font-semibold group-hover:translate-x-0.5 transition-transform">
+            <span className="text-primary font-semibold group-hover:translate-x-1 transition-transform">
               Inspect →
             </span>
           </div>
@@ -455,7 +496,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
                 safeNumber(stats.critical_threats) > 0 ? "text-danger" : "text-text-primary"
               }`}
             >
-              {loading ? <Skeleton width={48} height={36} /> : formatMetric(stats.critical_threats, "0")}
+              {loading ? <Skeleton width={48} height={36} /> : formatMetric(animatedThreats, "0")}
             </span>
           </div>
           <p className="text-xs text-text-secondary mt-1.5 leading-snug">
@@ -466,7 +507,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
               <span className={`w-1.5 h-1.5 rounded-full ${safeNumber(stats.critical_threats) > 0 ? "bg-danger animate-pulse" : "bg-emerald-500"}`} />
               <span>{safeNumber(stats.critical_threats) > 0 ? "Review signals" : "Clean baseline"}</span>
             </span>
-            <span className="text-primary font-semibold group-hover:translate-x-0.5 transition-transform">
+            <span className="text-primary font-semibold group-hover:translate-x-1 transition-transform">
               View →
             </span>
           </div>
@@ -487,7 +528,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
           </div>
           <div className="mt-3">
             <span className="text-4xl font-extrabold font-mono text-text-primary tracking-tight">
-              {loading ? <Skeleton width={48} height={36} /> : formatMetric(stats.recon_targets, "0")}
+              {loading ? <Skeleton width={48} height={36} /> : formatMetric(animatedRecon, "0")}
             </span>
           </div>
           <p className="text-xs text-text-secondary mt-1.5 leading-snug">
@@ -498,7 +539,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
               <span>Real-time lookups</span>
             </span>
-            <span className="text-primary font-semibold group-hover:translate-x-0.5 transition-transform">
+            <span className="text-primary font-semibold group-hover:translate-x-1 transition-transform">
               Explore →
             </span>
           </div>
@@ -519,7 +560,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
           </div>
           <div className="mt-3">
             <span className="text-4xl font-extrabold font-mono text-purple-600 dark:text-purple-400 tracking-tight">
-              {loading ? <Skeleton width={48} height={36} /> : formatMetric(stats.quantum_simulations, "0")}
+              {loading ? <Skeleton width={48} height={36} /> : formatMetric(animatedQuantum, "0")}
             </span>
           </div>
           <p className="text-xs text-text-secondary mt-1.5 leading-snug">
@@ -530,7 +571,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
               <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
               <span>EPR Entanglement</span>
             </span>
-            <span className="text-purple-500 font-semibold group-hover:translate-x-0.5 transition-transform">
+            <span className="text-purple-500 font-semibold group-hover:translate-x-1 transition-transform">
               Simulate →
             </span>
           </div>
@@ -538,126 +579,136 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
       </div>
 
       {/* =========================================================================
-          ROW 3: 4 TACTILE QUICK ACTIONS CARDS
+          ROW 3: 4 TACTILE QUICK ACTIONS CARDS (WITH ADVANCED HOVER MICROANIMATIONS)
           ========================================================================= */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-bold uppercase tracking-wider text-text-muted">
             Quick Actions
           </h2>
-          <span className="text-xs text-text-muted">Fast workflow execution</span>
+          <span className="text-xs text-text-muted font-mono">Interactive Modules</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {/* Action 1: Analyze File */}
+          {/* Action 1: Analyze File with Laser Scan Line Sweep */}
           <div
             onClick={() => onNavigate("scanner")}
-            className="group cursor-pointer p-6 rounded-3xl neu-raised hover:-translate-y-1 active:translate-y-0 active:neu-inset-sm transition-all duration-200 flex flex-col justify-between border border-border/60"
+            className="group cursor-pointer p-6 rounded-3xl neu-raised hover:-translate-y-1.5 active:translate-y-0 transition-all duration-200 flex flex-col justify-between border border-border/60 hover:border-primary/40 relative overflow-hidden"
           >
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <div className="w-12 h-12 rounded-2xl neu-inset-sm text-primary flex items-center justify-center group-hover:scale-105 transition-transform">
-                  <FileSearch className="w-6 h-6" />
+                <div className="w-12 h-12 rounded-2xl neu-inset-sm text-primary flex items-center justify-center relative overflow-hidden group-hover:scale-105 transition-transform">
+                  {/* Laser Scanning Line Sweep */}
+                  <div className="laser-sweep-line" />
+                  <FileSearch className="w-6 h-6 z-10" />
                 </div>
-                <span className="text-xs font-mono text-text-muted">Quarantine</span>
+                <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-primary/10 text-primary">
+                  Quarantine
+                </span>
               </div>
               <div>
-                <h3 className="text-lg font-bold text-text-primary tracking-tight">
+                <h3 className="text-lg font-bold text-text-primary tracking-tight group-hover:text-primary transition-colors">
                   Analyze File
                 </h3>
                 <p className="text-xs sm:text-sm text-text-secondary mt-1 leading-relaxed">
-                  Safely inspect an untrusted artifact.
+                  Safely inspect an untrusted artifact in memory.
                 </p>
               </div>
             </div>
 
             <div className="mt-5 pt-3 border-t border-border/50 flex items-center justify-between text-sm font-semibold text-primary">
               <span>Start Analysis</span>
-              <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+              <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1.5" />
             </div>
           </div>
 
-          {/* Action 2: Passive Recon */}
+          {/* Action 2: Passive Recon with Connecting Network Nodes */}
           <div
             onClick={() => onNavigate("recon")}
-            className="group cursor-pointer p-6 rounded-3xl neu-raised hover:-translate-y-1 active:translate-y-0 active:neu-inset-sm transition-all duration-200 flex flex-col justify-between border border-border/60"
+            className="group cursor-pointer p-6 rounded-3xl neu-raised hover:-translate-y-1.5 active:translate-y-0 transition-all duration-200 flex flex-col justify-between border border-border/60 hover:border-emerald-500/40 relative overflow-hidden"
           >
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <div className="w-12 h-12 rounded-2xl neu-inset-sm text-emerald-500 flex items-center justify-center group-hover:scale-105 transition-transform">
-                  <Globe2 className="w-6 h-6" />
+                <div className="w-12 h-12 rounded-2xl neu-inset-sm text-emerald-500 flex items-center justify-center relative group-hover:scale-105 transition-transform">
+                  <Globe2 className="w-6 h-6 transition-transform group-hover:rotate-12 duration-300" />
                 </div>
-                <span className="text-xs font-mono text-text-muted">OSINT</span>
+                <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                  OSINT
+                </span>
               </div>
               <div>
-                <h3 className="text-lg font-bold text-text-primary tracking-tight">
+                <h3 className="text-lg font-bold text-text-primary tracking-tight group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                   Passive Recon
                 </h3>
                 <p className="text-xs sm:text-sm text-text-secondary mt-1 leading-relaxed">
-                  Understand public exposure.
+                  Understand public exposure without intrusive probes.
                 </p>
               </div>
             </div>
 
             <div className="mt-5 pt-3 border-t border-border/50 flex items-center justify-between text-sm font-semibold text-emerald-600 dark:text-emerald-400">
               <span>Check Domain</span>
-              <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+              <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1.5" />
             </div>
           </div>
 
-          {/* Action 3: Quantum Trust */}
+          {/* Action 3: Quantum Trust with Rotating Atom & Orbit */}
           <div
             onClick={() => onNavigate("quantum")}
-            className="group cursor-pointer p-6 rounded-3xl neu-raised hover:-translate-y-1 active:translate-y-0 active:neu-inset-sm transition-all duration-200 flex flex-col justify-between border border-border/60"
+            className="group cursor-pointer p-6 rounded-3xl neu-raised hover:-translate-y-1.5 active:translate-y-0 transition-all duration-200 flex flex-col justify-between border border-border/60 hover:border-purple-500/40 relative overflow-hidden"
           >
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <div className="w-12 h-12 rounded-2xl neu-inset-sm text-purple-500 flex items-center justify-center group-hover:scale-105 transition-transform">
-                  <Atom className="w-6 h-6" />
+                <div className="w-12 h-12 rounded-2xl neu-inset-sm text-purple-500 flex items-center justify-center relative group-hover:scale-105 transition-transform">
+                  <Atom className="w-6 h-6 transition-transform group-hover:rotate-180 duration-700" />
                 </div>
-                <span className="text-xs font-mono text-text-muted">Bell-State</span>
+                <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400">
+                  Bell-State
+                </span>
               </div>
               <div>
-                <h3 className="text-lg font-bold text-text-primary tracking-tight">
+                <h3 className="text-lg font-bold text-text-primary tracking-tight group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
                   Quantum Trust
                 </h3>
                 <p className="text-xs sm:text-sm text-text-secondary mt-1 leading-relaxed">
-                  Explore verification integrity.
+                  Simulate EPR channel verification and integrity.
                 </p>
               </div>
             </div>
 
             <div className="mt-5 pt-3 border-t border-border/50 flex items-center justify-between text-sm font-semibold text-purple-600 dark:text-purple-400">
               <span>Run Simulation</span>
-              <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+              <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1.5" />
             </div>
           </div>
 
-          {/* Action 4: Security Reports */}
+          {/* Action 4: Security Reports with Document Verification Badge */}
           <div
             onClick={() => onNavigate("reports")}
-            className="group cursor-pointer p-6 rounded-3xl neu-raised hover:-translate-y-1 active:translate-y-0 active:neu-inset-sm transition-all duration-200 flex flex-col justify-between border border-border/60"
+            className="group cursor-pointer p-6 rounded-3xl neu-raised hover:-translate-y-1.5 active:translate-y-0 transition-all duration-200 flex flex-col justify-between border border-border/60 hover:border-primary/40 relative overflow-hidden"
           >
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <div className="w-12 h-12 rounded-2xl neu-inset-sm text-primary flex items-center justify-center group-hover:scale-105 transition-transform">
+                <div className="w-12 h-12 rounded-2xl neu-inset-sm text-primary flex items-center justify-center relative group-hover:scale-105 transition-transform">
                   <FileText className="w-6 h-6" />
                 </div>
-                <span className="text-xs font-mono text-text-muted">Provenance</span>
+                <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-primary/10 text-primary">
+                  Provenance
+                </span>
               </div>
               <div>
-                <h3 className="text-lg font-bold text-text-primary tracking-tight">
+                <h3 className="text-lg font-bold text-text-primary tracking-tight group-hover:text-primary transition-colors">
                   Security Reports
                 </h3>
                 <p className="text-xs sm:text-sm text-text-secondary mt-1 leading-relaxed">
-                  Generate evidence-based reports.
+                  Generate tamper-evident evidence reports.
                 </p>
               </div>
             </div>
 
             <div className="mt-5 pt-3 border-t border-border/50 flex items-center justify-between text-sm font-semibold text-primary">
               <span>Create Report</span>
-              <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+              <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1.5" />
             </div>
           </div>
         </div>

@@ -19,6 +19,8 @@ import {
   AlertTriangle,
   Lock,
   Unlock,
+  Activity,
+  Binary,
 } from "lucide-react";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
@@ -69,6 +71,15 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
     { id: 6, label: "Digital Signature Verification", desc: "Validating Authenticode, X.509 certs, and trust chains" },
     { id: 7, label: "Risk Scoring", desc: "Synthesizing multi-engine findings and weighted heuristics" },
     { id: 8, label: "Final Report Assembly", desc: "Compiling verifiable provenance and security verdict" },
+  ];
+
+  const pipelineNodes = [
+    { id: 1, label: "FILE", sub: "Quarantine", icon: FileCode, stage: 1 },
+    { id: 2, label: "HASH", sub: "SHA-256", icon: Key, stage: 2 },
+    { id: 3, label: "METADATA", sub: "PE/Headers", icon: Layers, stage: 4 },
+    { id: 4, label: "ENTROPY", sub: "Shannon", icon: Activity, stage: 5 },
+    { id: 5, label: "SIGNATURE", sub: "Authenticode", icon: Lock, stage: 6 },
+    { id: 6, label: "RISK", sub: "Heuristics", icon: ShieldCheck, stage: 8 },
   ];
 
   const toggleFindingExpanded = (id: string) => {
@@ -328,7 +339,7 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
 
           {/* 8-Stage Animated Progress Timeline */}
           {analyzing && (
-            <div className="p-6 sm:p-7 rounded-3xl neu-inset bg-surface-0/60 space-y-5 animate-fadeIn">
+            <div className="p-6 sm:p-7 rounded-3xl neu-inset bg-surface-0/60 space-y-6 animate-fadeIn">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-base font-bold text-text-primary flex items-center space-x-2">
@@ -342,6 +353,72 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
                 <span className="text-xs font-mono text-primary font-bold">
                   STEP {analysisStep} of 8: {stages[analysisStep - 1]?.label || "Processing"}
                 </span>
+              </div>
+
+              {/* Interactive Telemetry Node Pipeline Graph */}
+              <div className="p-4 sm:p-5 rounded-2xl neu-inset-sm bg-surface-0/70 border border-border/70 overflow-hidden">
+                <div className="flex items-center justify-between mb-3 text-xs">
+                  <span className="font-mono font-bold tracking-wider uppercase text-text-muted">
+                    Static Telemetry Pipeline
+                  </span>
+                  <span className="font-mono text-primary flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-primary animate-ping" />
+                    <span className="text-[11px] font-semibold">Active In-Memory Stream</span>
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between gap-1 sm:gap-2 overflow-x-auto py-2">
+                  {pipelineNodes.map((node, i) => {
+                    const isNodeCompleted = analysisStep >= node.stage;
+                    const isNodeActive = !isNodeCompleted && (i === 0 || analysisStep >= pipelineNodes[i - 1].stage);
+                    const NodeIcon = node.icon;
+
+                    return (
+                      <React.Fragment key={node.id}>
+                        {/* Node Card */}
+                        <div className="flex flex-col items-center min-w-[70px] sm:min-w-[84px] shrink-0">
+                          <div
+                            className={`w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center transition-all duration-300 relative ${
+                              isNodeCompleted
+                                ? "neu-raised-sm bg-emerald-500/15 border border-emerald-500/40 text-emerald-600 dark:text-emerald-400 shadow-sm"
+                                : isNodeActive
+                                ? "neu-inset bg-primary/20 border border-primary text-primary shadow-[0_0_14px_rgba(59,130,246,0.35)] scale-105"
+                                : "neu-button bg-surface-0 border border-border/50 text-text-muted opacity-50"
+                            }`}
+                          >
+                            <NodeIcon className={`w-5 h-5 ${isNodeActive ? "animate-pulse" : ""}`} />
+                            {isNodeActive && (
+                              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-primary animate-ping" />
+                            )}
+                          </div>
+                          <span
+                            className={`text-[10px] sm:text-xs font-mono font-bold mt-1.5 ${
+                              isNodeCompleted
+                                ? "text-emerald-600 dark:text-emerald-400"
+                                : isNodeActive
+                                ? "text-primary"
+                                : "text-text-muted"
+                            }`}
+                          >
+                            {node.label}
+                          </span>
+                          <span className="text-[9px] font-sans text-text-muted truncate max-w-[74px]">
+                            {node.sub}
+                          </span>
+                        </div>
+
+                        {/* Conduit line between nodes */}
+                        {i < pipelineNodes.length - 1 && (
+                          <div className="flex-1 h-1 min-w-[14px] sm:min-w-[24px] rounded-full relative overflow-hidden bg-surface-2 self-center -mt-5">
+                            {(isNodeCompleted || isNodeActive) && (
+                              <div className="absolute inset-0 bg-gradient-to-r from-primary via-emerald-400 to-primary conduit-flow" />
+                            )}
+                          </div>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Progress bar */}
@@ -456,10 +533,24 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
                       </span>
                       <button
                         onClick={() => copyHash(scanResult.file.sha256)}
-                        className="p-1 rounded text-text-muted hover:text-text-primary transition"
+                        className={`flex items-center space-x-1 px-2 py-0.5 rounded-lg text-[11px] font-mono transition-all duration-200 ${
+                          copiedHash
+                            ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold"
+                            : "text-text-muted hover:text-text-primary neu-button"
+                        }`}
                         title="Copy full SHA-256 hash"
                       >
-                        {copiedHash ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                        {copiedHash ? (
+                          <>
+                            <Check className="w-3 h-3 text-emerald-500" />
+                            <span>Copied</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3 h-3" />
+                            <span>Copy</span>
+                          </>
+                        )}
                       </button>
                     </div>
                   </div>
@@ -591,12 +682,13 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
               </div>
             ) : (
               <div className="space-y-3">
-                {scanResult.findings.map((f) => {
+                {scanResult.findings.map((f, idx) => {
                   const isExpanded = !!expandedFindings[f.id];
                   return (
                     <div
                       key={f.id}
-                      className="rounded-2xl neu-inset-sm bg-surface-0/50 border border-border/60 overflow-hidden transition-all duration-150"
+                      style={{ animationDelay: `${idx * 80}ms` }}
+                      className="rounded-2xl neu-inset-sm bg-surface-0/50 border border-border/60 overflow-hidden transition-all duration-150 animate-fadeIn"
                     >
                       {/* Clickable Header Row */}
                       <div
