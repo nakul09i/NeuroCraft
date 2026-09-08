@@ -626,9 +626,13 @@ async def get_dashboard_stats(
 
     return {
         "total_scans": len(scans),
+        "critical_threats": high_risk_scans,
         "high_risk_findings": high_risk_scans,
         "average_risk_score": avg_risk,
+        "average_exposure": avg_risk,
+        "recon_targets": len(recons),
         "recon_scans_count": len(recons),
+        "quantum_simulations": len(quants),
         "quantum_simulations_count": len(quants),
         "recent_scans": [
             {

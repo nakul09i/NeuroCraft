@@ -321,6 +321,7 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
               <div className="flex flex-col items-center shrink-0">
                 <ScoreRing
                   score={scanResult.verdict.score}
+                  variant="risk"
                   size={120}
                   strokeWidth={10}
                   label="RISK SCORE"

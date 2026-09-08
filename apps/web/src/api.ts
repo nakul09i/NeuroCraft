@@ -213,7 +213,17 @@ export const api = {
       const res = await fetch(`${API_BASE}/dashboard/stats`, {
         headers: getAuthHeaders(),
       });
-      if (res.ok) return await res.json();
+      if (res.ok) {
+        const raw = await res.json();
+        return {
+          total_scans: Number(raw.total_scans ?? 0),
+          critical_threats: Number(raw.critical_threats ?? raw.high_risk_findings ?? 0),
+          recon_targets: Number(raw.recon_targets ?? raw.recon_scans_count ?? 0),
+          quantum_simulations: Number(raw.quantum_simulations ?? raw.quantum_simulations_count ?? 0),
+          average_exposure: Number(raw.average_exposure ?? raw.average_risk_score ?? 0),
+          recent_scans: Array.isArray(raw.recent_scans) ? raw.recent_scans : [],
+        };
+      }
     } catch {
       // Return default stats
     }

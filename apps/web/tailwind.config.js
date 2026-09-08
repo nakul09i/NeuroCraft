@@ -50,15 +50,51 @@ export default {
           "info-border": "var(--info-border)",
           "info-text": "var(--info-text)",
         },
+        accent: {
+          cyan: "var(--accent-cyan)",
+          "cyan-subtle": "var(--accent-cyan-subtle)",
+          purple: "var(--accent-purple)",
+          "purple-subtle": "var(--accent-purple-subtle)",
+        },
       },
       fontFamily: {
-        sans: ["Inter", "system-ui", "-apple-system", "sans-serif"],
-        mono: ["JetBrains Mono", "Fira Code", "Courier New", "monospace"],
+        sans: ["Inter", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+        mono: ["'JetBrains Mono'", "monospace"],
       },
       boxShadow: {
         sm: "var(--shadow-sm)",
         md: "var(--shadow-md)",
         lg: "var(--shadow-lg)",
+        glow: "0 0 20px -5px rgba(56, 189, 248, 0.25)",
+      },
+      keyframes: {
+        fadeIn: {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
+        },
+        fadeUp: {
+          "0%": { opacity: "0", transform: "translateY(8px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        scaleIn: {
+          "0%": { opacity: "0", transform: "scale(0.96)" },
+          "100%": { opacity: "1", transform: "scale(1)" },
+        },
+        pulseSubtle: {
+          "0%, 100%": { opacity: "1", transform: "scale(1)" },
+          "50%": { opacity: "0.6", transform: "scale(0.97)" },
+        },
+        shimmer: {
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(100%)" },
+        },
+      },
+      animation: {
+        fadeIn: "fadeIn 0.2s ease-out forwards",
+        fadeUp: "fadeUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+        scaleIn: "scaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+        pulseSubtle: "pulseSubtle 2.5s ease-in-out infinite",
+        shimmer: "shimmer 2s infinite linear",
       },
     },
   },

@@ -119,6 +119,7 @@ export const ReconView: React.FC = () => {
               <div className="flex flex-col items-center shrink-0">
                 <ScoreRing
                   score={reconData.exposure_score}
+                  variant="risk"
                   size={120}
                   strokeWidth={10}
                   label="EXPOSURE SCORE"

@@ -12,6 +12,7 @@ import { QuantumView } from "./components/views/QuantumView";
 import { ReportsView } from "./components/views/ReportsView";
 import { HistoryView } from "./components/views/HistoryView";
 import { SettingsView } from "./components/views/SettingsView";
+import { ErrorBoundary } from "./components/ui/ErrorBoundary";
 import { AuthModal } from "./components/AuthModal";
 import { api } from "./api";
 import { UserProfile } from "./types";
@@ -73,31 +74,35 @@ const MainApp: React.FC = () => {
         <Header
           activeTabTitle={tabTitles[activeTab] || "NeuroCraft"}
           onOpenCommand={() => setCommandPaletteOpen(true)}
+          user={user}
+          onOpenAuth={() => setAuthModalOpen(true)}
         />
 
-        {/* Scrollable View Area */}
+        {/* Scrollable View Area wrapped in ErrorBoundary */}
         <main className="flex-1 overflow-y-auto px-4 sm:px-8 py-6 pb-24 md:pb-8">
-          {activeTab === "dashboard" && (
-            <DashboardView onNavigate={setActiveTab} user={user} />
-          )}
-          {activeTab === "scanner" && (
-            <ScannerView onGenerateReport={handleNavigateToReport} />
-          )}
-          {activeTab === "recon" && <ReconView />}
-          {activeTab === "quantum" && <QuantumView />}
-          {activeTab === "reports" && (
-            <ReportsView initialScanId={selectedScanId} />
-          )}
-          {activeTab === "history" && (
-            <HistoryView onNavigateToScan={handleNavigateToScan} />
-          )}
-          {activeTab === "settings" && (
-            <SettingsView
-              user={user}
-              onOpenAuth={() => setAuthModalOpen(true)}
-              onLogout={handleLogout}
-            />
-          )}
+          <ErrorBoundary fallbackTitle="View Rendering Error">
+            {activeTab === "dashboard" && (
+              <DashboardView onNavigate={setActiveTab} user={user} />
+            )}
+            {activeTab === "scanner" && (
+              <ScannerView onGenerateReport={handleNavigateToReport} />
+            )}
+            {activeTab === "recon" && <ReconView />}
+            {activeTab === "quantum" && <QuantumView />}
+            {activeTab === "reports" && (
+              <ReportsView initialScanId={selectedScanId} />
+            )}
+            {activeTab === "history" && (
+              <HistoryView onNavigateToScan={handleNavigateToScan} />
+            )}
+            {activeTab === "settings" && (
+              <SettingsView
+                user={user}
+                onOpenAuth={() => setAuthModalOpen(true)}
+                onLogout={handleLogout}
+              />
+            )}
+          </ErrorBoundary>
         </main>
       </div>
 
