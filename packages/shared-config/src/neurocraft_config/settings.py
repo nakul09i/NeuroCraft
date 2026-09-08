@@ -28,11 +28,11 @@ class AppConfig(BaseModel):
         default_factory=lambda: int(os.getenv("SCANNER_TIMEOUT_SECONDS", "30"))
     )
 
-    # Free-First Core Services
+    # Free-First Core Services (Defaults to zero-config local SQLite)
     database_url: str = Field(
         default_factory=lambda: os.getenv(
             "DATABASE_URL",
-            "postgresql://neurocraft_user:neurocraft_password@127.0.0.1:5432/neurocraft_dev",
+            "sqlite+aiosqlite:///./neurocraft.db",
         )
     )
     redis_url: str = Field(
