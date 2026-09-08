@@ -1,23 +1,30 @@
 import React, { useState, useEffect } from "react";
-import { Navbar } from "./components/Navbar";
-import { DashboardView } from "./components/DashboardView";
-import { ScannerView } from "./components/ScannerView";
-import { ReconView } from "./components/ReconView";
-import { QuantumView } from "./components/QuantumView";
-import { ReportsView } from "./components/ReportsView";
+import { ThemeProvider } from "./context/ThemeContext";
+import { ToastProvider, useToast } from "./context/ToastContext";
+import { Sidebar } from "./components/layout/Sidebar";
+import { Header } from "./components/layout/Header";
+import { BottomNav } from "./components/layout/BottomNav";
+import { CommandPalette } from "./components/layout/CommandPalette";
+import { DashboardView } from "./components/views/DashboardView";
+import { ScannerView } from "./components/views/ScannerView";
+import { ReconView } from "./components/views/ReconView";
+import { QuantumView } from "./components/views/QuantumView";
+import { ReportsView } from "./components/views/ReportsView";
+import { HistoryView } from "./components/views/HistoryView";
+import { SettingsView } from "./components/views/SettingsView";
 import { AuthModal } from "./components/AuthModal";
 import { api } from "./api";
-import { ScanResponse, UserProfile } from "./types";
-import { Shield, Lock, Terminal } from "lucide-react";
+import { UserProfile } from "./types";
 
-export const App: React.FC = () => {
+const MainApp: React.FC = () => {
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<string>("dashboard");
   const [user, setUser] = useState<UserProfile | null>(null);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [selectedScanId, setSelectedScanId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    // Check existing auth token
     api.getMe().then((profile) => {
       if (profile) setUser(profile);
     });
@@ -26,6 +33,12 @@ export const App: React.FC = () => {
   const handleLogout = () => {
     api.logout();
     setUser(null);
+    toast.info("Signed out of your session.");
+  };
+
+  const handleNavigateToScan = (scanId: string) => {
+    setSelectedScanId(scanId);
+    setActiveTab("scanner");
   };
 
   const handleNavigateToReport = (scanId: string) => {
@@ -33,55 +46,92 @@ export const App: React.FC = () => {
     setActiveTab("reports");
   };
 
+  const tabTitles: Record<string, string> = {
+    dashboard: "Security Command Center",
+    scanner: "File Analysis & Digital Signatures",
+    recon: "Defensive Passive Reconnaissance",
+    quantum: "Quantum Trust Simulation",
+    reports: "Audit & Provenance Reports",
+    history: "Security Audit Trail & History",
+    settings: "Application Settings",
+  };
+
   return (
-    <div className="min-h-screen flex flex-col bg-[#070a11] text-slate-100 cyber-grid-bg">
-      {/* Top Navigation */}
-      <Navbar
+    <div className="flex h-screen w-screen overflow-hidden bg-bg text-text-primary cyber-grid-bg">
+      {/* Collapsible Desktop Sidebar */}
+      <Sidebar
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        onSelectTab={setActiveTab}
         user={user}
         onOpenAuth={() => setAuthModalOpen(true)}
         onLogout={handleLogout}
       />
 
-      {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeTab === "dashboard" && <DashboardView onNavigate={setActiveTab} />}
-        {activeTab === "scanner" && (
-          <ScannerView onGenerateReport={handleNavigateToReport} />
-        )}
-        {activeTab === "recon" && <ReconView />}
-        {activeTab === "quantum" && <QuantumView />}
-        {activeTab === "reports" && <ReportsView initialScanId={selectedScanId} />}
-      </main>
+      {/* Main Content Viewport */}
+      <div className="flex-1 flex flex-col h-full overflow-hidden">
+        {/* Top Header */}
+        <Header
+          activeTabTitle={tabTitles[activeTab] || "NeuroCraft"}
+          onOpenCommand={() => setCommandPaletteOpen(true)}
+        />
+
+        {/* Scrollable View Area */}
+        <main className="flex-1 overflow-y-auto px-4 sm:px-8 py-6 pb-24 md:pb-8">
+          {activeTab === "dashboard" && (
+            <DashboardView onNavigate={setActiveTab} user={user} />
+          )}
+          {activeTab === "scanner" && (
+            <ScannerView onGenerateReport={handleNavigateToReport} />
+          )}
+          {activeTab === "recon" && <ReconView />}
+          {activeTab === "quantum" && <QuantumView />}
+          {activeTab === "reports" && (
+            <ReportsView initialScanId={selectedScanId} />
+          )}
+          {activeTab === "history" && (
+            <HistoryView onNavigateToScan={handleNavigateToScan} />
+          )}
+          {activeTab === "settings" && (
+            <SettingsView
+              user={user}
+              onOpenAuth={() => setAuthModalOpen(true)}
+              onLogout={handleLogout}
+            />
+          )}
+        </main>
+      </div>
+
+      {/* Mobile Bottom Navigation */}
+      <BottomNav activeTab={activeTab} onSelectTab={setActiveTab} />
+
+      {/* Global Command Palette (Ctrl/Cmd + K) */}
+      <CommandPalette
+        isOpen={commandPaletteOpen}
+        onClose={() => setCommandPaletteOpen(false)}
+        onNavigate={setActiveTab}
+      />
 
       {/* Authentication Modal */}
       <AuthModal
         isOpen={authModalOpen}
         onClose={() => setAuthModalOpen(false)}
-        onSuccess={(newUser) => setUser(newUser)}
+        onSuccess={(newUser) => {
+          setUser(newUser);
+          toast.success(`Welcome back, ${newUser.display_name || newUser.email}`);
+        }}
       />
-
-      {/* Footer */}
-      <footer className="border-t border-slate-900 bg-[#060910] py-6 px-4">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-4">
-          <div className="flex items-center space-x-2">
-            <Shield className="w-4 h-4 text-cyan-400" />
-            <span className="font-bold text-slate-300">NeuroCraft</span>
-            <span>—</span>
-            <span>Detect. Verify. Prove.</span>
-          </div>
-
-          <div className="flex items-center space-x-4 font-mono text-[11px]">
-            <span className="text-purple-400">Bell-State TVD Analysis</span>
-            <span>•</span>
-            <span className="text-emerald-400">Zero Dynamic Code Execution</span>
-            <span>•</span>
-            <span className="text-cyan-400">FOSS Free-First Architecture</span>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 };
+
+export const App: React.FC = () => {
+  return (
+    <ThemeProvider>
+      <ToastProvider>
+        <MainApp />
+      </ToastProvider>
+    </ThemeProvider>
+  );
+};
+
 export default App;
