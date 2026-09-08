@@ -33,7 +33,7 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
 
   if (variant === "segmented") {
     return (
-      <div className={`inline-flex items-center p-1 rounded-xl bg-surface-1/70 border border-border/60 ${className}`}>
+      <div className={`inline-flex items-center p-1 rounded-xl neu-inset ${className}`}>
         {themeOptions.map((opt) => {
           const isActive = theme === opt.mode;
           const Icon = opt.icon;
@@ -42,9 +42,9 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
               key={opt.mode}
               type="button"
               onClick={() => setTheme(opt.mode)}
-              className={`flex items-center space-x-1.5 px-3 py-1 text-xs font-medium rounded-lg transition-all ${
+              className={`flex items-center space-x-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
                 isActive
-                  ? "bg-surface-0 text-text-primary shadow-xs font-semibold"
+                  ? "neu-raised-sm bg-surface-0 text-primary font-semibold"
                   : "text-text-muted hover:text-text-primary"
               }`}
               title={`Switch to ${opt.label} mode`}
@@ -66,19 +66,19 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="flex items-center space-x-2 px-2.5 py-1.5 text-xs font-medium rounded-lg bg-surface-1/60 hover:bg-surface-1 border border-border/60 text-text-secondary hover:text-text-primary transition-all shadow-xs focus-ring"
+        className="flex items-center space-x-2 px-3 py-2 text-xs font-medium rounded-xl neu-button text-text-secondary hover:text-text-primary transition-all focus-ring"
         aria-label="Toggle Theme Menu"
         aria-expanded={open}
       >
-        <CurrentIcon className="w-3.5 h-3.5 text-text-secondary" />
-        <span className="hidden sm:inline capitalize text-text-secondary text-[11px] font-medium">
+        <CurrentIcon className="w-4 h-4 text-primary" />
+        <span className="hidden sm:inline capitalize text-[13px]">
           {theme}
         </span>
-        <ChevronDown className={`w-3 h-3 text-text-muted transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+        <ChevronDown className={`w-3.5 h-3.5 text-text-muted transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-1.5 w-36 rounded-xl bg-surface-0/95 backdrop-blur-md border border-border/80 shadow-lg p-1 z-50 animate-scaleIn">
+        <div className="absolute right-0 mt-2 w-40 rounded-2xl bg-surface-0 neu-raised-lg p-1.5 z-50 animate-scaleIn">
           {themeOptions.map((opt) => {
             const isActive = theme === opt.mode;
             const Icon = opt.icon;
@@ -90,15 +90,15 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
                   setTheme(opt.mode);
                   setOpen(false);
                 }}
-                className={`w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg font-medium text-left transition-colors ${
+                className={`w-full flex items-center justify-between px-3 py-2 text-xs rounded-xl font-medium text-left transition-colors ${
                   isActive
-                    ? "bg-primary/10 text-primary font-semibold"
+                    ? "neu-inset text-primary font-semibold"
                     : "text-text-secondary hover:text-text-primary hover:bg-surface-1"
                 }`}
               >
-                <div className="flex items-center space-x-2">
-                  <Icon className="w-3.5 h-3.5 shrink-0" />
-                  <span>{opt.label}</span>
+                <div className="flex items-center space-x-2.5">
+                  <Icon className="w-4 h-4 shrink-0" />
+                  <span className="text-[13px]">{opt.label}</span>
                 </div>
                 {isActive && <Check className="w-3.5 h-3.5 text-primary shrink-0" />}
               </button>
@@ -109,4 +109,3 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
     </div>
   );
 };
-

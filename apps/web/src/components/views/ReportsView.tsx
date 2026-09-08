@@ -5,6 +5,9 @@ import {
   Calendar,
   FileCheck,
   CheckCircle2,
+  AlertTriangle,
+  RotateCcw,
+  Sparkles,
 } from "lucide-react";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
@@ -25,12 +28,29 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ initialScanId }) => {
   const [loading, setLoading] = useState(false);
   const [genStage, setGenStage] = useState<number>(0);
   const [report, setReport] = useState<ReportResponse | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const reportTypes = [
-    { id: "EXECUTIVE_SUMMARY", name: "Executive Summary", desc: "High-level risk posture and critical findings for stakeholders" },
-    { id: "TECHNICAL_DEEP_DIVE", name: "Technical Deep Dive", desc: "Detailed entropy, imports, and binary capability telemetry" },
-    { id: "CRYPTOGRAPHIC_ANALYSIS", name: "Cryptographic Analysis", desc: "Authenticode signatures, certificate chains, and EPR channel validation" },
-    { id: "FULL_SECURITY_AUDIT", name: "Full Security Audit", desc: "Consolidated multi-engine assessment with complete provenance logs" },
+    {
+      id: "EXECUTIVE_SUMMARY",
+      name: "Executive Summary",
+      desc: "High-level risk posture and critical findings tailored for leadership and stakeholders",
+    },
+    {
+      id: "TECHNICAL_DEEP_DIVE",
+      name: "Technical Deep Dive",
+      desc: "Detailed entropy distribution, suspicious PE section analysis, and binary capabilities",
+    },
+    {
+      id: "CRYPTOGRAPHIC_ANALYSIS",
+      name: "Cryptographic Analysis",
+      desc: "Authenticode signatures, X.509 certificate chain validation, and EPR channel telemetry",
+    },
+    {
+      id: "FULL_SECURITY_AUDIT",
+      name: "Full Security Audit",
+      desc: "Consolidated multi-engine assessment with comprehensive non-repudiation audit logs",
+    },
   ];
 
   const stages = [
@@ -40,10 +60,11 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ initialScanId }) => {
     "Finalizing",
   ];
 
-  const handleGenerate = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleGenerate = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setLoading(true);
     setGenStage(0);
+    setErrorMsg(null);
 
     const timer1 = setTimeout(() => setGenStage(1), 300);
     const timer2 = setTimeout(() => setGenStage(2), 650);
@@ -68,7 +89,9 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ initialScanId }) => {
       clearTimeout(timer3);
       setLoading(false);
       setGenStage(0);
-      toast.error(err.message || "Failed to generate report", "Synthesis Error");
+      const message = typeof err?.message === "string" ? err.message : "Failed to synthesize security report";
+      setErrorMsg(message);
+      toast.error(message, "Report Generation Error");
     }
   };
 
@@ -76,61 +99,78 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ initialScanId }) => {
     window.print();
   };
 
+  // Safe recommendation extractor that never prints [object Object]
+  const renderRecommendationText = (rec: any): string => {
+    if (typeof rec === "string") return rec;
+    if (!rec) return "";
+    if (typeof rec === "object") {
+      return rec.description || rec.title || rec.text || rec.detail || JSON.stringify(rec);
+    }
+    return String(rec);
+  };
+
+  const recommendations = Array.isArray(report?.content?.recommendations)
+    ? report!.content.recommendations
+    : [];
+
   return (
-    <div className="space-y-8 animate-fadeIn max-w-4xl mx-auto pb-14">
-      {/* Header Banner */}
-      <div className="p-7 rounded-2xl border border-border/70 bg-surface-0/70 backdrop-blur-sm shadow-sm space-y-3">
-        <div className="flex items-center space-x-2">
+    <div className="space-y-8 animate-fadeIn max-w-5xl mx-auto pb-14">
+      {/* Soft Neumorphic Hero Header Banner */}
+      <Card surface="raised" className="p-8 sm:p-10 relative overflow-hidden print:hidden">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-primary/5 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
+        
+        <div className="flex items-center space-x-3 mb-3">
           <Badge variant="safe" size="sm">Tamper-Evident</Badge>
-          <span className="text-xs text-text-muted">
-            SHA-256 Provenance Audit
+          <span className="text-sm font-mono text-text-muted">
+            SHA-256 Provenance Audit Record
           </span>
         </div>
-        <h2 className="text-2xl sm:text-3xl font-semibold text-text-primary tracking-tight">
+
+        <h1 className="text-3xl sm:text-4xl font-bold text-text-primary tracking-tight">
           Security Report Builder
-        </h2>
-        <p className="text-xs sm:text-sm text-text-secondary max-w-3xl leading-relaxed">
+        </h1>
+        <p className="text-base text-text-secondary mt-2 max-w-3xl leading-relaxed">
           Synthesize static quarantine findings, Authenticode signature certificates, passive exposure vectors, and quantum trust simulations into an executive or technical audit report.
         </p>
-      </div>
+      </Card>
 
       {/* Report Builder Configuration Card */}
-      <Card level={0} className="p-6 sm:p-7 space-y-6 print:hidden">
-        <form onSubmit={handleGenerate} className="space-y-5">
+      <Card surface="raised" className="p-7 sm:p-8 space-y-6 print:hidden">
+        <form onSubmit={handleGenerate} className="space-y-6">
           {/* Source Scan Input */}
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-text-muted mb-1.5">
+            <label className="block text-sm font-semibold uppercase tracking-wider text-text-muted mb-2">
               Source Scan ID (Optional)
             </label>
             <input
               type="text"
-              placeholder="e.g. scan-172583… (leave blank for latest session)"
+              placeholder="e.g. scan-172583… (leave blank to synthesize latest session)"
               value={scanId}
               onChange={(e) => setScanId(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-surface-1/60 border border-border/70 text-xs font-mono text-text-primary placeholder:text-text-muted focus-ring shadow-xs"
+              className="w-full px-4 py-3 rounded-2xl neu-inset bg-surface-0/60 text-sm font-mono text-text-primary placeholder:text-text-muted focus-ring"
             />
           </div>
 
           {/* Report Type Selector */}
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-text-muted mb-2.5">
-              Select Report Type
+            <label className="block text-sm font-semibold uppercase tracking-wider text-text-muted mb-3">
+              Select Report Template
             </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {reportTypes.map((rt) => {
                 const isSelected = reportType === rt.id;
                 return (
                   <div
                     key={rt.id}
                     onClick={() => setReportType(rt.id)}
-                    className={`p-3.5 rounded-xl border cursor-pointer transition-all ${
+                    className={`p-5 rounded-2xl cursor-pointer transition-all duration-200 border ${
                       isSelected
-                        ? "bg-primary/10 border-primary/40 text-text-primary shadow-xs"
-                        : "bg-surface-1/40 border-border/60 text-text-secondary hover:bg-surface-1/80 hover:text-text-primary"
+                        ? "neu-inset border-primary/50 bg-primary/10 text-text-primary shadow-inner"
+                        : "neu-button bg-surface-0 border-border/60 text-text-secondary hover:text-text-primary"
                     }`}
                   >
-                    <div className="font-semibold text-xs text-text-primary">{rt.name}</div>
-                    <div className="text-[11px] text-text-muted mt-1 leading-relaxed">
+                    <div className="font-bold text-base text-text-primary mb-1">{rt.name}</div>
+                    <div className="text-xs sm:text-sm text-text-muted leading-relaxed">
                       {rt.desc}
                     </div>
                   </div>
@@ -141,21 +181,24 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ initialScanId }) => {
 
           {/* Generation Sequence Indicator */}
           {loading && (
-            <div className="p-4 rounded-xl bg-surface-1/50 border border-border/70 space-y-3 animate-fadeIn">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-primary font-medium">{stages[genStage]}…</span>
-                <span className="text-text-muted">{genStage + 1} / 4</span>
+            <div className="p-5 rounded-2xl neu-inset-sm bg-surface-0/60 space-y-4 animate-fadeIn">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-primary font-bold flex items-center space-x-2">
+                  <Sparkles className="w-4 h-4 animate-spin" />
+                  <span>{stages[genStage]}…</span>
+                </span>
+                <span className="text-text-muted font-mono font-medium">Stage {genStage + 1} of 4</span>
               </div>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 {stages.map((stg, i) => (
                   <div
                     key={stg}
-                    className={`p-2 text-center text-[10px] rounded-lg border transition-all ${
+                    className={`p-3 text-center text-xs rounded-xl border transition-all duration-200 ${
                       genStage > i
-                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 font-medium"
+                        ? "neu-inset-sm bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 font-semibold"
                         : genStage === i
-                        ? "bg-primary/10 text-primary border-primary/40 font-semibold"
-                        : "bg-surface-0/60 border-border/60 text-text-muted"
+                        ? "neu-inset-sm bg-primary/20 text-primary border-primary/40 font-bold"
+                        : "neu-button bg-surface-0 border-border/50 text-text-muted"
                     }`}
                   >
                     {stg}
@@ -165,14 +208,34 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ initialScanId }) => {
             </div>
           )}
 
+          {/* Error Recovery State */}
+          {errorMsg && (
+            <div className="p-4 rounded-2xl border border-rose-500/30 bg-rose-500/10 flex items-center justify-between gap-4 animate-fadeIn">
+              <div className="flex items-center space-x-3">
+                <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0" />
+                <span className="text-sm text-rose-700 dark:text-rose-300 font-medium">
+                  {errorMsg}
+                </span>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleGenerate()}
+                icon={<RotateCcw className="w-4 h-4" />}
+              >
+                Try Again
+              </Button>
+            </div>
+          )}
+
           {/* Submit CTA */}
-          <div className="flex justify-end pt-2 border-t border-border/60">
+          <div className="flex justify-end pt-3 border-t border-border/60">
             <Button
               type="submit"
               disabled={loading}
               variant="primary"
-              className="text-xs font-medium"
-              icon={<FileCheck className="w-4 h-4" />}
+              className="text-base font-semibold px-6 py-3.5 shadow-md"
+              icon={<FileCheck className="w-5 h-5" />}
             >
               Generate Report
             </Button>
@@ -182,135 +245,139 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ initialScanId }) => {
 
       {/* Generation Complete Banner */}
       {report && (
-        <div className="p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 shadow-xs flex items-center justify-between animate-fadeIn print:hidden">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
-              <CheckCircle2 className="w-5 h-5" />
+        <Card
+          surface="raised"
+          className="p-5 border border-emerald-500/30 bg-emerald-500/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-fadeIn print:hidden"
+        >
+          <div className="flex items-center space-x-4">
+            <div className="p-3 rounded-2xl neu-inset-sm text-emerald-600 dark:text-emerald-400">
+              <CheckCircle2 className="w-6 h-6" />
             </div>
             <div>
-              <div className="text-xs font-semibold text-text-primary">
-                Report Ready
+              <div className="text-base font-bold text-text-primary">
+                Security Audit Report Ready
               </div>
-              <div className="text-[11px] text-text-muted">
-                Consolidated cryptographic audit produced successfully.
+              <div className="text-sm text-text-secondary">
+                Consolidated cryptographic evidence synthesized with deterministic non-repudiation.
               </div>
             </div>
           </div>
 
           <Button
-            size="sm"
+            size="md"
             variant="secondary"
             onClick={handlePrint}
-            icon={<Printer className="w-3.5 h-3.5" />}
+            icon={<Printer className="w-4 h-4" />}
+            className="neu-button font-medium"
           >
             Print / Export PDF
           </Button>
-        </div>
+        </Card>
       )}
 
       {/* Rendered Evidence-Based Report */}
       {report ? (
         <Card
-          level={0}
-          className="p-8 sm:p-10 shadow-sm space-y-8 print:border-none print:shadow-none print:p-0"
+          surface="raised"
+          className="p-8 sm:p-12 space-y-9 print:border-none print:shadow-none print:p-0"
         >
           {/* Header */}
           <div className="border-b border-border/60 pb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <div className="text-[11px] text-primary font-mono font-medium tracking-wide uppercase">
+              <div className="text-xs text-primary font-mono font-bold tracking-wider uppercase">
                 NeuroCraft Audit Record · ID: {report.id}
               </div>
-              <h3 className="text-2xl sm:text-3xl font-semibold text-text-primary tracking-tight mt-1">
+              <h2 className="text-2xl sm:text-3xl font-bold text-text-primary tracking-tight mt-1.5">
                 {report.title}
-              </h3>
+              </h2>
             </div>
 
-            <div className="text-right text-xs text-text-muted">
-              <div className="flex items-center space-x-1.5 justify-end">
-                <Calendar className="w-3.5 h-3.5 text-primary" />
-                <span>{new Date(report.created_at).toLocaleString()}</span>
+            <div className="text-right text-sm text-text-muted">
+              <div className="flex items-center space-x-2 justify-end">
+                <Calendar className="w-4 h-4 text-primary" />
+                <span className="font-medium">{new Date(report.created_at).toLocaleString()}</span>
               </div>
-              <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mt-1">
-                ✓ Cryptographically Signed
+              <div className="text-xs text-emerald-600 dark:text-emerald-400 font-bold mt-1">
+                ✓ Cryptographically Signed & Quarantined
               </div>
             </div>
           </div>
 
           {/* Executive Summary */}
           <div className="space-y-3">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-text-muted">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-text-muted">
               1. Executive Summary
-            </h4>
-            <div className="p-4 rounded-xl bg-surface-1/40 border border-border/60 text-xs leading-relaxed text-text-secondary">
-              {report.summary}
+            </h3>
+            <div className="p-5 rounded-2xl neu-inset-sm bg-surface-0/60 text-sm leading-relaxed text-text-secondary">
+              {report.summary || "No executive summary provided."}
             </div>
           </div>
 
-          {/* Key Recommendations List */}
-          <div className="space-y-3">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-text-muted">
-              2. Actionable Recommendations ({report.content.recommendations?.length || 0})
-            </h4>
-            {!report.content.recommendations || report.content.recommendations.length === 0 ? (
-              <div className="p-4 text-xs text-emerald-600 dark:text-emerald-400 font-medium rounded-xl border border-border/60 bg-surface-1/40">
-                ✓ Zero adverse security remediation steps required.
+          {/* Actionable Recommendations List */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-text-muted">
+              2. Actionable Recommendations ({recommendations.length})
+            </h3>
+            {recommendations.length === 0 ? (
+              <div className="p-5 text-sm text-emerald-600 dark:text-emerald-400 font-semibold rounded-2xl neu-inset-sm bg-surface-0/60">
+                ✓ Zero adverse security remediation steps required. Binary demonstrates clean provenance.
               </div>
             ) : (
-              <div className="space-y-2">
-                {report.content.recommendations.map((rec: string, i: number) => (
-                  <div
-                    key={i}
-                    className="p-3.5 rounded-xl border border-border/60 bg-surface-1/40 flex items-start justify-between gap-4 text-xs"
-                  >
-                    <div>
-                      <div className="font-medium text-text-primary">Step {i + 1}</div>
-                      <div className="text-text-secondary mt-0.5 leading-relaxed">{rec}</div>
+              <div className="space-y-3">
+                {recommendations.map((rec: any, i: number) => {
+                  const recText = renderRecommendationText(rec);
+                  return (
+                    <div
+                      key={i}
+                      className="p-4 sm:p-5 rounded-2xl border border-border/60 neu-inset-sm bg-surface-0/40 flex items-start justify-between gap-4 text-sm"
+                    >
+                      <div className="space-y-1">
+                        <div className="font-bold text-text-primary">Step {i + 1}</div>
+                        <div className="text-text-secondary leading-relaxed">{recText}</div>
+                      </div>
+                      <Badge variant="medium" size="sm">
+                        Priority
+                      </Badge>
                     </div>
-                    <Badge variant="medium" size="sm">
-                      Recommended
-                    </Badge>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
 
           {/* Cryptographic Provenance Section */}
           <div className="space-y-3 pt-2">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-text-muted">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-text-muted">
               3. Cryptographic Provenance & Non-Repudiation
-            </h4>
-            <div className="p-4 rounded-xl bg-surface-1/40 border border-border/60 space-y-2 font-mono text-xs text-text-secondary">
-              <div className="flex items-center justify-between">
+            </h3>
+            <div className="p-5 rounded-2xl neu-inset bg-surface-0/80 space-y-3 font-mono text-xs sm:text-sm text-text-secondary">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                 <span className="text-text-muted">Report Record ID:</span>
-                <span className="font-medium text-text-primary truncate max-w-xs">{report.id}</span>
+                <span className="font-bold text-text-primary break-all">{report.id}</span>
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                 <span className="text-text-muted">Source Artifact Ref:</span>
-                <span className="font-medium text-text-primary truncate max-w-xs">{report.scan_id || "Session Consolidate"}</span>
+                <span className="font-bold text-text-primary break-all">{report.scan_id || "Session Consolidate"}</span>
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                 <span className="text-text-muted">Verification Engine:</span>
-                <span className="font-medium text-primary">NeuroCraft Multi-Engine v1.4-FOSS</span>
+                <span className="font-bold text-primary">NeuroCraft Multi-Engine v1.4-FOSS</span>
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                 <span className="text-text-muted">Execution Policy:</span>
-                <span className="font-medium text-emerald-600 dark:text-emerald-400">Deterministic Static Only</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">Deterministic Static Only</span>
               </div>
             </div>
           </div>
         </Card>
       ) : (
-        <Card level={0} className="p-12 print:hidden">
+        <Card surface="raised" className="p-14 print:hidden">
           <EmptyState
-            icon={<FileText className="w-8 h-8 text-text-muted" />}
-            title="No reports yet"
-            description="Generate your first evidence-based report using the builder above."
-            actionLabel="Generate Report"
-            onAction={() => {
-              const btn = document.querySelector('button[type="submit"]') as HTMLButtonElement;
-              if (btn) btn.click();
-            }}
+            icon={<FileText className="w-10 h-10 text-text-muted" />}
+            title="No reports synthesized yet"
+            description="Generate your first evidence-based security report using the builder template above."
+            actionLabel="Synthesize Report"
+            onAction={() => handleGenerate()}
           />
         </Card>
       )}

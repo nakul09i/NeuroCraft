@@ -2,7 +2,7 @@ import React from "react";
 import { Loader2 } from "lucide-react";
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "outline" | "ghost" | "destructive" | "quantum";
+  variant?: "primary" | "secondary" | "outline" | "ghost" | "destructive" | "quantum" | "inset";
   size?: "sm" | "md" | "lg";
   loading?: boolean;
   loadingText?: string;
@@ -25,30 +25,33 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles =
-      "inline-flex items-center justify-center font-medium select-none transition-all duration-150 focus-ring disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none btn-interactive";
+      "inline-flex items-center justify-center font-medium select-none transition-all duration-150 focus-ring disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none";
 
-    let sizeStyles = "px-3.5 py-1.5 text-xs gap-2 rounded-lg";
-    if (size === "sm") sizeStyles = "px-2.5 py-1 text-[11px] gap-1.5 rounded-md";
-    if (size === "lg") sizeStyles = "px-5 py-2.5 text-sm gap-2 rounded-xl font-semibold";
+    let sizeStyles = "px-4 py-2.5 text-[15px] gap-2 rounded-xl";
+    if (size === "sm") sizeStyles = "px-3 py-1.5 text-[13px] gap-1.5 rounded-lg";
+    if (size === "lg") sizeStyles = "px-6 py-3 text-[16px] gap-2.5 rounded-2xl font-semibold";
 
     let variantStyles =
-      "bg-primary text-text-inverse hover:bg-primary-hover shadow-xs hover:shadow-sm";
+      "bg-primary text-text-inverse hover:bg-primary-hover shadow-md hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm";
 
     if (variant === "secondary") {
       variantStyles =
-        "bg-surface-1 text-text-primary border border-border hover:bg-surface-2 hover:border-border-strong shadow-xs";
+        "neu-button text-text-primary";
+    } else if (variant === "inset") {
+      variantStyles =
+        "neu-inset text-primary font-semibold";
     } else if (variant === "outline") {
       variantStyles =
-        "bg-transparent text-text-primary border border-border hover:bg-surface-1 hover:border-border-strong";
+        "bg-surface-0/60 text-text-primary border border-border hover:bg-surface-1 hover:border-border-strong shadow-xs";
     } else if (variant === "ghost") {
       variantStyles =
-        "bg-transparent text-text-secondary hover:text-text-primary hover:bg-surface-1";
+        "bg-transparent text-text-secondary hover:text-text-primary hover:bg-surface-1/60";
     } else if (variant === "destructive") {
       variantStyles =
-        "bg-danger text-white hover:opacity-95 shadow-xs";
+        "bg-danger text-white hover:opacity-95 shadow-sm hover:-translate-y-0.5 active:translate-y-0";
     } else if (variant === "quantum") {
       variantStyles =
-        "bg-accent-purple text-white hover:opacity-95 shadow-xs hover:shadow-sm";
+        "bg-accent-purple text-white hover:opacity-95 shadow-md shadow-purple-500/20 hover:-translate-y-0.5 active:translate-y-0";
     }
 
     return (
@@ -60,7 +63,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       >
         {loading ? (
           <>
-            <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
+            <Loader2 className="w-4 h-4 animate-spin shrink-0" />
             <span>{loadingText || children}</span>
           </>
         ) : (

@@ -4,7 +4,7 @@ export interface ScoreRingProps {
   score?: number | null; // 0 to 100, or null/undefined
   loading?: boolean;
   error?: boolean;
-  size?: number; // diameter in px (default 130)
+  size?: number; // diameter in px (default 144)
   strokeWidth?: number; // stroke width in px (default 10)
   label?: string;
   sublabel?: string;
@@ -16,7 +16,7 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
   score,
   loading = false,
   error = false,
-  size = 130,
+  size = 144,
   strokeWidth = 10,
   label,
   sublabel,
@@ -43,7 +43,6 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
     const animate = (currentTime: number) => {
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      // Clean easeOutCubic
       const ease = 1 - Math.pow(1 - progress, 3);
       const currentVal = Math.round(start + (targetScore - start) * ease);
       setDisplayScore(currentVal);
@@ -70,7 +69,6 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
 
   if (targetScore !== null) {
     if (variant === "posture") {
-      // Posture: higher is better
       if (validScore >= 75) {
         strokeColor = "var(--success)";
       } else if (validScore >= 50) {
@@ -79,7 +77,6 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
         strokeColor = "var(--danger)";
       }
     } else {
-      // Risk: lower is better
       if (validScore <= 25) {
         strokeColor = "var(--success)";
       } else if (validScore <= 60) {
@@ -99,85 +96,87 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
       aria-label={label || "Security Score"}
       className={`relative inline-flex flex-col items-center justify-center select-none ${className}`}
     >
-      <svg width={size} height={size} className="rotate-[-90deg] transition-all">
-        {/* Ambient Background Track */}
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke="var(--surface-2)"
-          strokeWidth={strokeWidth}
-          fill="transparent"
-        />
-
-        {/* Animated Active Value Ring */}
-        {targetScore !== null && (
+      <div className="relative p-2 rounded-full neu-inset">
+        <svg width={size} height={size} className="rotate-[-90deg] transition-all">
+          {/* Ambient Background Track */}
           <circle
             cx={size / 2}
             cy={size / 2}
             r={radius}
-            stroke={strokeColor}
+            stroke="var(--surface-2)"
             strokeWidth={strokeWidth}
-            strokeDasharray={circumference}
-            strokeDashoffset={strokeDashoffset}
-            strokeLinecap="round"
             fill="transparent"
-            style={{ transition: "stroke-dashoffset 0.1s linear, stroke 0.3s ease" }}
           />
-        )}
 
-        {/* Loading Ring Shimmer */}
-        {loading && (
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            stroke="var(--primary)"
-            strokeWidth={strokeWidth}
-            strokeDasharray={`${circumference * 0.25} ${circumference * 0.75}`}
-            strokeLinecap="round"
-            fill="transparent"
-            className="animate-spin origin-center opacity-50"
-          />
-        )}
-      </svg>
+          {/* Animated Active Value Ring */}
+          {targetScore !== null && (
+            <circle
+              cx={size / 2}
+              cy={size / 2}
+              r={radius}
+              stroke={strokeColor}
+              strokeWidth={strokeWidth}
+              strokeDasharray={circumference}
+              strokeDashoffset={strokeDashoffset}
+              strokeLinecap="round"
+              fill="transparent"
+              style={{ transition: "stroke-dashoffset 0.1s linear, stroke 0.3s ease" }}
+            />
+          )}
 
-      {/* Center Label Display */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none px-2 text-center">
-        {loading ? (
-          <div className="w-8 h-8 rounded-full bg-surface-2 animate-pulse" />
-        ) : error ? (
-          <span className="text-xs font-semibold text-danger">Unavailable</span>
-        ) : targetScore !== null ? (
-          <>
-            <span className="text-3xl sm:text-4xl font-bold tracking-tight text-text-primary leading-none">
-              {validScore}
-            </span>
-            <span className="text-[11px] font-medium text-text-muted mt-1">
-              / 100
-            </span>
-          </>
-        ) : (
-          <>
-            <span className="text-2xl font-bold text-text-muted leading-none">
-              —
-            </span>
-            <span className="text-[10px] text-text-muted mt-1 leading-tight">
-              No security score yet
-            </span>
-          </>
-        )}
+          {/* Loading Ring Shimmer */}
+          {loading && (
+            <circle
+              cx={size / 2}
+              cy={size / 2}
+              r={radius}
+              stroke="var(--primary)"
+              strokeWidth={strokeWidth}
+              strokeDasharray={`${circumference * 0.25} ${circumference * 0.75}`}
+              strokeLinecap="round"
+              fill="transparent"
+              className="animate-spin origin-center opacity-50"
+            />
+          )}
+        </svg>
+
+        {/* Center Label Display */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none px-2 text-center">
+          {loading ? (
+            <div className="w-10 h-10 rounded-full bg-surface-2 animate-pulse" />
+          ) : error ? (
+            <span className="text-xs font-semibold text-danger">Unavailable</span>
+          ) : targetScore !== null ? (
+            <>
+              <span className="text-4xl sm:text-5xl font-bold tracking-tight text-text-primary leading-none">
+                {validScore}
+              </span>
+              <span className="text-xs font-medium text-text-muted mt-1.5">
+                / 100
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="text-3xl font-bold text-text-muted leading-none">
+                —
+              </span>
+              <span className="text-[11px] text-text-muted mt-1 leading-tight max-w-[90px]">
+                No security score available yet
+              </span>
+            </>
+          )}
+        </div>
       </div>
 
       {(label || sublabel) && (
-        <div className="mt-3 text-center">
+        <div className="mt-3.5 text-center">
           {label && (
-            <div className="text-xs font-semibold text-text-primary tracking-tight">
+            <div className="text-sm font-semibold text-text-primary tracking-tight">
               {label}
             </div>
           )}
           {sublabel && (
-            <div className="text-[11px] text-text-muted mt-0.5">
+            <div className="text-xs text-text-muted mt-0.5">
               {sublabel}
             </div>
           )}

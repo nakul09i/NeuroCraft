@@ -1,24 +1,25 @@
 /* ==============================================================================
-   NEUROCRAFT — APPLE-INSPIRED DESIGN SYSTEM TOKENS
-   Simplicity · Clarity · Restraint · Soft Depth · Muted Technical Accent
+   NEUROCRAFT — SOFT NEUMORPHISM DESIGN SYSTEM TOKENS
+   Three Surface Levels: Base, Raised, Inset · Realistic Subtle Depth · Premium SaaS
    ============================================================================== */
 
 :root {
-  /* Light Theme Tokens (Warm clean paper, whisper-thin borders, soft layered shadows) */
-  --bg: #fbfbfa;
-  --surface-0: #ffffff;
-  --surface-1: #f7f7f5;
-  --surface-2: #efeee9;
-  --surface-3: #e2e1db;
+  /* Light Theme Tokens (#EEF3F7 Cool Slate Base, Tactile Dual Shadows) */
+  --bg: #eef3f7;
+  --surface-0: #f5f8fb;
+  --surface-1: #eef3f7;
+  --surface-2: #e4ecf3;
+  --surface-3: #d8e3ed;
+  --surface-inset: #e9eff5;
   --surface-elevated: #ffffff;
 
-  --border: rgba(0, 0, 0, 0.08);
-  --border-subtle: rgba(0, 0, 0, 0.04);
-  --border-strong: rgba(0, 0, 0, 0.16);
+  --border: rgba(166, 180, 200, 0.3);
+  --border-subtle: rgba(166, 180, 200, 0.15);
+  --border-strong: rgba(166, 180, 200, 0.45);
 
-  --text-primary: #111827;
-  --text-secondary: #4b5563;
-  --text-muted: #6b7280;
+  --text-primary: #0f172a;
+  --text-secondary: #596780;
+  --text-muted: #7e8b9f;
   --text-inverse: #ffffff;
 
   --primary: #0284c7;
@@ -54,42 +55,50 @@
 
   --ring: rgba(2, 132, 199, 0.35);
 
-  /* Soft Natural Layered Shadows */
-  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
-  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.06), 0 2px 6px -2px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 12px 24px -4px rgba(0, 0, 0, 0.08), 0 4px 12px -4px rgba(0, 0, 0, 0.04);
-  --shadow-xl: 0 20px 32px -8px rgba(0, 0, 0, 0.1), 0 8px 16px -6px rgba(0, 0, 0, 0.05);
+  /* Soft Neumorphic Dual-Directional Shadows (Light Mode) */
+  --neu-raised-sm: -3px -3px 6px rgba(255, 255, 255, 0.85), 3px 3px 6px rgba(166, 180, 200, 0.32);
+  --neu-raised-md: -5px -5px 12px rgba(255, 255, 255, 0.92), 5px 5px 12px rgba(166, 180, 200, 0.38);
+  --neu-raised-lg: -8px -8px 20px rgba(255, 255, 255, 0.98), 8px 8px 20px rgba(166, 180, 200, 0.42);
+
+  --neu-inset-sm: inset 2px 2px 5px rgba(166, 180, 200, 0.3), inset -2px -2px 5px rgba(255, 255, 255, 0.85);
+  --neu-inset-md: inset 3px 3px 8px rgba(166, 180, 200, 0.35), inset -3px -3px 8px rgba(255, 255, 255, 0.9);
+
+  --shadow-xs: var(--neu-raised-sm);
+  --shadow-sm: var(--neu-raised-sm);
+  --shadow-md: var(--neu-raised-md);
+  --shadow-lg: var(--neu-raised-lg);
+  --shadow-xl: var(--neu-raised-lg);
 }
 
 .dark {
-  /* Dark Theme Tokens (Deep navy / near-black, refined translucent layers, electric cyan & subtle violet) */
-  --bg: #090d16;
-  --surface-0: #0f141f;
-  --surface-1: #151b29;
-  --surface-2: #1c2436;
-  --surface-3: #263046;
-  --surface-elevated: #151b29;
+  /* Dark Theme Tokens (Deep Navy Charcoal Base, Subdued Luminescence) */
+  --bg: #0c111c;
+  --surface-0: #131b2c;
+  --surface-1: #182236;
+  --surface-2: #1e2a42;
+  --surface-3: #273654;
+  --surface-inset: #0e1422;
+  --surface-elevated: #182236;
 
-  --border: rgba(255, 255, 255, 0.08);
+  --border: rgba(255, 255, 255, 0.07);
   --border-subtle: rgba(255, 255, 255, 0.04);
-  --border-strong: rgba(255, 255, 255, 0.16);
+  --border-strong: rgba(255, 255, 255, 0.12);
 
-  --text-primary: #f8fafc;
+  --text-primary: #f1f5f9;
   --text-secondary: #94a3b8;
   --text-muted: #64748b;
-  --text-inverse: #090d16;
+  --text-inverse: #0c111c;
 
   --primary: #38bdf8;
   --primary-hover: #0ea5e9;
-  --primary-subtle: rgba(56, 189, 248, 0.1);
+  --primary-subtle: rgba(56, 189, 248, 0.12);
   --primary-border: rgba(56, 189, 248, 0.25);
   --primary-text: #38bdf8;
 
   --accent-cyan: #38bdf8;
-  --accent-cyan-subtle: rgba(56, 189, 248, 0.1);
+  --accent-cyan-subtle: rgba(56, 189, 248, 0.12);
   --accent-purple: #a855f7;
-  --accent-purple-subtle: rgba(168, 85, 247, 0.12);
+  --accent-purple-subtle: rgba(168, 85, 247, 0.14);
 
   --success: #34d399;
   --success-subtle: rgba(52, 211, 153, 0.1);
@@ -113,10 +122,17 @@
 
   --ring: rgba(56, 189, 248, 0.35);
 
-  /* Deep Navy Dark Ambient Shadows */
-  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
-  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.5), 0 1px 2px -1px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 14px -2px rgba(0, 0, 0, 0.5), 0 2px 6px -2px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 14px 28px -4px rgba(0, 0, 0, 0.6), 0 4px 12px -4px rgba(0, 0, 0, 0.4);
-  --shadow-xl: 0 24px 40px -8px rgba(0, 0, 0, 0.7), 0 8px 20px -6px rgba(0, 0, 0, 0.5);
+  /* Soft Neumorphic Dual-Directional Shadows (Dark Mode) */
+  --neu-raised-sm: -2px -2px 6px rgba(255, 255, 255, 0.03), 3px 3px 7px rgba(0, 0, 0, 0.5);
+  --neu-raised-md: -4px -4px 12px rgba(255, 255, 255, 0.04), 5px 5px 14px rgba(0, 0, 0, 0.6);
+  --neu-raised-lg: -6px -6px 20px rgba(255, 255, 255, 0.05), 8px 8px 24px rgba(0, 0, 0, 0.7);
+
+  --neu-inset-sm: inset 2px 2px 4px rgba(0, 0, 0, 0.55), inset -2px -2px 4px rgba(255, 255, 255, 0.025);
+  --neu-inset-md: inset 3px 3px 8px rgba(0, 0, 0, 0.65), inset -3px -3px 8px rgba(255, 255, 255, 0.035);
+
+  --shadow-xs: var(--neu-raised-sm);
+  --shadow-sm: var(--neu-raised-sm);
+  --shadow-md: var(--neu-raised-md);
+  --shadow-lg: var(--neu-raised-lg);
+  --shadow-xl: var(--neu-raised-lg);
 }

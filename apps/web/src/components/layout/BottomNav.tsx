@@ -18,7 +18,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onSelectTab }) 
   return (
     <nav
       aria-label="Mobile Navigation"
-      className="md:hidden fixed bottom-0 left-0 right-0 h-16 border-t border-border bg-surface-0/95 backdrop-blur-md flex items-center justify-around px-2 z-40"
+      className="md:hidden fixed bottom-0 left-0 right-0 h-16 border-t border-border bg-surface-0/95 backdrop-blur-md flex items-center justify-around px-3 z-40 neu-raised-md"
     >
       {items.map((item) => {
         const Icon = item.icon;
@@ -28,14 +28,14 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onSelectTab }) 
           <button
             key={item.id}
             onClick={() => onSelectTab(item.id)}
-            className={`flex flex-col items-center justify-center flex-1 h-full py-1 text-[10px] font-medium transition-all ${
+            className={`flex flex-col items-center justify-center flex-1 py-1.5 px-1 rounded-xl text-xs font-semibold transition-all ${
               isActive
-                ? "text-primary font-bold"
+                ? "neu-inset-sm bg-primary/10 text-primary"
                 : "text-text-muted hover:text-text-primary"
             }`}
           >
-            <Icon className={`w-5 h-5 mb-0.5 ${isActive ? "text-primary" : "text-text-muted"}`} />
-            <span>{item.label}</span>
+            <Icon className={`w-5 h-5 mb-0.5 ${isActive ? "text-primary stroke-[2.2]" : "text-text-muted stroke-[1.8]"}`} />
+            <span className="text-[11px]">{item.label}</span>
           </button>
         );
       })}

@@ -43,30 +43,30 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fadeIn">
-      <div className="relative w-full max-w-md bg-surface-0/95 backdrop-blur-xl border border-border/80 rounded-2xl shadow-xl p-7 overflow-hidden animate-scaleIn">
+      <div className="relative w-full max-w-md bg-surface-0 border border-border/80 rounded-3xl neu-raised-lg p-8 overflow-hidden animate-scaleIn">
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 text-text-muted hover:text-text-primary p-1.5 rounded-lg hover:bg-surface-1 transition-colors"
+          className="absolute top-6 right-6 text-text-muted hover:text-text-primary p-2 rounded-xl neu-button transition-colors"
           aria-label="Close dialog"
         >
           <X className="w-4 h-4" />
         </button>
 
         {/* Title */}
-        <div className="text-center mb-6 pt-1">
-          <h2 className="text-xl sm:text-2xl font-semibold text-text-primary tracking-tight">
+        <div className="text-center mb-6 pt-2">
+          <h2 className="text-2xl sm:text-3xl font-bold text-text-primary tracking-tight">
             {isLogin ? "Sign in to NeuroCraft" : "Create Security Account"}
           </h2>
-          <p className="text-xs text-text-secondary mt-1">
+          <p className="text-sm text-text-secondary mt-1.5">
             {isLogin
               ? "Access persistent private scans, telemetry, and threat history"
-              : "Isolated user tenant with cryptographic ownership"}
+              : "Isolated tenant with cryptographic provenance ownership"}
           </p>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 rounded-xl bg-danger/10 border border-danger/30 flex items-center space-x-2 text-danger text-xs">
+          <div className="mb-5 p-3.5 rounded-2xl bg-danger/10 border border-danger/30 flex items-center space-x-2.5 text-danger text-xs sm:text-sm">
             <ShieldAlert className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
@@ -75,70 +75,70 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
         <form onSubmit={handleSubmit} className="space-y-4">
           {!isLogin && (
             <div>
-              <label className="block text-xs font-medium text-text-secondary mb-1.5">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-text-muted mb-1.5">
                 Display Name
               </label>
               <div className="relative">
-                <UserIcon className="absolute left-3.5 top-3 w-4 h-4 text-text-muted" />
+                <UserIcon className="absolute left-4 top-3.5 w-4 h-4 text-text-muted" />
                 <input
                   type="text"
                   required
                   placeholder="Security Analyst"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-surface-1/60 border border-border/70 text-xs text-text-primary placeholder:text-text-muted focus-ring shadow-xs transition"
+                  className="w-full pl-11 pr-4 py-3 rounded-2xl neu-inset bg-surface-0/60 text-sm text-text-primary placeholder:text-text-muted focus-ring"
                 />
               </div>
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-medium text-text-secondary mb-1.5">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-text-muted mb-1.5">
               Email Address
             </label>
             <div className="relative">
-              <Mail className="absolute left-3.5 top-3 w-4 h-4 text-text-muted" />
+              <Mail className="absolute left-4 top-3.5 w-4 h-4 text-text-muted" />
               <input
                 type="email"
                 required
                 placeholder="analyst@enterprise.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-surface-1/60 border border-border/70 text-xs text-text-primary placeholder:text-text-muted focus-ring shadow-xs transition"
+                className="w-full pl-11 pr-4 py-3 rounded-2xl neu-inset bg-surface-0/60 text-sm text-text-primary placeholder:text-text-muted focus-ring"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-text-secondary mb-1.5">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-text-muted mb-1.5">
               Password
             </label>
             <div className="relative">
-              <Lock className="absolute left-3.5 top-3 w-4 h-4 text-text-muted" />
+              <Lock className="absolute left-4 top-3.5 w-4 h-4 text-text-muted" />
               <input
                 type="password"
                 required
                 placeholder="••••••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-surface-1/60 border border-border/70 text-xs text-text-primary placeholder:text-text-muted focus-ring shadow-xs transition"
+                className="w-full pl-11 pr-4 py-3 rounded-2xl neu-inset bg-surface-0/60 text-sm text-text-primary placeholder:text-text-muted focus-ring"
               />
             </div>
           </div>
 
-          <div className="pt-2">
+          <div className="pt-3">
             <Button
               type="submit"
               disabled={loading}
               variant="primary"
-              className="w-full text-xs font-medium py-2.5 shadow-xs"
+              className="w-full text-base font-semibold py-3.5 shadow-md"
             >
               {loading ? "Processing…" : isLogin ? "Sign In" : "Register"}
             </Button>
           </div>
         </form>
 
-        <div className="mt-5 text-center text-xs text-text-secondary">
+        <div className="mt-6 text-center text-sm text-text-secondary">
           {isLogin ? "Need an account?" : "Already registered?"}{" "}
           <button
             type="button"
@@ -146,7 +146,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
               setIsLogin(!isLogin);
               setError(null);
             }}
-            className="text-primary hover:underline font-medium ml-1"
+            className="text-primary hover:underline font-semibold ml-1"
           >
             {isLogin ? "Sign Up" : "Sign In"}
           </button>
