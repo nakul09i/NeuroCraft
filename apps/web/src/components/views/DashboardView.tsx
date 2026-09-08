@@ -31,6 +31,7 @@ import { Skeleton } from "../ui/Skeleton";
 import { EmptyState } from "../ui/EmptyState";
 import { api } from "../../api";
 import { DashboardStats, UserProfile } from "../../types";
+import { formatMetric, safeNumber } from "../../utils/error";
 
 export interface DashboardViewProps {
   onNavigate: (tab: string) => void;
@@ -66,20 +67,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
     loadData();
   }, []);
 
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return "Good morning";
-    if (hour < 18) return "Good afternoon";
-    return "Good evening";
-  };
-
   const displayName = user?.display_name || user?.email?.split("@")[0] || "Analyst";
 
   // Safe posture calculation (0 to 100) — Guaranteed never NaN / null / undefined / Infinity
   const calculatePostureScore = (): number | null => {
     if (loading || hasError) return null;
     if (stats.total_scans === 0) return 100;
-    const penalty = (stats.critical_threats * 30) + (stats.average_exposure * 0.15);
+    const penalty = (safeNumber(stats.critical_threats) * 30) + (safeNumber(stats.average_exposure) * 0.15);
     const raw = Math.max(15, Math.min(100, Math.round(100 - penalty)));
     return Number.isFinite(raw) ? raw : 100;
   };
@@ -152,28 +146,28 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
   return (
     <div className="space-y-8 max-w-[1360px] mx-auto pb-14">
       {/* =========================================================================
-          HERO BANNER: AWS-STYLE USABILITY + APPLE-STYLE POLISH
+          HERO BANNER: "Know what you can trust."
           ========================================================================= */}
       <Card surface="raised" className="p-8 sm:p-10 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
 
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-          <div className="space-y-2 max-w-2xl">
+          <div className="space-y-2.5 max-w-2xl">
             <div className="flex items-center space-x-2.5 text-xs font-semibold uppercase tracking-wider text-text-muted">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
               <span>Security Command Center · NeuroCraft</span>
             </div>
 
             <h1 className="text-4xl sm:text-5xl font-extrabold text-text-primary tracking-tight">
-              {getGreeting()}, {displayName}.
+              Know what you can trust.
             </h1>
 
             <p className="text-base sm:text-lg text-text-secondary leading-relaxed font-normal">
-              Your security command center is ready.
+              Verify executable provenance, extract static entropy and X.509 signatures, perform passive reconnaissance, and simulate quantum cryptographic trust — with zero dynamic code execution.
             </p>
           </div>
 
-          {/* Action CTAs (Primary & Secondary) */}
+          {/* Primary, Secondary, and Tertiary CTAs */}
           <div className="flex flex-wrap items-center gap-3 shrink-0">
             <Button
               size="lg"
@@ -191,7 +185,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
               className="neu-button text-base font-semibold px-6 py-3.5"
               icon={<Globe2 className="w-5 h-5 text-text-secondary" />}
             >
-              Check Exposure
+              Run Passive Recon
             </Button>
             <Button
               size="md"
@@ -201,15 +195,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
               icon={<Atom className="w-4 h-4 text-purple-500" />}
             >
               Quantum Trust
-            </Button>
-            <Button
-              size="md"
-              variant="secondary"
-              onClick={() => onNavigate("reports")}
-              className="neu-button text-sm font-semibold"
-              icon={<FileText className="w-4 h-4 text-primary" />}
-            >
-              Generate Report
             </Button>
             <button
               onClick={loadData}
@@ -416,59 +401,71 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
       </div>
 
       {/* =========================================================================
-          ROW 2: 4 CLICKABLE KPI METRIC CARDS (34–46px NUMBERS)
+          ROW 2: 4 CLICKABLE KPI METRIC CARDS (TOTAL SCANS, THREATS DETECTED, RECON TARGETS, QUANTUM RUNS)
           ========================================================================= */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {/* FILES ANALYZED */}
+        {/* TOTAL SCANS */}
         <Card
           surface="raised"
           interactive
           onClick={() => onNavigate("scanner")}
-          className="p-6 cursor-pointer group"
+          className="p-6 cursor-pointer group hover:-translate-y-1 transition-all duration-200"
         >
           <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold text-text-muted">Files Analyzed</span>
-            <div className="p-2.5 rounded-xl neu-inset-sm text-primary group-hover:scale-105 transition-transform">
+            <span className="text-sm font-semibold text-text-muted">Total Scans</span>
+            <div className="p-2.5 rounded-xl neu-inset-sm text-primary group-hover:scale-110 transition-transform">
               <FileSearch className="w-5 h-5" />
             </div>
           </div>
           <div className="mt-3">
             <span className="text-4xl font-extrabold font-mono text-text-primary tracking-tight">
-              {loading ? <Skeleton width={48} height={36} /> : stats.total_scans}
+              {loading ? <Skeleton width={48} height={36} /> : formatMetric(stats.total_scans, "0")}
             </span>
           </div>
+          <p className="text-xs text-text-secondary mt-1.5 leading-snug">
+            Safe static quarantine & format parsing
+          </p>
           <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-between text-xs text-text-muted">
-            <span>Static quarantine</span>
+            <span className="inline-flex items-center space-x-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              <span>Verified static</span>
+            </span>
             <span className="text-primary font-semibold group-hover:translate-x-0.5 transition-transform">
               Inspect →
             </span>
           </div>
         </Card>
 
-        {/* THREATS */}
+        {/* THREATS DETECTED */}
         <Card
           surface="raised"
           interactive
           onClick={() => onNavigate("history")}
-          className="p-6 cursor-pointer group"
+          className="p-6 cursor-pointer group hover:-translate-y-1 transition-all duration-200"
         >
           <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold text-text-muted">Threats</span>
-            <div className="p-2.5 rounded-xl neu-inset-sm text-danger group-hover:scale-105 transition-transform">
+            <span className="text-sm font-semibold text-text-muted">Threats Detected</span>
+            <div className="p-2.5 rounded-xl neu-inset-sm text-danger group-hover:scale-110 transition-transform">
               <ShieldAlert className="w-5 h-5" />
             </div>
           </div>
           <div className="mt-3">
             <span
               className={`text-4xl font-extrabold font-mono tracking-tight ${
-                stats.critical_threats > 0 ? "text-danger" : "text-text-primary"
+                safeNumber(stats.critical_threats) > 0 ? "text-danger" : "text-text-primary"
               }`}
             >
-              {loading ? <Skeleton width={48} height={36} /> : stats.critical_threats}
+              {loading ? <Skeleton width={48} height={36} /> : formatMetric(stats.critical_threats, "0")}
             </span>
           </div>
+          <p className="text-xs text-text-secondary mt-1.5 leading-snug">
+            Entropy anomalies & untrusted certs
+          </p>
           <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-between text-xs text-text-muted">
-            <span>{stats.critical_threats > 0 ? "Review signals" : "Clean baseline"}</span>
+            <span className="inline-flex items-center space-x-1">
+              <span className={`w-1.5 h-1.5 rounded-full ${safeNumber(stats.critical_threats) > 0 ? "bg-danger animate-pulse" : "bg-emerald-500"}`} />
+              <span>{safeNumber(stats.critical_threats) > 0 ? "Review signals" : "Clean baseline"}</span>
+            </span>
             <span className="text-primary font-semibold group-hover:translate-x-0.5 transition-transform">
               View →
             </span>
@@ -480,21 +477,27 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
           surface="raised"
           interactive
           onClick={() => onNavigate("recon")}
-          className="p-6 cursor-pointer group"
+          className="p-6 cursor-pointer group hover:-translate-y-1 transition-all duration-200"
         >
           <div className="flex items-center justify-between">
             <span className="text-sm font-semibold text-text-muted">Recon Targets</span>
-            <div className="p-2.5 rounded-xl neu-inset-sm text-emerald-500 group-hover:scale-105 transition-transform">
+            <div className="p-2.5 rounded-xl neu-inset-sm text-emerald-500 group-hover:scale-110 transition-transform">
               <Globe2 className="w-5 h-5" />
             </div>
           </div>
           <div className="mt-3">
             <span className="text-4xl font-extrabold font-mono text-text-primary tracking-tight">
-              {loading ? <Skeleton width={48} height={36} /> : stats.recon_targets}
+              {loading ? <Skeleton width={48} height={36} /> : formatMetric(stats.recon_targets, "0")}
             </span>
           </div>
+          <p className="text-xs text-text-secondary mt-1.5 leading-snug">
+            Passive OSINT, DNS & TLS evaluation
+          </p>
           <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-between text-xs text-text-muted">
-            <span>Passive OSINT</span>
+            <span className="inline-flex items-center space-x-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              <span>Real-time lookups</span>
+            </span>
             <span className="text-primary font-semibold group-hover:translate-x-0.5 transition-transform">
               Explore →
             </span>
@@ -506,21 +509,27 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
           surface="raised"
           interactive
           onClick={() => onNavigate("quantum")}
-          className="p-6 cursor-pointer group"
+          className="p-6 cursor-pointer group hover:-translate-y-1 transition-all duration-200"
         >
           <div className="flex items-center justify-between">
             <span className="text-sm font-semibold text-text-muted">Quantum Runs</span>
-            <div className="p-2.5 rounded-xl neu-inset-sm text-purple-500 group-hover:scale-105 transition-transform">
+            <div className="p-2.5 rounded-xl neu-inset-sm text-purple-500 group-hover:scale-110 transition-transform">
               <Atom className="w-5 h-5" />
             </div>
           </div>
           <div className="mt-3">
-            <span className="text-4xl font-extrabold font-mono text-text-primary tracking-tight">
-              {loading ? <Skeleton width={48} height={36} /> : stats.quantum_simulations}
+            <span className="text-4xl font-extrabold font-mono text-purple-600 dark:text-purple-400 tracking-tight">
+              {loading ? <Skeleton width={48} height={36} /> : formatMetric(stats.quantum_simulations, "0")}
             </span>
           </div>
+          <p className="text-xs text-text-secondary mt-1.5 leading-snug">
+            Bell-state |Φ⁺⟩ simulation & eavesdropping
+          </p>
           <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-between text-xs text-text-muted">
-            <span>Bell-state |Φ⁺⟩</span>
+            <span className="inline-flex items-center space-x-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+              <span>EPR Entanglement</span>
+            </span>
             <span className="text-purple-500 font-semibold group-hover:translate-x-0.5 transition-transform">
               Simulate →
             </span>

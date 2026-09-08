@@ -10,6 +10,10 @@ import {
   ChevronUp,
   Cpu,
   Sparkles,
+  Radio,
+  Eye,
+  Activity,
+  AlertTriangle,
 } from "lucide-react";
 import {
   BarChart,
@@ -27,6 +31,7 @@ import { Badge } from "../ui/Badge";
 import { useToast } from "../../context/ToastContext";
 import { api } from "../../api";
 import { QuantumScenario, QuantumSimulationResponse } from "../../types";
+import { formatApiError, formatMetric, safeNumber } from "../../utils/error";
 
 export const QuantumView: React.FC = () => {
   const { toast } = useToast();
@@ -81,8 +86,8 @@ export const QuantumView: React.FC = () => {
           ? "Quantum channel verification: PASS"
           : "Quantum channel verification: FAIL"
       );
-    } catch (err: any) {
-      toast.error(err.message || "Simulation execution failed", "Simulation Error");
+    } catch (err: unknown) {
+      toast.error(formatApiError(err, "Simulation execution failed"), "Simulation Error");
     } finally {
       setLoading(false);
     }
@@ -121,12 +126,14 @@ export const QuantumView: React.FC = () => {
     ? (simResult.threshold * 100).toFixed(1)
     : "15.0";
 
+  const isEveActive = scenario === "CHANNEL_MANIPULATION" || scenario === "FORGERY" || scenario === "IMPERSONATION";
+
   return (
     <div className="space-y-8 animate-fadeIn max-w-5xl mx-auto pb-14">
-      {/* Soft Neumorphic Hero Header Banner */}
+      {/* Header Banner */}
       <Card surface="raised" className="p-8 sm:p-10 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-80 h-80 bg-purple-500/5 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
-        
+
         <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
           <div className="flex items-center space-x-2.5">
             <span className="p-2 rounded-xl neu-inset-sm text-purple-600 dark:text-purple-400">
@@ -137,18 +144,149 @@ export const QuantumView: React.FC = () => {
             </span>
           </div>
           <Badge variant="quantum" size="sm">
-            EPR Channel Active
+            EPR Bell-State Active
           </Badge>
         </div>
 
         <div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-text-primary tracking-tight">
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-text-primary tracking-tight">
             Quantum Trust Simulation
           </h1>
           <p className="text-base text-text-secondary mt-2 max-w-3xl leading-relaxed">
-            Verify whether observed communication telemetry matches expected Bell-state entanglement distributions.
-            Detects forgery, replay attacks, and channel interception by measuring Total Variation Distance (TVD) against projective thresholds.
+            Verify whether observed communication telemetry matches expected Bell-state entanglement distributions. Detects signature forgery, replay attacks, and channel eavesdropping by measuring Total Variation Distance (TVD) against projective thresholds.
           </p>
+
+          {/* Educational Disclaimer required by Requirement 10 */}
+          <div className="mt-4 p-3.5 rounded-2xl neu-inset-sm bg-surface-0/60 border border-purple-500/20 flex items-center space-x-3 text-xs text-text-secondary">
+            <Info className="w-4 h-4 text-purple-500 shrink-0" />
+            <span>
+              Quantum trust simulation is used as a research/educational integrity signal and does not replace conventional cryptographic verification.
+            </span>
+          </div>
+        </div>
+      </Card>
+
+      {/* Interactive Bell-State Quantum Channel Visual Diagram */}
+      <Card surface="raised" className="p-7 sm:p-8 space-y-6">
+        <div className="flex items-center justify-between border-b border-border/60 pb-3">
+          <div>
+            <h2 className="text-lg font-bold text-text-primary">
+              Bell-State Quantum Channel Diagram
+            </h2>
+            <p className="text-xs text-text-secondary mt-0.5">
+              Live transmission model: Alice → Quantum Channel → Bob (with Eve Eavesdropping simulation)
+            </p>
+          </div>
+          <Badge variant={scenario === "LEGITIMATE" ? "safe" : "high"} size="sm">
+            {scenario === "LEGITIMATE" ? "UNCOMPROMISED CHANNEL" : "ATTACK VECTOR ACTIVE"}
+          </Badge>
+        </div>
+
+        {/* The Visual Channel Canvas */}
+        <div className="p-6 sm:p-8 rounded-3xl neu-inset bg-surface-0/50 relative overflow-hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+            {/* Alice (Transmitter) */}
+            <div className="lg:col-span-3 p-4 rounded-2xl neu-raised-sm bg-surface-0 text-center space-y-2 border border-border/60">
+              <div className="w-12 h-12 rounded-2xl neu-inset-sm text-primary flex items-center justify-center mx-auto">
+                <Radio className="w-6 h-6" />
+              </div>
+              <div className="font-bold text-sm text-text-primary">Alice (Transmitter)</div>
+              <div className="text-[11px] font-mono text-text-muted">Prepares |Φ⁺⟩ pairs</div>
+              <div className="text-[10px] font-mono font-bold text-primary px-2 py-0.5 rounded-md bg-primary/10 inline-block">
+                (|00⟩ + |11⟩)/√2
+              </div>
+            </div>
+
+            {/* Middle: Quantum Channel Waveguide with Eve Interception Node */}
+            <div className="lg:col-span-6 flex flex-col items-center justify-center space-y-4 px-2">
+              {/* Optional Eve Node */}
+              <div
+                className={`px-4 py-2.5 rounded-2xl border transition-all duration-300 flex items-center space-x-2.5 ${
+                  isEveActive
+                    ? "neu-inset bg-rose-500/15 border-rose-500/40 text-rose-600 dark:text-rose-400 font-bold animate-pulse shadow-md"
+                    : "neu-button bg-surface-0 border-border/60 text-text-muted"
+                }`}
+              >
+                <Eye className="w-4 h-4" />
+                <div className="text-xs">
+                  {isEveActive ? (
+                    <span>Eve: Active Eavesdropper Intercepting States</span>
+                  ) : (
+                    <span>Eve: Quiescent (Zero Interception)</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Animated Optical Waveguide */}
+              <div className="w-full relative h-10 flex items-center justify-center">
+                {/* Horizontal Channel Line */}
+                <div
+                  className={`w-full h-2 rounded-full transition-colors duration-300 ${
+                    scenario === "LEGITIMATE"
+                      ? "bg-gradient-to-r from-primary via-purple-500 to-emerald-500"
+                      : "bg-gradient-to-r from-primary via-rose-500 to-rose-600"
+                  }`}
+                />
+
+                {/* Flowing Quantum Particle Dots */}
+                <div className="absolute inset-0 flex items-center justify-around pointer-events-none">
+                  <span className="w-3.5 h-3.5 rounded-full bg-cyan-400 shadow-[0_0_8px_#38bdf8] animate-ping" />
+                  <span className="w-3.5 h-3.5 rounded-full bg-purple-400 shadow-[0_0_8px_#c084fc] animate-pulse" />
+                  <span className="w-3.5 h-3.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399] animate-ping" />
+                </div>
+              </div>
+
+              <div className="text-[11px] font-mono text-text-muted text-center">
+                Quantum Optical Waveguide · Coherence Length 100 km
+              </div>
+            </div>
+
+            {/* Bob (Receiver) */}
+            <div className="lg:col-span-3 p-4 rounded-2xl neu-raised-sm bg-surface-0 text-center space-y-2 border border-border/60">
+              <div className="w-12 h-12 rounded-2xl neu-inset-sm text-emerald-500 flex items-center justify-center mx-auto">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+              <div className="font-bold text-sm text-text-primary">Bob (Receiver)</div>
+              <div className="text-[11px] font-mono text-text-muted">Measures basis Z</div>
+              <div className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-md bg-emerald-500/10 inline-block">
+                TVD Projection
+              </div>
+            </div>
+          </div>
+
+          {/* Simulation Status Telemetry Row Required by Specification */}
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-6 pt-5 border-t border-border/50 font-mono text-xs">
+            <div className="p-3 rounded-xl neu-inset-sm bg-surface-0/70">
+              <div className="text-text-muted text-[10px] uppercase font-bold">Entanglement State</div>
+              <div className="font-bold text-purple-600 dark:text-purple-400 mt-0.5">|Φ⁺⟩ Bell Pair</div>
+            </div>
+
+            <div className="p-3 rounded-xl neu-inset-sm bg-surface-0/70">
+              <div className="text-text-muted text-[10px] uppercase font-bold">Channel Status</div>
+              <div className="font-bold text-text-primary mt-0.5 truncate">
+                {scenario === "LEGITIMATE" ? "Maximally Entangled" : "Perturbed / Collapsed"}
+              </div>
+            </div>
+
+            <div className="p-3 rounded-xl neu-inset-sm bg-surface-0/70">
+              <div className="text-text-muted text-[10px] uppercase font-bold">Measurement Error</div>
+              <div className="font-bold text-text-primary mt-0.5">{safeTVD}% TVD</div>
+            </div>
+
+            <div className="p-3 rounded-xl neu-inset-sm bg-surface-0/70">
+              <div className="text-text-muted text-[10px] uppercase font-bold">Detection Probability</div>
+              <div className={`font-bold mt-0.5 ${scenario === "LEGITIMATE" ? "text-emerald-600" : "text-rose-600"}`}>
+                {scenario === "LEGITIMATE" ? "0.0% (Clean)" : "99.9% (Alert)"}
+              </div>
+            </div>
+
+            <div className="p-3 rounded-xl neu-inset-sm bg-surface-0/70 col-span-2 sm:col-span-1">
+              <div className="text-text-muted text-[10px] uppercase font-bold">Integrity Result</div>
+              <div className={`font-bold mt-0.5 ${verdict.startsWith("PASS") ? "text-emerald-600" : verdict === "INCONCLUSIVE" ? "text-amber-600" : "text-rose-600"}`}>
+                {verdict || "Ready"}
+              </div>
+            </div>
+          </div>
         </div>
       </Card>
 
@@ -158,57 +296,61 @@ export const QuantumView: React.FC = () => {
           <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/60">
             <div>
               <h2 className="text-xl sm:text-2xl font-semibold text-text-primary">
-                Channel & Attack Scenarios
+                Select Transmission Scenario
               </h2>
-              <p className="text-sm text-text-secondary mt-0.5">
-                Select a physical channel state or simulated adversarial manipulation.
+              <p className="text-xs text-text-secondary mt-0.5">
+                Simulate various adversarial conditions over the Bell channel.
               </p>
             </div>
-            <span className="text-xs font-mono font-medium px-2.5 py-1 rounded-lg neu-inset-sm text-text-muted">
-              5 attack vectors
+            <span className="text-xs font-mono text-text-muted">
+              5 Presets Available
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
             {scenariosList.map((sc) => {
               const isSelected = scenario === sc.id;
               return (
-                <button
+                <div
                   key={sc.id}
-                  type="button"
                   onClick={() => setScenario(sc.id as QuantumScenario)}
-                  className={`p-4 rounded-2xl text-left transition-all duration-200 border ${
+                  className={`p-4 sm:p-5 rounded-2xl cursor-pointer transition-all duration-150 flex flex-col justify-between ${
                     isSelected
-                      ? "neu-inset border-purple-500/50 bg-purple-500/10 text-text-primary shadow-inner"
-                      : "neu-button bg-surface-0 border-border/60 text-text-secondary hover:text-text-primary"
+                      ? "neu-inset border-2 border-purple-500/60 bg-purple-500/10 shadow-inner"
+                      : "neu-raised-sm bg-surface-0 hover:border-purple-500/30"
                   }`}
                 >
-                  <div className="text-sm font-semibold text-text-primary truncate mb-1">
-                    {sc.name}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-bold text-sm sm:text-base text-text-primary">
+                        {sc.name}
+                      </span>
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-surface-2 text-text-muted font-semibold">
+                        {sc.badge}
+                      </span>
+                    </div>
+                    <p className="text-xs text-text-secondary leading-relaxed">
+                      {sc.desc}
+                    </p>
                   </div>
-                  <span
-                    className={`inline-block text-xs px-2 py-0.5 rounded-full font-medium mb-2 ${
-                      isSelected
-                        ? "bg-purple-500/25 text-purple-600 dark:text-purple-300 font-semibold"
-                        : "bg-surface-2/60 text-text-muted"
-                    }`}
-                  >
-                    {sc.badge}
-                  </span>
-                  <p className="text-xs line-clamp-3 leading-relaxed text-text-muted">
-                    {sc.desc}
-                  </p>
-                </button>
+
+                  <div className="mt-4 pt-2 border-t border-border/40 flex items-center justify-between text-xs">
+                    <span className="font-mono text-[11px] text-text-muted">Scenario ID:</span>
+                    <span className="font-mono font-bold text-purple-600 dark:text-purple-400">
+                      {sc.id}
+                    </span>
+                  </div>
+                </div>
               );
             })}
           </div>
         </div>
 
-        {/* Sliders and Run Simulation CTA */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-5 border-t border-border/60 items-center">
+        {/* Sliders: Projected Shots & Thermal Noise */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 pt-3 border-t border-border/60">
           <div className="p-4 rounded-2xl neu-inset-sm bg-surface-0/50">
             <div className="flex items-center justify-between text-sm font-medium text-text-primary mb-2">
-              <span>Projective Shots</span>
+              <span>Projected Shots</span>
               <span className="font-mono text-base text-purple-600 dark:text-purple-400 font-bold">
                 {shots.toLocaleString()}
               </span>
@@ -250,7 +392,7 @@ export const QuantumView: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex justify-end">
+          <div className="flex items-center">
             <Button
               onClick={handleRunSimulation}
               loading={loading}
@@ -394,7 +536,7 @@ export const QuantumView: React.FC = () => {
                 <span>Why this result?</span>
               </h4>
               <button className="p-2 rounded-xl neu-button text-text-muted hover:text-text-primary transition-colors">
-                {showWhyResult ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                {showWhyResult ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
               </button>
             </div>
 
@@ -424,7 +566,7 @@ export const QuantumView: React.FC = () => {
                 <span>Technical Explanation (Cryptographic & Physical Foundation)</span>
               </h4>
               <button className="p-2 rounded-xl neu-button text-text-muted hover:text-text-primary transition-colors">
-                {showTechnicalDetails ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                {showTechnicalDetails ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
               </button>
             </div>
 

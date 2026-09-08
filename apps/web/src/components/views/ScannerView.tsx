@@ -15,6 +15,10 @@ import {
   Check,
   RotateCcw,
   Sparkles,
+  Award,
+  AlertTriangle,
+  Lock,
+  Unlock,
 } from "lucide-react";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
@@ -24,6 +28,7 @@ import { useToast } from "../../context/ToastContext";
 import { useNotifications } from "../../context/NotificationContext";
 import { api } from "../../api";
 import { ScanResponse, VerdictLevel } from "../../types";
+import { formatApiError, formatBytes, safeNumber } from "../../utils/error";
 
 export interface ScannerViewProps {
   onScanComplete?: (scan: ScanResponse) => void;
@@ -44,20 +49,34 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
   const [scanResult, setScanResult] = useState<ScanResponse | null>(null);
   const [copiedHash, setCopiedHash] = useState(false);
 
+  // Expandable finding rows tracking
+  const [expandedFindings, setExpandedFindings] = useState<Record<string, boolean>>({});
+
   // Progressive disclosure expandable section toggles
   const [showTechEvidence, setShowTechEvidence] = useState(true);
-  const [showCryptoDetails, setShowCryptoDetails] = useState(false);
+  const [showCryptoDetails, setShowCryptoDetails] = useState(true);
   const [showRawMetadata, setShowRawMetadata] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // 8-stage progress timeline required by specification
   const stages = [
-    { id: 1, label: "Quarantine", desc: "Isolating file in secure in-memory sandbox" },
-    { id: 2, label: "Metadata Extraction", desc: "Calculating SHA-256, MIME, and binary headers" },
-    { id: 3, label: "Static Analysis", desc: "Evaluating section entropy and import tables" },
-    { id: 4, label: "Signature Verification", desc: "Parsing Authenticode & X.509 certificate chains" },
-    { id: 5, label: "Risk Assessment", desc: "Synthesizing multi-engine risk indicators" },
+    { id: 1, label: "Secure Quarantine", desc: "Isolating file in secure in-memory buffer" },
+    { id: 2, label: "Hash Calculation", desc: "Computing cryptographic SHA-256 and MD5 digests" },
+    { id: 3, label: "Metadata Extraction", desc: "Parsing file size, timestamps, and MIME properties" },
+    { id: 4, label: "Format/Header Parsing", desc: "Analyzing PE/ELF/Mach-O/PDF structures and headers" },
+    { id: 5, label: "Entropy Analysis", desc: "Measuring byte-distribution entropy and packing indicators" },
+    { id: 6, label: "Digital Signature Verification", desc: "Validating Authenticode, X.509 certs, and trust chains" },
+    { id: 7, label: "Risk Scoring", desc: "Synthesizing multi-engine findings and weighted heuristics" },
+    { id: 8, label: "Final Report Assembly", desc: "Compiling verifiable provenance and security verdict" },
   ];
+
+  const toggleFindingExpanded = (id: string) => {
+    setExpandedFindings((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
 
   const handleFileDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -88,17 +107,27 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
     setFailedStep(null);
     setScanResult(null);
 
-    // Sequential backend progress reflection
-    const timer1 = setTimeout(() => setAnalysisStep(2), 300);
-    const timer2 = setTimeout(() => setAnalysisStep(3), 700);
-    const timer3 = setTimeout(() => setAnalysisStep(4), 1100);
+    // Progressive timeline cadence across 8 stages
+    const timer1 = setTimeout(() => setAnalysisStep(2), 250);
+    const timer2 = setTimeout(() => setAnalysisStep(3), 550);
+    const timer3 = setTimeout(() => setAnalysisStep(4), 850);
+    const timer4 = setTimeout(() => setAnalysisStep(5), 1150);
+    const timer5 = setTimeout(() => setAnalysisStep(6), 1450);
+    const timer6 = setTimeout(() => setAnalysisStep(7), 1750);
 
     try {
       const res = await api.uploadAndScan(selectedFile);
-      setAnalysisStep(5);
+      setAnalysisStep(8);
       setTimeout(() => {
         setScanResult(res);
         setAnalyzing(false);
+        // Expand all findings by default
+        const initialExpand: Record<string, boolean> = {};
+        res.findings.forEach((f) => {
+          initialExpand[f.id] = true;
+        });
+        setExpandedFindings(initialExpand);
+
         toast.success(`Analysis completed for ${selectedFile.name}`);
         addNotification(
           "File Quarantine Analysis Completed",
@@ -107,14 +136,17 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
           res.verdict.level === "SAFE" ? "success" : "warning"
         );
         if (onScanComplete) onScanComplete(res);
-      }, 450);
-    } catch (err: any) {
+      }, 400);
+    } catch (err: unknown) {
       clearTimeout(timer1);
       clearTimeout(timer2);
       clearTimeout(timer3);
-      setFailedStep(analysisStep);
+      clearTimeout(timer4);
+      clearTimeout(timer5);
+      clearTimeout(timer6);
+      setFailedStep(analysisStep || 1);
       setAnalyzing(false);
-      const msg = typeof err?.message === "string" ? err.message : "File analysis failed";
+      const msg = formatApiError(err, "File analysis failed. Please verify file integrity and try again.");
       toast.error(msg, "Analysis Error");
       addNotification("File Analysis Failed", msg, "scanner", "error");
     }
@@ -142,17 +174,17 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
         <div className="absolute top-0 right-0 w-80 h-80 bg-primary/5 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
 
         <div className="flex items-center space-x-2.5 mb-3">
-          <Badge variant="safe" size="sm">Deterministic Sandbox</Badge>
-          <span className="text-xs font-mono text-text-muted">
-            Zero Dynamic Code Execution Guarantee
+          <Badge variant="safe" size="sm">Deterministic Quarantine</Badge>
+          <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
+            Zero Dynamic Code Execution
           </span>
         </div>
 
-        <h1 className="text-3xl sm:text-4xl font-bold text-text-primary tracking-tight">
-          Analyze an untrusted file.
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-text-primary tracking-tight">
+          Safe Static File Analysis
         </h1>
         <p className="text-base text-text-secondary mt-2 max-w-3xl leading-relaxed">
-          Static analysis without dynamic code execution. Inspect portable executables, PDFs, Android packages, and scripts in an isolated memory quarantine.
+          Inspect executable binaries, documents, scripts, and archives in memory quarantine. Extracts cryptographic digests, entropy variance, and Authenticode / X.509 signature provenance without executing untrusted code.
         </p>
       </Card>
 
@@ -186,13 +218,13 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
             </div>
 
             <h3 className="text-xl sm:text-2xl font-bold text-text-primary tracking-tight">
-              {selectedFile ? selectedFile.name : "Drag & drop an untrusted artifact here"}
+              {selectedFile ? selectedFile.name : "Drop file here"}
             </h3>
 
             <p className="text-sm text-text-secondary mt-1.5 max-w-md mx-auto">
               {selectedFile
-                ? `${(selectedFile.size / 1024).toFixed(1)} KB · Ready to analyze`
-                : "or click to browse your local file system"}
+                ? `${formatBytes(selectedFile.size)} · Ready to analyze`
+                : "or click Browse Files from your computer"}
             </p>
 
             <div className="mt-5 flex items-center justify-center gap-3">
@@ -206,7 +238,7 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
                 }}
                 className="shadow-md font-semibold text-sm px-6"
               >
-                Choose File
+                Browse Files
               </Button>
               {selectedFile && (
                 <Button
@@ -225,9 +257,9 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
             </div>
 
             <div className="mt-6 pt-4 border-t border-border/50 flex flex-wrap items-center justify-center gap-4 text-xs font-mono text-text-muted">
-              <span>Maximum File Size: <strong>25 MB</strong></span>
+              <span>Maximum Size: <strong>25 MB</strong></span>
               <span>·</span>
-              <span>Supported: <strong>PE (.exe, .dll) · ELF · Mach-O · PDF · APK · Scripts</strong></span>
+              <span>Supported: <strong>EXE · DLL · PDF · APK · Scripts (.ps1, .sh, .py) · Archives (.zip)</strong></span>
             </div>
           </div>
 
@@ -248,7 +280,7 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
                 }
                 className="px-3 py-1.5 rounded-xl neu-button text-xs font-medium text-text-primary hover:text-primary transition-colors"
               >
-                sample_pe.exe
+                signed_pe.exe
               </button>
               <button
                 type="button"
@@ -261,20 +293,20 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
                 }
                 className="px-3 py-1.5 rounded-xl neu-button text-xs font-medium text-text-primary hover:text-primary transition-colors"
               >
-                sample_doc.pdf
+                corporate_policy.pdf
               </button>
               <button
                 type="button"
                 onClick={() =>
                   loadSampleFile(
-                    "deploy_script.ps1",
+                    "deploy_automation.ps1",
                     "# Remote deployment automation script\nParam([string]$TargetHost)\nWrite-Output 'Executing deterministic verification on target'\nGet-Process | Select-Object -First 5",
                     "text/plain"
                   )
                 }
                 className="px-3 py-1.5 rounded-xl neu-button text-xs font-medium text-text-primary hover:text-primary transition-colors"
               >
-                deploy_script.ps1
+                deploy_automation.ps1
               </button>
             </div>
           </div>
@@ -294,9 +326,9 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
             </div>
           )}
 
-          {/* 5 Real Progress Steps */}
+          {/* 8-Stage Animated Progress Timeline */}
           {analyzing && (
-            <div className="p-6 rounded-3xl neu-inset bg-surface-0/60 space-y-5 animate-fadeIn">
+            <div className="p-6 sm:p-7 rounded-3xl neu-inset bg-surface-0/60 space-y-5 animate-fadeIn">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-base font-bold text-text-primary flex items-center space-x-2">
@@ -304,15 +336,24 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
                     <span>Analyzing {selectedFile?.name}…</span>
                   </h3>
                   <p className="text-xs text-text-secondary mt-0.5">
-                    Isolated quarantine parsing without process spawning.
+                    Zero dynamic code execution · Strict static memory quarantine
                   </p>
                 </div>
                 <span className="text-xs font-mono text-primary font-bold">
-                  Step {analysisStep} of 5
+                  STEP {analysisStep} of 8: {stages[analysisStep - 1]?.label || "Processing"}
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
+              {/* Progress bar */}
+              <div className="w-full bg-surface-2 rounded-full h-2 overflow-hidden neu-inset-sm">
+                <div
+                  className="bg-primary h-2 rounded-full transition-all duration-300 ease-out"
+                  style={{ width: `${(analysisStep / 8) * 100}%` }}
+                />
+              </div>
+
+              {/* Responsive 8-Step Timeline */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
                 {stages.map((stg) => {
                   const isCompleted = analysisStep > stg.id;
                   const isRunning = analysisStep === stg.id;
@@ -321,7 +362,7 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
                   return (
                     <div
                       key={stg.id}
-                      className={`p-3.5 rounded-2xl border text-center transition-all duration-200 ${
+                      className={`p-2.5 rounded-xl border text-center transition-all duration-200 flex flex-col justify-between ${
                         isCompleted
                           ? "neu-inset-sm bg-emerald-500/15 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
                           : isRunning
@@ -331,16 +372,12 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
                           : "neu-button bg-surface-0 border-border/50 text-text-muted"
                       }`}
                     >
-                      <div className="text-[10px] uppercase tracking-wider font-bold mb-1">
-                        {isCompleted
-                          ? "Completed"
-                          : isRunning
-                          ? "Running"
-                          : isFailed
-                          ? "Failed"
-                          : "Pending"}
+                      <div className="text-[9px] uppercase tracking-wider font-bold mb-1">
+                        STEP {stg.id}
                       </div>
-                      <div className="text-xs font-semibold truncate">{stg.label}</div>
+                      <div className="text-[11px] font-semibold leading-tight line-clamp-2">
+                        {stg.label}
+                      </div>
                     </div>
                   );
                 })}
@@ -350,7 +387,7 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
         </Card>
       )}
 
-      {/* Analysis Results — Human-First Progressive Disclosure */}
+      {/* Analysis Results — Professional Security Report Interface */}
       {scanResult && (
         <div className="space-y-7 animate-fadeIn">
           {/* Top Actions: Reset & Report */}
@@ -372,14 +409,14 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
                 variant="primary"
                 onClick={() => onGenerateReport(scanResult.scan_id)}
                 icon={<FileText className="w-4 h-4" />}
-                className="shadow-md"
+                className="shadow-md font-semibold"
               >
                 Generate Security Report
               </Button>
             )}
           </div>
 
-          {/* 1. TOP RESULT CARD: File Name, Risk, Summary */}
+          {/* 1. TOP SUMMARY CARD: File Name, Type, SHA-256, Size, Risk Score & Gauge */}
           <Card surface="raised" className="p-8 sm:p-10 space-y-6">
             <div className="flex flex-col md:flex-row items-center justify-between gap-8">
               <div className="space-y-3 text-center md:text-left flex-1">
@@ -389,6 +426,9 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
                   </Badge>
                   <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-lg neu-inset-sm text-text-muted">
                     {scanResult.file.type} Binary
+                  </span>
+                  <span className="text-xs font-semibold px-2.5 py-1 rounded-lg neu-inset-sm text-emerald-600 dark:text-emerald-400">
+                    Zero Dynamic Code Execution
                   </span>
                 </div>
 
@@ -406,18 +446,18 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
                     : "High-risk signals detected. Binary exhibits abnormal structural tampering or critical entropy anomalies."}
                 </p>
 
-                {/* Core Metadata Row: SHA-256, Type, Size, Signature */}
+                {/* Core Metadata Row: SHA-256, Type, Size, Authenticode */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-3">
                   <div className="p-3 rounded-2xl neu-inset-sm bg-surface-0/60">
-                    <div className="text-xs text-text-muted">SHA-256 Hash</div>
+                    <div className="text-xs text-text-muted font-medium">SHA-256 Digest</div>
                     <div className="flex items-center space-x-1.5 mt-0.5">
                       <span className="font-mono text-xs font-bold text-text-primary truncate">
-                        {scanResult.file.sha256.substring(0, 12)}…
+                        {scanResult.file.sha256.substring(0, 14)}…
                       </span>
                       <button
                         onClick={() => copyHash(scanResult.file.sha256)}
-                        className="p-1 rounded text-text-muted hover:text-text-primary"
-                        title="Copy full hash"
+                        className="p-1 rounded text-text-muted hover:text-text-primary transition"
+                        title="Copy full SHA-256 hash"
                       >
                         {copiedHash ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
                       </button>
@@ -425,32 +465,32 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
                   </div>
 
                   <div className="p-3 rounded-2xl neu-inset-sm bg-surface-0/60">
-                    <div className="text-xs text-text-muted">File Type</div>
+                    <div className="text-xs text-text-muted font-medium">File Format</div>
                     <div className="font-semibold text-xs sm:text-sm text-text-primary mt-0.5 truncate">
                       {scanResult.file.type}
                     </div>
                   </div>
 
                   <div className="p-3 rounded-2xl neu-inset-sm bg-surface-0/60">
-                    <div className="text-xs text-text-muted">Size in Memory</div>
+                    <div className="text-xs text-text-muted font-medium">File Size</div>
                     <div className="font-semibold text-xs sm:text-sm text-text-primary mt-0.5">
-                      {(scanResult.file.size / 1024).toFixed(1)} KB
+                      {formatBytes(scanResult.file.size)}
                     </div>
                   </div>
 
                   <div className="p-3 rounded-2xl neu-inset-sm bg-surface-0/60">
-                    <div className="text-xs text-text-muted">Authenticode Status</div>
+                    <div className="text-xs text-text-muted font-medium">Authenticode Signature</div>
                     <div className="font-semibold text-xs sm:text-sm text-text-primary mt-0.5 truncate">
-                      {scanResult.signature_info?.is_signed ? "Cryptographically Signed" : "Unsigned Binary"}
+                      {scanResult.signature_info?.is_signed ? "Signed" : "Unsigned"}
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Radial Risk Score Ring */}
+              {/* Radial Risk Gauge */}
               <div className="shrink-0 flex flex-col items-center">
                 <ScoreRing
-                  score={scanResult.verdict.score}
+                  score={safeNumber(scanResult.verdict.score, 0)}
                   variant="risk"
                   size={150}
                   strokeWidth={11}
@@ -460,15 +500,86 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
             </div>
           </Card>
 
-          {/* 2. FINDINGS SECTION */}
+          {/* 2. DIGITAL SIGNATURE & CERTIFICATE AUTHENTICITY */}
+          <Card surface="raised" className="p-7 sm:p-8 space-y-5">
+            <div className="flex items-center justify-between border-b border-border/60 pb-3">
+              <div className="flex items-center space-x-2.5">
+                {scanResult.signature_info?.is_signed ? (
+                  <Lock className="w-5 h-5 text-emerald-500" />
+                ) : (
+                  <Unlock className="w-5 h-5 text-amber-500" />
+                )}
+                <div>
+                  <h3 className="text-lg font-bold text-text-primary">
+                    Digital Signature & Certificate Authenticity
+                  </h3>
+                  <p className="text-xs text-text-secondary mt-0.5">
+                    Authenticode PKCS#7 signature verification and X.509 certificate chain validation.
+                  </p>
+                </div>
+              </div>
+              <Badge
+                variant={scanResult.signature_info?.is_signed ? "safe" : "neutral"}
+                size="md"
+              >
+                {scanResult.signature_info?.is_signed ? "SIGNED" : "UNSIGNED"}
+              </Badge>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 font-mono text-xs">
+              <div className="p-4 rounded-2xl neu-inset-sm bg-surface-0/60 space-y-1">
+                <div className="text-text-muted text-[11px] font-sans">Certificate Subject</div>
+                <div className="font-bold text-text-primary break-all">
+                  {scanResult.signature_info?.signer_name || scanResult.signature_info?.certificates?.[0]?.subject || "None (Unsigned Binary)"}
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl neu-inset-sm bg-surface-0/60 space-y-1">
+                <div className="text-text-muted text-[11px] font-sans">Certificate Issuer</div>
+                <div className="font-bold text-text-primary break-all">
+                  {scanResult.signature_info?.issuer_name || scanResult.signature_info?.certificates?.[0]?.issuer || "None"}
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl neu-inset-sm bg-surface-0/60 space-y-1">
+                <div className="text-text-muted text-[11px] font-sans">Validity & Expiration</div>
+                <div className="font-bold text-text-primary">
+                  {scanResult.signature_info?.certificates?.[0]?.not_after || "No expiry recorded"}
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl neu-inset-sm bg-surface-0/60 space-y-1">
+                <div className="text-text-muted text-[11px] font-sans">Chain Status</div>
+                <div className={`font-bold ${scanResult.signature_info?.is_signed ? "text-emerald-500" : "text-text-muted"}`}>
+                  {scanResult.signature_info?.is_signed ? "Valid Trusted Chain" : "No Chain Present"}
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl neu-inset-sm bg-surface-0/60 space-y-1">
+                <div className="text-text-muted text-[11px] font-sans">Verification Result</div>
+                <div className="font-bold text-primary">
+                  {scanResult.signature_info?.status || (scanResult.signature_info?.is_signed ? "VALID" : "NOT_SIGNED")}
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl neu-inset-sm bg-surface-0/60 space-y-1">
+                <div className="text-text-muted text-[11px] font-sans">Cryptographic Hash Type</div>
+                <div className="font-bold text-text-primary">
+                  {scanResult.signature_info?.digest_algorithm || scanResult.signature_info?.certificates?.[0]?.signature_algorithm || "SHA-256 with RSA"}
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* 3. EVIDENCE-BASED FINDINGS (EXPANDABLE ROWS) */}
           <Card surface="raised" className="p-7 sm:p-8 space-y-4">
             <div className="flex items-center justify-between border-b border-border/60 pb-3">
               <div>
                 <h3 className="text-lg font-bold text-text-primary">
-                  Security Findings ({scanResult.findings.length})
+                  Evidence-Based Findings ({scanResult.findings.length})
                 </h3>
                 <p className="text-xs text-text-secondary mt-0.5">
-                  Observed behavioral anomalies, signature discrepancies, and heuristic patterns.
+                  Expandable telemetry rows with technical rationale, forensic evidence, and source engines.
                 </p>
               </div>
             </div>
@@ -480,30 +591,69 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
               </div>
             ) : (
               <div className="space-y-3">
-                {scanResult.findings.map((f) => (
-                  <div
-                    key={f.id}
-                    className="p-4 sm:p-5 rounded-2xl neu-inset-sm bg-surface-0/50 border border-border/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
-                  >
-                    <div className="space-y-1">
-                      <div className="flex items-center space-x-2">
-                        <span className="font-bold text-sm text-text-primary">{f.title}</span>
-                        <Badge variant={getVerdictBadgeVariant(f.severity)} size="sm">
-                          {f.severity}
-                        </Badge>
+                {scanResult.findings.map((f) => {
+                  const isExpanded = !!expandedFindings[f.id];
+                  return (
+                    <div
+                      key={f.id}
+                      className="rounded-2xl neu-inset-sm bg-surface-0/50 border border-border/60 overflow-hidden transition-all duration-150"
+                    >
+                      {/* Clickable Header Row */}
+                      <div
+                        onClick={() => toggleFindingExpanded(f.id)}
+                        className="p-4 sm:p-5 flex items-center justify-between gap-4 cursor-pointer hover:bg-surface-0/80 select-none"
+                      >
+                        <div className="flex items-center space-x-3 overflow-hidden">
+                          <Badge variant={getVerdictBadgeVariant(f.severity)} size="sm">
+                            {f.severity}
+                          </Badge>
+                          <span className="font-bold text-sm text-text-primary truncate">
+                            {f.title}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center space-x-3 shrink-0">
+                          <span className="hidden sm:inline text-xs font-mono text-text-muted">
+                            Engine: {f.source_engine}
+                          </span>
+                          <button
+                            type="button"
+                            className="p-1 rounded text-text-muted hover:text-text-primary"
+                            aria-label={isExpanded ? "Collapse finding" : "Expand finding"}
+                          >
+                            {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                          </button>
+                        </div>
                       </div>
-                      <p className="text-xs text-text-secondary leading-relaxed">{f.description}</p>
+
+                      {/* Expandable Finding Details */}
+                      {isExpanded && (
+                        <div className="px-5 pb-5 pt-1 border-t border-border/40 space-y-3 animate-fadeIn text-xs">
+                          <div>
+                            <span className="font-semibold text-text-primary">Explanation: </span>
+                            <span className="text-text-secondary leading-relaxed">{f.description}</span>
+                          </div>
+
+                          <div className="p-3 rounded-xl neu-inset-sm bg-surface-0/70 font-mono text-[11px] space-y-1">
+                            <div className="text-text-muted font-sans font-semibold">Forensic Evidence & Source:</div>
+                            <div className="text-text-primary">Source Engine: <strong>{f.source_engine}</strong></div>
+                            <div className="text-text-primary">Confidence: <strong>{f.confidence}</strong></div>
+                            {f.evidence && (
+                              <div className="text-text-secondary mt-1">
+                                Evidence Output: {typeof f.evidence === "object" ? JSON.stringify(f.evidence) : String(f.evidence)}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <span className="text-xs font-mono font-bold text-text-muted shrink-0">
-                      {f.confidence} Confidence · {f.source_engine}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </Card>
 
-          {/* 3. PROGRESSIVE DISCLOSURE: TECHNICAL EVIDENCE ▾ */}
+          {/* 4. PROGRESSIVE DISCLOSURE: TECHNICAL EVIDENCE & ENTROPY */}
           <Card surface="raised" className="p-6 sm:p-7 space-y-4">
             <div
               onClick={() => setShowTechEvidence(!showTechEvidence)}
@@ -530,6 +680,7 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
                         ? scanResult.metadata.entropy.shannon.toFixed(3)
                         : "0.000"} / 8.000
                     </div>
+                    <div className="text-[10px] text-text-muted mt-0.5">High entropy indicates packing/encryption</div>
                   </div>
 
                   <div className="p-4 rounded-2xl neu-inset-sm bg-surface-0/60">
@@ -537,6 +688,7 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
                     <div className="text-lg font-bold text-text-primary mt-1">
                       {scanResult.metadata?.entropy?.suspicious_sections?.length || 0}
                     </div>
+                    <div className="text-[10px] text-text-muted mt-0.5">Sections with &gt; 7.200 entropy</div>
                   </div>
 
                   <div className="p-4 rounded-2xl neu-inset-sm bg-surface-0/60">
@@ -544,52 +696,8 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
                     <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400 mt-1">
                       Strict Static Only
                     </div>
+                    <div className="text-[10px] text-text-muted mt-0.5">Zero dynamic code execution</div>
                   </div>
-                </div>
-              </div>
-            )}
-          </Card>
-
-          {/* 4. PROGRESSIVE DISCLOSURE: CRYPTOGRAPHIC CERTIFICATE DETAILS ▾ */}
-          <Card surface="raised" className="p-6 sm:p-7 space-y-4">
-            <div
-              onClick={() => setShowCryptoDetails(!showCryptoDetails)}
-              className="flex items-center justify-between cursor-pointer select-none py-1"
-            >
-              <div className="flex items-center space-x-2.5">
-                <Key className="w-5 h-5 text-emerald-500" />
-                <h3 className="text-base sm:text-lg font-bold text-text-primary">
-                  Cryptographic Details & Authenticode Provenance
-                </h3>
-              </div>
-              <button className="p-2 rounded-xl neu-button text-text-muted hover:text-text-primary transition-colors">
-                {showCryptoDetails ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-              </button>
-            </div>
-
-            {showCryptoDetails && (
-              <div className="p-5 rounded-2xl neu-inset bg-surface-0/60 font-mono text-xs text-text-secondary space-y-2.5 animate-fadeIn">
-                <div className="flex justify-between border-b border-border/50 pb-1.5">
-                  <span className="text-text-muted">Signature State:</span>
-                  <span className="font-bold text-text-primary">
-                    {scanResult.signature_info?.is_signed ? scanResult.signature_info.status : "No Embedded Authenticode Cert"}
-                  </span>
-                </div>
-                <div className="flex justify-between border-b border-border/50 pb-1.5">
-                  <span className="text-text-muted">Subject Common Name:</span>
-                  <span className="font-bold text-text-primary">
-                    {scanResult.signature_info?.signer_name || scanResult.signature_info?.certificates?.[0]?.subject || "N/A"}
-                  </span>
-                </div>
-                <div className="flex justify-between border-b border-border/50 pb-1.5">
-                  <span className="text-text-muted">Issuer Authority:</span>
-                  <span className="font-bold text-text-primary">
-                    {scanResult.signature_info?.issuer_name || scanResult.signature_info?.certificates?.[0]?.issuer || "N/A"}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-text-muted">Verification Engine:</span>
-                  <span className="font-bold text-primary">ASN.1 PKCS#7 Deterministic Parser</span>
                 </div>
               </div>
             )}

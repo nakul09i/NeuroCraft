@@ -3,6 +3,7 @@ import { ThemeProvider } from "./context/ThemeContext";
 import { ToastProvider, useToast } from "./context/ToastContext";
 import { NotificationProvider } from "./context/NotificationContext";
 import { Sidebar } from "./components/layout/Sidebar";
+import { MobileDrawer } from "./components/layout/MobileDrawer";
 import { Header } from "./components/layout/Header";
 import { BottomNav } from "./components/layout/BottomNav";
 import { CommandPalette } from "./components/layout/CommandPalette";
@@ -26,6 +27,7 @@ const MainApp: React.FC = () => {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [helpModalOpen, setHelpModalOpen] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [selectedScanId, setSelectedScanId] = useState<string | undefined>(undefined);
 
   // Dynamic document title update per active route
@@ -93,6 +95,7 @@ const MainApp: React.FC = () => {
         <Header
           activeTabTitle={tabBreadcrumbs[activeTab] || "NeuroCraft"}
           onOpenCommand={() => setCommandPaletteOpen(true)}
+          onOpenMobileMenu={() => setMobileDrawerOpen(true)}
           onNavigate={setActiveTab}
           user={user}
           onOpenAuth={() => setAuthModalOpen(true)}
@@ -129,6 +132,18 @@ const MainApp: React.FC = () => {
 
       {/* Mobile Bottom Navigation */}
       <BottomNav activeTab={activeTab} onSelectTab={setActiveTab} />
+
+      {/* Mobile Navigation Drawer */}
+      <MobileDrawer
+        isOpen={mobileDrawerOpen}
+        onClose={() => setMobileDrawerOpen(false)}
+        activeTab={activeTab}
+        onSelectTab={setActiveTab}
+        user={user}
+        onOpenAuth={() => setAuthModalOpen(true)}
+        onLogout={handleLogout}
+        onOpenHelp={() => setHelpModalOpen(true)}
+      />
 
       {/* Global Command Palette (Ctrl/Cmd + K) */}
       <CommandPalette
