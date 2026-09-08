@@ -9,9 +9,8 @@ import {
   User,
   Cpu,
   Info,
-  ExternalLink,
 } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../ui/Card";
+import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
 import { Badge } from "../ui/Badge";
 import { useTheme, ThemeMode } from "../../context/ThemeContext";
@@ -30,51 +29,56 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 }) => {
   const { theme, setTheme } = useTheme();
 
-  const themeOptions: Array<{ id: ThemeMode; label: string; desc: string; icon: any }> = [
+  const themeOptions: Array<{ id: ThemeMode; label: string; symbol: string; desc: string; icon: any }> = [
     {
       id: "light",
       label: "Light Mode",
-      desc: "Warm neutral white surfaces with deep readable text",
+      symbol: "☀",
+      desc: "Warm cream background (#F5F4EF) with high-contrast black borders",
       icon: Sun,
     },
     {
       id: "dark",
       label: "Dark Mode",
-      desc: "Deep non-fatiguing charcoal surfaces for focused inspection",
+      symbol: "☾",
+      desc: "Deep near-black background (#08090A) with electric cyan accents",
       icon: Moon,
     },
     {
       id: "system",
-      label: "System Preference",
-      desc: "Automatically synchronize with your operating system settings",
+      label: "System Mode",
+      symbol: "◐",
+      desc: "Synchronize automatically with your operating system preference",
       icon: Laptop,
     },
   ];
 
   return (
-    <div className="space-y-8 animate-fadeIn max-w-4xl mx-auto">
-      {/* Header */}
-      <div>
-        <div className="inline-flex items-center space-x-2 px-2.5 py-1 rounded-full bg-primary-subtle text-primary text-[11px] font-mono font-bold mb-2">
-          <Settings className="w-3.5 h-3.5" />
-          <span>PREFERENCES & CONFIGURATION</span>
+    <div className="space-y-8 animate-fadeIn max-w-4xl mx-auto pb-12">
+      {/* Header Banner */}
+      <div className="p-6 sm:p-7 rounded-xl border-2 border-border bg-surface-0 shadow-brutal space-y-2">
+        <div className="flex items-center space-x-2">
+          <Badge variant="neutral" size="sm">SYSTEM PREFERENCES</Badge>
+          <span className="text-[10px] font-mono font-bold text-text-muted uppercase">
+            PERSISTED CONFIGURATION
+          </span>
         </div>
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight">
-          Application Settings
+        <h2 className="text-2xl sm:text-3xl font-black text-text-primary tracking-tight font-display uppercase">
+          APPLICATION SETTINGS
         </h2>
         <p className="text-xs sm:text-sm text-text-secondary mt-1">
-          Customize your theme, inspect user profile and cryptographic credentials, and review architecture guarantees.
+          Customize your visual interface theme, manage authenticated identity, and review security invariants.
         </p>
       </div>
 
       {/* Theme Selection */}
-      <Card level={1} className="p-6 space-y-4">
-        <div className="border-b border-border pb-3">
-          <h3 className="text-sm font-bold text-text-primary uppercase tracking-wider">
-            Appearance & Interface Theme
+      <Card level={0} className="p-6 space-y-4">
+        <div className="border-b-2 border-border pb-3">
+          <h3 className="text-xs font-mono font-extrabold text-text-primary uppercase tracking-wider">
+            APPEARANCE & INTERFACE THEME
           </h3>
           <p className="text-xs text-text-secondary mt-0.5">
-            Select how NeuroCraft looks on your device. Persisted automatically in local storage.
+            Persisted automatically across browser sessions.
           </p>
         </div>
 
@@ -87,19 +91,19 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <button
                 key={opt.id}
                 onClick={() => setTheme(opt.id)}
-                className={`p-4 rounded-xl text-left border transition-all focus-ring ${
+                className={`p-4 rounded-lg text-left border-2 transition-all focus-ring ${
                   isSelected
-                    ? "bg-primary-subtle border-primary shadow-xs ring-1 ring-primary"
-                    : "bg-surface-0 border-border hover:border-border-strong hover:bg-surface-1"
+                    ? "bg-primary text-black border-border shadow-brutal-sm -translate-x-0.5 -translate-y-0.5 font-bold"
+                    : "bg-surface-1 border-border text-text-primary hover:bg-surface-2"
                 }`}
               >
                 <div className="flex items-center space-x-2.5 mb-2">
-                  <Icon className={`w-4 h-4 ${isSelected ? "text-primary" : "text-text-muted"}`} />
-                  <span className={`text-xs font-bold ${isSelected ? "text-primary" : "text-text-primary"}`}>
+                  <span className="text-base font-mono font-black">{opt.symbol}</span>
+                  <span className="text-xs font-black font-display uppercase">
                     {opt.label}
                   </span>
                 </div>
-                <p className="text-[11px] text-text-muted leading-relaxed">
+                <p className={`text-[11px] leading-relaxed ${isSelected ? "text-black/80 font-medium" : "text-text-muted"}`}>
                   {opt.desc}
                 </p>
               </button>
@@ -109,80 +113,80 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       </Card>
 
       {/* Account & Profile */}
-      <Card level={1} className="p-6 space-y-4">
-        <div className="border-b border-border pb-3 flex items-center justify-between">
+      <Card level={0} className="p-6 space-y-4">
+        <div className="border-b-2 border-border pb-3 flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-bold text-text-primary uppercase tracking-wider">
-              Account & Tenant Identity
+            <h3 className="text-xs font-mono font-extrabold text-text-primary uppercase tracking-wider">
+              ACCOUNT & TENANT IDENTITY
             </h3>
             <p className="text-xs text-text-secondary mt-0.5">
-              Row-level isolated profile for private persistent scan history.
+              Isolated audit session credentials and profile privileges.
             </p>
           </div>
-          <Badge variant="safe" size="sm">
-            ISOLATED
-          </Badge>
+          <Badge variant="safe" size="sm">ISOLATED</Badge>
         </div>
 
         {user ? (
-          <div className="p-4 rounded-xl bg-surface-0 border border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="p-4 rounded-lg bg-surface-1 border-2 border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-[2px_2px_0px_var(--border)]">
             <div className="space-y-1 text-xs">
-              <div className="font-bold text-text-primary text-sm">{user.display_name || user.email}</div>
-              <div className="text-text-muted font-mono">{user.email}</div>
-              <div className="text-[11px] font-mono text-text-muted">User ID: {user.id}</div>
+              <div className="font-extrabold text-text-primary text-sm font-display">
+                {user.display_name || user.email}
+              </div>
+              <div className="text-text-muted font-mono font-bold">{user.email}</div>
+              <div className="text-[10px] font-mono text-text-muted">SESSION ID: {user.id}</div>
             </div>
 
             <Button size="sm" variant="destructive" onClick={onLogout}>
-              Sign Out
+              SIGN OUT
             </Button>
           </div>
         ) : (
-          <div className="p-4 rounded-xl bg-surface-0 border border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="p-4 rounded-lg bg-surface-1 border-2 border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-[2px_2px_0px_var(--border)]">
             <div className="text-xs text-text-secondary">
-              Currently using guest mode. Sign in to save scans to your personal private workspace.
+              Currently operating in anonymous guest mode. Sign in to tie scans to your persistent identity.
             </div>
-            <Button size="sm" onClick={onOpenAuth}>
-              Sign In / Register
+            <Button size="sm" variant="primary" onClick={onOpenAuth}>
+              SIGN IN / REGISTER
             </Button>
           </div>
         )}
       </Card>
 
       {/* Architectural Guarantees */}
-      <Card level={2} className="p-6 space-y-4">
-        <div className="border-b border-border pb-3">
-          <h3 className="text-sm font-bold text-text-primary uppercase tracking-wider flex items-center space-x-2">
-            <ShieldCheck className="w-4 h-4 text-theme-success" />
-            <span>Architectural & Privacy Guarantees</span>
+      <Card level={0} className="p-6 space-y-4">
+        <div className="border-b-2 border-border pb-3">
+          <h3 className="text-xs font-mono font-extrabold text-text-primary uppercase tracking-wider flex items-center space-x-2">
+            <ShieldCheck className="w-4 h-4 text-theme-success stroke-[2.5]" />
+            <span>ARCHITECTURAL & PRIVACY INVARIANTS</span>
           </h3>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-          <div className="space-y-1">
-            <div className="font-bold text-text-primary">Zero Dynamic Execution</div>
+          <div className="p-3.5 rounded-lg bg-surface-1 border-2 border-border space-y-1 shadow-[2px_2px_0px_var(--border)]">
+            <div className="font-extrabold text-text-primary font-display">Zero Dynamic Execution</div>
             <p className="text-text-secondary text-[11px] leading-relaxed">
-              Files uploaded to NeuroCraft are inspected strictly with safe static parsers. Binaries are never executed.
+              Files uploaded to NeuroCraft are quarantined in memory and inspected strictly with deterministic parsers. Binaries are never executed.
             </p>
           </div>
 
-          <div className="space-y-1">
-            <div className="font-bold text-text-primary">Simulated Quantum Channels</div>
+          <div className="p-3.5 rounded-lg bg-surface-1 border-2 border-border space-y-1 shadow-[2px_2px_0px_var(--border)]">
+            <div className="font-extrabold text-text-primary font-display">Quantum Channel Non-Locality</div>
             <p className="text-text-secondary text-[11px] leading-relaxed">
-              All quantum trust evaluations simulate physical statevector channel distributions locally using pure mathematical modeling.
+              All quantum trust calculations simulate Bell-state density matrix projections locally without relying on external cloud APIs.
             </p>
           </div>
 
-          <div className="space-y-1">
-            <div className="font-bold text-text-primary">Free-First FOSS Stack</div>
+          <div className="p-3.5 rounded-lg bg-surface-1 border-2 border-border space-y-1 shadow-[2px_2px_0px_var(--border)]">
+            <div className="font-extrabold text-text-primary font-display">Free-First FOSS Stack</div>
             <p className="text-text-secondary text-[11px] leading-relaxed">
-              Zero mandatory paid vendor APIs. Fully operational with zero-configuration local SQLite.
+              Zero mandatory paid vendor dependencies. Runs entirely self-contained with Python 3.11+ and standard cryptographic libraries.
             </p>
           </div>
 
-          <div className="space-y-1">
-            <div className="font-bold text-text-primary">Evidence Transparency</div>
+          <div className="p-3.5 rounded-lg bg-surface-1 border-2 border-border space-y-1 shadow-[2px_2px_0px_var(--border)]">
+            <div className="font-extrabold text-text-primary font-display">Evidence Transparency</div>
             <p className="text-text-secondary text-[11px] leading-relaxed">
-              Unsigned does not equal malicious. Scores are accompanied by transparent point-by-point evidence explanations.
+              Unsigned binaries are flagged for absence of Authenticode certificates, never blindly marked as malware without supporting evidence.
             </p>
           </div>
         </div>

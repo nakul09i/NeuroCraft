@@ -16,35 +16,75 @@
     overflow-x: hidden;
     transition: background-color 0.2s ease, color 0.2s ease;
   }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: "Space Grotesk", "Inter", sans-serif;
+    letter-spacing: -0.02em;
+  }
 }
 
-/* Subtle architectural dot grid */
+/* Architectural high-contrast dot grid */
 .cyber-grid-bg {
-  background-size: 32px 32px;
+  background-size: 28px 28px;
   background-image: 
     radial-gradient(circle, var(--border) 1px, transparent 1px);
 }
 
-/* Custom polished scrollbar */
+/* Neo-Brutalist Tactile Card */
+.brutal-card {
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow-brutal);
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.brutal-card-interactive:hover {
+  transform: translate(-3px, -3px);
+  box-shadow: var(--shadow-brutal-hover);
+}
+
+.brutal-card-interactive:active {
+  transform: translate(1px, 1px);
+  box-shadow: var(--shadow-brutal-active);
+}
+
+/* Neo-Brutalist Tactile Button */
+.brutal-btn {
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow-brutal-sm);
+  transition: transform 0.14s ease, box-shadow 0.14s ease, background-color 0.14s ease;
+}
+
+.brutal-btn:hover:not(:disabled) {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--shadow-brutal);
+}
+
+.brutal-btn:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: var(--shadow-brutal-active);
+}
+
+/* Custom crisp brutalist scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--surface-0);
+  background: var(--bg);
+  border-left: 1px solid var(--border);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border-strong);
-  border-radius: 3px;
+  background: var(--border);
+  border-radius: 0px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
 }
 
-/* Accessible focus ring */
+/* High-contrast focus ring */
 .focus-ring {
   outline: none;
 }
@@ -60,5 +100,6 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+    transform: none !important;
   }
 }

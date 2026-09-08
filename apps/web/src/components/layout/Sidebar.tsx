@@ -10,7 +10,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Shield,
-  User,
   LogOut,
   LogIn,
 } from "lucide-react";
@@ -62,13 +61,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
     {
       title: "VERIFICATION",
       items: [
-        { id: "quantum", label: "Quantum Trust", icon: Atom, badge: "SIH" },
+        { id: "quantum", label: "Quantum Trust", icon: Atom, badge: "EPR" },
       ],
     },
     {
       title: "REPORTING",
       items: [
-        { id: "reports", label: "Reports", icon: FileText },
+        { id: "reports", label: "Security Reports", icon: FileText },
         { id: "history", label: "History", icon: History },
       ],
     },
@@ -76,26 +75,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <aside
-      className={`hidden md:flex flex-col border-r border-border bg-surface-0 transition-all duration-300 z-30 select-none ${
+      className={`hidden md:flex flex-col border-r-2 border-border bg-surface-0 transition-all duration-200 z-30 select-none ${
         collapsed ? "w-18" : "w-60"
       }`}
     >
       {/* Brand Header */}
-      <div className="h-16 border-b border-border/80 flex items-center justify-between px-4">
+      <div className="h-16 border-b-2 border-border flex items-center justify-between px-3.5 bg-surface-0">
         <div
           onClick={() => onSelectTab("dashboard")}
-          className="flex items-center space-x-3 cursor-pointer group overflow-hidden"
+          className="flex items-center space-x-2.5 cursor-pointer group overflow-hidden"
         >
           {/* NeuroCraft Connected Trust-Node Motif */}
-          <div className="w-9 h-9 rounded-xl bg-primary-subtle border border-primary-border flex items-center justify-center shrink-0 group-hover:border-primary transition shadow-xs">
-            <Shield className="w-4.5 h-4.5 text-primary group-hover:scale-105 transition-transform" />
+          <div className="w-8 h-8 rounded-md bg-primary border-2 border-border text-black flex items-center justify-center shrink-0 shadow-brutal-sm group-hover:-translate-x-0.5 group-hover:-translate-y-0.5 transition-transform">
+            <Shield className="w-4 h-4 stroke-[2.5]" />
           </div>
           {!collapsed && (
             <div className="flex flex-col">
-              <span className="font-extrabold text-sm tracking-tight text-text-primary">
+              <span className="font-extrabold text-sm tracking-tight font-display text-text-primary">
                 NEUROCRAFT
               </span>
-              <span className="text-[10px] font-mono uppercase tracking-wider text-text-muted">
+              <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-text-muted">
                 Detect · Verify · Prove
               </span>
             </div>
@@ -104,19 +103,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-2 transition focus-ring"
+          className="p-1 rounded-md border-2 border-border bg-surface-1 text-text-primary hover:bg-surface-2 hover:shadow-brutal-sm active:translate-x-0.5 active:translate-y-0.5 transition focus-ring"
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
-          {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          {collapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
         </button>
       </div>
 
       {/* Categorized Navigation Sections */}
-      <nav className="flex-1 py-4 px-2 space-y-4 overflow-y-auto">
+      <nav className="flex-1 py-3 px-2 space-y-3.5 overflow-y-auto">
         {navSections.map((section) => (
           <div key={section.title} className="space-y-1">
             {!collapsed && (
-              <div className="px-3 text-[10px] font-mono font-bold tracking-widest text-text-muted uppercase mb-1">
+              <div className="px-2.5 text-[9px] font-mono font-extrabold tracking-widest text-text-muted uppercase mb-1">
                 {section.title}
               </div>
             )}
@@ -129,28 +128,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   key={item.id}
                   onClick={() => onSelectTab(item.id)}
                   title={collapsed ? item.label : undefined}
-                  className={`w-full flex items-center rounded-lg transition-all font-medium text-xs focus-ring relative group ${
-                    collapsed ? "justify-center p-2.5" : "px-3 py-2 space-x-3"
+                  className={`w-full flex items-center rounded-lg font-bold text-xs transition-all duration-150 focus-ring relative group ${
+                    collapsed ? "justify-center p-2.5" : "px-3 py-2 space-x-2.5"
                   } ${
                     isActive
-                      ? "bg-primary-subtle text-primary font-bold shadow-xs"
-                      : "text-text-secondary hover:text-text-primary hover:bg-surface-1"
+                      ? "bg-primary text-black border-2 border-border shadow-brutal-sm -translate-x-0.5 -translate-y-0.5 font-extrabold"
+                      : "text-text-secondary hover:text-text-primary hover:bg-surface-2 border-2 border-transparent"
                   }`}
                 >
-                  {/* Active Route Indicator Pill */}
-                  {isActive && (
-                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-primary rounded-r-full shadow-glow" />
-                  )}
                   <Icon
-                    className={`w-4 h-4 shrink-0 transition-colors ${
-                      isActive ? "text-primary" : "text-text-muted group-hover:text-text-primary"
+                    className={`w-4 h-4 shrink-0 stroke-[2.2] ${
+                      isActive ? "text-black" : "text-text-muted group-hover:text-text-primary"
                     }`}
                   />
                   {!collapsed && (
                     <div className="flex items-center justify-between w-full">
-                      <span>{item.label}</span>
+                      <span className="font-display tracking-tight">{item.label}</span>
                       {item.badge && (
-                        <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-purple-500/15 text-purple-600 dark:text-purple-300 border border-purple-400/20 font-bold">
+                        <span
+                          className={`text-[9px] font-mono font-extrabold px-1.5 py-0.5 rounded border ${
+                            isActive
+                              ? "bg-black text-white border-black"
+                              : "bg-accent-purple/20 text-accent-purple border-accent-purple"
+                          }`}
+                        >
                           {item.badge}
                         </span>
                       )}
@@ -164,43 +165,43 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </nav>
 
       {/* SYSTEM Section / Bottom Actions */}
-      <div className="p-2 border-t border-border/80 space-y-2 bg-surface-0/50">
+      <div className="p-2 border-t-2 border-border space-y-2 bg-surface-0">
         {!collapsed && (
-          <div className="px-3 text-[10px] font-mono font-bold tracking-widest text-text-muted uppercase">
+          <div className="px-2.5 text-[9px] font-mono font-extrabold tracking-widest text-text-muted uppercase">
             SYSTEM
           </div>
         )}
         <button
           onClick={() => onSelectTab("settings")}
           title={collapsed ? "Settings" : undefined}
-          className={`w-full flex items-center rounded-lg transition-all font-medium text-xs focus-ring ${
-            collapsed ? "justify-center p-2.5" : "px-3 py-2 space-x-3"
+          className={`w-full flex items-center rounded-lg font-bold text-xs transition-all duration-150 focus-ring ${
+            collapsed ? "justify-center p-2.5" : "px-3 py-2 space-x-2.5"
           } ${
             activeTab === "settings"
-              ? "bg-primary-subtle text-primary font-bold"
-              : "text-text-secondary hover:text-text-primary hover:bg-surface-1"
+              ? "bg-primary text-black border-2 border-border shadow-brutal-sm font-extrabold"
+              : "text-text-secondary hover:text-text-primary hover:bg-surface-2 border-2 border-transparent"
           }`}
         >
-          <Settings className="w-4 h-4 shrink-0 text-text-muted" />
-          {!collapsed && <span>Settings</span>}
+          <Settings className={`w-4 h-4 shrink-0 stroke-[2.2] ${activeTab === "settings" ? "text-black" : "text-text-muted"}`} />
+          {!collapsed && <span className="font-display tracking-tight">Settings</span>}
         </button>
 
         {user ? (
           <div
-            className={`flex items-center justify-between rounded-lg bg-surface-1 p-2 border border-border/60 ${
+            className={`flex items-center justify-between rounded-lg bg-surface-1 p-2 border-2 border-border shadow-brutal-sm ${
               collapsed ? "justify-center" : ""
             }`}
           >
             {!collapsed && (
-              <div className="flex items-center space-x-2.5 overflow-hidden">
-                <div className="w-7 h-7 rounded-lg bg-surface-3 flex items-center justify-center text-text-primary font-bold text-xs shrink-0">
+              <div className="flex items-center space-x-2 overflow-hidden">
+                <div className="w-6 h-6 rounded bg-primary text-black border border-border flex items-center justify-center font-extrabold text-xs shrink-0">
                   {user.display_name?.charAt(0) || user.email.charAt(0)}
                 </div>
                 <div className="overflow-hidden">
-                  <div className="text-xs font-semibold text-text-primary truncate">
+                  <div className="text-xs font-bold text-text-primary truncate font-display">
                     {user.display_name || user.email}
                   </div>
-                  <div className="text-[10px] text-text-muted uppercase font-mono truncate">
+                  <div className="text-[9px] text-text-muted uppercase font-mono font-bold truncate">
                     {user.role}
                   </div>
                 </div>
@@ -209,7 +210,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               onClick={onLogout}
               title="Sign Out"
-              className="p-1.5 rounded-lg text-text-muted hover:text-danger hover:bg-surface-2 transition shrink-0"
+              className="p-1 rounded text-text-muted hover:text-danger hover:bg-surface-2 transition shrink-0"
               aria-label="Sign out"
             >
               <LogOut className="w-3.5 h-3.5" />
@@ -219,11 +220,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <button
             onClick={onOpenAuth}
             title={collapsed ? "Sign In" : undefined}
-            className={`w-full flex items-center rounded-lg bg-primary-subtle border border-primary-border text-primary font-bold text-xs transition-all focus-ring ${
-              collapsed ? "justify-center p-2.5" : "px-3 py-2 space-x-2.5"
+            className={`w-full flex items-center rounded-lg bg-primary text-black border-2 border-border font-extrabold text-xs shadow-brutal-sm hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal active:translate-x-0.5 active:translate-y-0.5 transition-all duration-150 focus-ring ${
+              collapsed ? "justify-center p-2.5" : "px-3 py-2 space-x-2"
             }`}
           >
-            <LogIn className="w-4 h-4 shrink-0" />
+            <LogIn className="w-4 h-4 shrink-0 stroke-[2.5]" />
             {!collapsed && <span>Sign In</span>}
           </button>
         )}

@@ -3,13 +3,13 @@ import {
   Atom,
   ShieldCheck,
   ShieldAlert,
+  HelpCircle,
   Play,
-  RefreshCw,
   Info,
-  Sliders,
-  Sparkles,
   ChevronDown,
   ChevronUp,
+  Cpu,
+  Layers,
 } from "lucide-react";
 import {
   BarChart,
@@ -21,10 +21,9 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../ui/Card";
+import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
 import { Badge } from "../ui/Badge";
-import { ScoreRing } from "../ui/ScoreRing";
 import { useToast } from "../../context/ToastContext";
 import { api } from "../../api";
 import { QuantumScenario, QuantumSimulationResponse } from "../../types";
@@ -36,7 +35,8 @@ export const QuantumView: React.FC = () => {
   const [noiseLevel, setNoiseLevel] = useState<number>(0.0);
   const [loading, setLoading] = useState(false);
   const [simResult, setSimResult] = useState<QuantumSimulationResponse | null>(null);
-  const [showDeepMath, setShowDeepMath] = useState(false);
+  const [showWhyResult, setShowWhyResult] = useState(true);
+  const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
 
   const scenariosList = [
     {
@@ -78,14 +78,25 @@ export const QuantumView: React.FC = () => {
       setSimResult(res);
       toast.success(
         res.verdict === "NO ATTACK DETECTED"
-          ? "Quantum channel verified — statistical deviation within tolerance."
-          : "Attack detected — statistical Total Variation Distance exceeded threshold."
+          ? "Quantum channel verification: PASS"
+          : "Quantum channel verification: FAIL"
       );
     } catch (err: any) {
       toast.error(err.message || "Simulation execution failed", "Simulation Error");
     } finally {
       setLoading(false);
     }
+  };
+
+  const getVerdictLabel = () => {
+    if (!simResult) return "";
+    if (simResult.verdict === "NO ATTACK DETECTED") {
+      return noiseLevel > 0.3 ? "PASS (NOISY)" : "PASS";
+    }
+    if (Math.abs(simResult.deviation - simResult.threshold) < 0.05) {
+      return "INCONCLUSIVE";
+    }
+    return "FAIL";
   };
 
   const chartData = simResult
@@ -96,36 +107,45 @@ export const QuantumView: React.FC = () => {
       }))
     : [];
 
-  return (
-    <div className="space-y-8 animate-fadeIn max-w-5xl mx-auto">
-      {/* Visual Signature Banner */}
-      <div className="relative rounded-2xl p-6 sm:p-8 bg-gradient-to-r from-purple-950/30 via-surface-1 to-surface-1 border border-purple-500/30 shadow-sm overflow-hidden">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-600 dark:text-purple-300 text-[11px] font-mono font-bold mb-3">
-              <Atom className="w-3.5 h-3.5" />
-              <span>SIH KEY DIFFERENTIATOR</span>
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight">
-              Quantum Trust Simulation Engine
-            </h2>
-            <p className="text-xs sm:text-sm text-text-secondary mt-1.5 max-w-2xl leading-relaxed">
-              Test whether observed communication behavior matches the expected quantum pattern. Detects forgery, replay attacks, and eavesdropping by measuring Total Variation Distance (TVD) from Bell-state distributions.
-            </p>
-          </div>
+  const verdict = getVerdictLabel();
 
-          <div className="px-3.5 py-1.5 rounded-xl bg-purple-500/15 border border-purple-400/40 text-purple-600 dark:text-purple-300 text-xs font-mono font-bold tracking-wider shrink-0 shadow-sm">
-            SIMULATED QUANTUM ENVIRONMENT
+  return (
+    <div className="space-y-8 animate-fadeIn max-w-5xl mx-auto pb-12">
+      {/* Violet-Accented Neo-Brutalist Banner */}
+      <div className="p-6 sm:p-7 rounded-xl border-2 border-border bg-surface-0 shadow-brutal space-y-3 relative overflow-hidden">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center space-x-2">
+            <span className="p-1 rounded bg-accent-purple text-white border border-border">
+              <Atom className="w-4 h-4 stroke-[2.5]" />
+            </span>
+            <span className="text-[10px] font-mono font-extrabold uppercase tracking-widest text-accent-purple">
+              BELL-STATE VERIFICATION SIMULATOR
+            </span>
           </div>
+          <Badge variant="quantum" size="sm">EPR CHANNEL ACTIVE</Badge>
+        </div>
+
+        <div>
+          <h2 className="text-2xl sm:text-3xl font-black text-text-primary tracking-tight font-display uppercase">
+            QUANTUM TRUST SIMULATION
+          </h2>
+          <p className="text-xs sm:text-sm text-text-secondary mt-1 max-w-3xl leading-relaxed">
+            Verify whether observed communication behavior matches the expected Bell-state entanglement distribution.
+            Detects forgery, replay attacks, and channel interception by measuring Total Variation Distance (TVD).
+          </p>
         </div>
       </div>
 
-      {/* Scenario Selector & Controls */}
-      <Card level={1} className="p-6 space-y-6">
+      {/* Scenario Configuration Card */}
+      <Card level={0} className="p-6 space-y-6">
         <div>
-          <label className="block text-xs font-bold text-text-primary uppercase tracking-wider mb-3">
-            Select Attack / Channel Scenario
-          </label>
+          <div className="flex items-center justify-between mb-3 border-b-2 border-border pb-2">
+            <label className="text-xs font-mono font-extrabold text-text-primary uppercase tracking-wider">
+              CONFIGURE ATTACK / CHANNEL SCENARIO
+            </label>
+            <span className="text-[10px] font-mono text-text-muted font-bold">5 SIMULATED VECTORS</span>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
             {scenariosList.map((sc) => {
               const isSelected = scenario === sc.id;
@@ -134,19 +154,29 @@ export const QuantumView: React.FC = () => {
                   key={sc.id}
                   type="button"
                   onClick={() => setScenario(sc.id as QuantumScenario)}
-                  className={`p-3.5 rounded-xl text-left transition-all border ${
+                  className={`p-3.5 rounded-lg text-left transition-all border-2 ${
                     isSelected
-                      ? "bg-purple-500/15 border-purple-500 shadow-sm ring-1 ring-purple-500/30"
-                      : "bg-surface-0 border-border text-text-secondary hover:border-border-strong hover:bg-surface-2"
+                      ? "bg-accent-purple text-white border-border shadow-brutal-sm -translate-x-0.5 -translate-y-0.5 font-bold"
+                      : "bg-surface-1 border-border text-text-primary hover:bg-surface-2"
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-bold text-text-primary">{sc.name}</span>
+                    <span className="text-xs font-extrabold font-display truncate">{sc.name}</span>
                   </div>
-                  <span className="text-[9px] font-mono px-1 py-0.5 rounded bg-surface-2 text-purple-600 dark:text-purple-300 border border-border">
+                  <span
+                    className={`text-[9px] font-mono uppercase px-1.5 py-0.5 rounded border font-extrabold ${
+                      isSelected
+                        ? "bg-black text-white border-black"
+                        : "bg-surface-0 text-accent-purple border-accent-purple"
+                    }`}
+                  >
                     {sc.badge}
                   </span>
-                  <p className="text-[11px] text-text-muted line-clamp-2 mt-2 leading-tight">
+                  <p
+                    className={`text-[10px] mt-2 line-clamp-2 leading-tight ${
+                      isSelected ? "text-white/90" : "text-text-muted"
+                    }`}
+                  >
                     {sc.desc}
                   </p>
                 </button>
@@ -155,12 +185,12 @@ export const QuantumView: React.FC = () => {
           </div>
         </div>
 
-        {/* Sliders and Run Action */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-border items-center">
+        {/* Sliders and Run Simulation CTA */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t-2 border-border items-center">
           <div>
-            <div className="flex items-center justify-between text-xs text-text-primary font-medium mb-1.5">
-              <span>Projective Measurement Shots</span>
-              <span className="font-mono text-primary font-bold">{shots}</span>
+            <div className="flex items-center justify-between text-xs font-mono font-bold text-text-primary mb-1.5">
+              <span>PROJECTIVE SHOTS</span>
+              <span className="text-accent-purple font-extrabold">{shots}</span>
             </div>
             <input
               type="range"
@@ -169,14 +199,14 @@ export const QuantumView: React.FC = () => {
               step="100"
               value={shots}
               onChange={(e) => setShots(Number(e.target.value))}
-              className="w-full accent-primary cursor-pointer"
+              className="w-full accent-purple-500 cursor-pointer"
             />
           </div>
 
           <div>
-            <div className="flex items-center justify-between text-xs text-text-primary font-medium mb-1.5">
-              <span>Thermal Channel Noise Level</span>
-              <span className="font-mono text-primary font-bold">
+            <div className="flex items-center justify-between text-xs font-mono font-bold text-text-primary mb-1.5">
+              <span>THERMAL NOISE LEVEL</span>
+              <span className="text-accent-purple font-extrabold">
                 {(noiseLevel * 100).toFixed(0)}%
               </span>
             </div>
@@ -187,7 +217,7 @@ export const QuantumView: React.FC = () => {
               step="0.05"
               value={noiseLevel}
               onChange={(e) => setNoiseLevel(Number(e.target.value))}
-              className="w-full accent-primary cursor-pointer"
+              className="w-full accent-purple-500 cursor-pointer"
             />
           </div>
 
@@ -195,10 +225,12 @@ export const QuantumView: React.FC = () => {
             <Button
               onClick={handleRunSimulation}
               loading={loading}
-              loadingText="Simulating Channel..."
-              icon={<Play className="w-4 h-4" />}
+              loadingText="SIMULATING..."
+              variant="quantum"
+              className="w-full sm:w-auto text-xs font-black uppercase tracking-wider shadow-brutal"
+              icon={<Play className="w-4 h-4 stroke-[2.5]" />}
             >
-              Run Quantum Simulation
+              RUN SIMULATION →
             </Button>
           </div>
         </div>
@@ -207,81 +239,91 @@ export const QuantumView: React.FC = () => {
       {/* Simulation Results & Visualizations */}
       {simResult && (
         <div className="space-y-6 animate-fadeIn">
-          {/* Verdict Banner */}
+          {/* Verdict Banner: PASS / FAIL / INCONCLUSIVE */}
           <Card
-            level={1}
-            className={`p-6 border ${
-              simResult.verdict === "NO ATTACK DETECTED"
-                ? "bg-theme-success-subtle border-theme-success-border"
-                : "bg-theme-danger-subtle border-theme-danger-border"
+            level={0}
+            className={`p-6 sm:p-7 border-2 border-border ${
+              verdict.startsWith("PASS")
+                ? "bg-theme-success-subtle shadow-brutal"
+                : verdict === "INCONCLUSIVE"
+                ? "bg-theme-warning-subtle shadow-brutal"
+                : "bg-theme-danger-subtle shadow-brutal"
             }`}
           >
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-center space-x-4">
                 <div
-                  className={`p-3 rounded-xl border ${
-                    simResult.verdict === "NO ATTACK DETECTED"
-                      ? "bg-surface-0 border-theme-success-border text-theme-success"
-                      : "bg-surface-0 border-theme-danger-border text-theme-danger"
+                  className={`p-3.5 rounded-lg border-2 border-border shadow-brutal-sm ${
+                    verdict.startsWith("PASS")
+                      ? "bg-theme-success text-black"
+                      : verdict === "INCONCLUSIVE"
+                      ? "bg-warning text-black"
+                      : "bg-danger text-white"
                   }`}
                 >
-                  {simResult.verdict === "NO ATTACK DETECTED" ? (
-                    <ShieldCheck className="w-8 h-8" />
+                  {verdict.startsWith("PASS") ? (
+                    <ShieldCheck className="w-8 h-8 stroke-[2.5]" />
+                  ) : verdict === "INCONCLUSIVE" ? (
+                    <HelpCircle className="w-8 h-8 stroke-[2.5]" />
                   ) : (
-                    <ShieldAlert className="w-8 h-8" />
+                    <ShieldAlert className="w-8 h-8 stroke-[2.5]" />
                   )}
                 </div>
+
                 <div>
-                  <div className="flex items-center space-x-2 text-xs font-mono font-bold text-text-muted uppercase">
-                    <span>Quantum Verification Result</span>
-                    <span>•</span>
-                    <span className="text-purple-500 font-bold">{simResult.environment_badge}</span>
+                  <div className="flex items-center space-x-2 text-[10px] font-mono font-extrabold uppercase text-text-muted">
+                    <span>EPR VERIFICATION RESULT</span>
+                    <span>·</span>
+                    <span className="text-text-primary font-bold">{simResult.environment_badge}</span>
                   </div>
-                  <h3 className="text-2xl font-black text-text-primary tracking-tight mt-0.5">
-                    {simResult.verdict}
+                  <h3 className="text-3xl sm:text-4xl font-black font-display text-text-primary tracking-tight mt-0.5">
+                    {verdict}
                   </h3>
+                  <div className="text-xs font-mono font-bold text-text-secondary mt-1">
+                    {simResult.verdict}
+                  </div>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-6 border-t sm:border-t-0 sm:border-l border-border pt-4 sm:pt-0 sm:pl-6 text-center">
-                <div>
+              <div className="flex items-center space-x-6 border-t-2 sm:border-t-0 sm:border-l-2 border-border pt-4 sm:pt-0 sm:pl-6 text-center">
+                <div className="p-3 bg-surface-0 border-2 border-border rounded-lg shadow-[2px_2px_0px_var(--border)]">
                   <div className="text-2xl font-black font-mono text-text-primary">
                     {(simResult.deviation * 100).toFixed(2)}%
                   </div>
-                  <div className="text-[10px] uppercase font-bold text-text-muted mt-0.5">
-                    Observed TVD
+                  <div className="text-[9px] font-mono uppercase font-bold text-text-muted mt-0.5">
+                    OBSERVED TVD
                   </div>
                 </div>
 
-                <div>
+                <div className="p-3 bg-surface-0 border-2 border-border rounded-lg shadow-[2px_2px_0px_var(--border)]">
                   <div className="text-2xl font-black font-mono text-text-muted">
                     {(simResult.threshold * 100).toFixed(1)}%
                   </div>
-                  <div className="text-[10px] uppercase font-bold text-text-muted mt-0.5">
-                    Tolerance Bound
+                  <div className="text-[9px] font-mono uppercase font-bold text-text-muted mt-0.5">
+                    TOLERANCE BOUND
                   </div>
                 </div>
               </div>
             </div>
           </Card>
 
-          {/* Side-by-Side Distribution Chart */}
-          <Card level={1} className="p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-border pb-3">
+          {/* Side-by-Side Distribution Chart: Expected vs Observed */}
+          <Card level={0} className="p-6 space-y-4">
+            <div className="flex items-center justify-between border-b-2 border-border pb-3">
               <div>
-                <h4 className="text-xs font-bold text-text-primary uppercase tracking-wider">
-                  Bell State Computational Basis Projection
+                <h4 className="text-xs font-mono font-extrabold text-text-primary uppercase tracking-wider">
+                  BELL-STATE COMPUTATIONAL BASIS PROJECTION: EXPECTED VS OBSERVED
                 </h4>
                 <p className="text-xs text-text-secondary mt-0.5">
                   Expected Bell State |Φ+⟩ = (|00⟩ + |11⟩)/√2 vs Observed Projective Measurement
                 </p>
               </div>
-              <span className="text-xs font-mono text-primary font-bold">
-                {shots} Monte Carlo Shots
-              </span>
+              <Badge variant="quantum" size="sm">
+                {shots} SHOTS
+              </Badge>
             </div>
 
-            <div className="h-64 w-full pt-4">
+            <div className="h-64 w-full pt-4 font-mono">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -289,48 +331,83 @@ export const QuantumView: React.FC = () => {
                   <YAxis stroke="var(--text-muted)" tickFormatter={(v) => `${(v * 100).toFixed(0)}%`} />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: "var(--surface-elevated)",
+                      backgroundColor: "var(--surface-0)",
                       borderColor: "var(--border)",
-                      borderRadius: "12px",
-                      fontSize: "12px",
+                      borderWidth: "2px",
+                      boxShadow: "4px 4px 0px var(--border)",
+                      fontSize: "11px",
+                      fontFamily: "monospace",
                       color: "var(--text-primary)",
                     }}
                     formatter={(val: number) => [`${(val * 100).toFixed(2)}%`, ""]}
                   />
-                  <Legend wrapperStyle={{ fontSize: "12px" }} />
-                  <Bar dataKey="Expected" fill="var(--primary)" name="Expected (|Φ+⟩)" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="Observed" fill="#a855f7" name="Observed Projection" radius={[4, 4, 0, 0]} />
+                  <Legend wrapperStyle={{ fontSize: "11px", fontFamily: "monospace" }} />
+                  <Bar dataKey="Expected" fill="var(--primary)" name="Expected (|Φ+⟩)" />
+                  <Bar dataKey="Observed" fill="#a855f7" name="Observed Projection" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </Card>
 
-          {/* Plain-Language Explanation */}
-          <Card level={2} className="p-6 space-y-3">
-            <div className="flex items-center justify-between">
-              <h4 className="text-xs font-bold text-text-primary uppercase tracking-wider flex items-center space-x-2">
-                <Info className="w-4 h-4 text-primary" />
-                <span>Physical & Information-Theoretic Explanation</span>
+          {/* Expandable: WHY THIS RESULT? */}
+          <Card level={0} className="p-6 space-y-3">
+            <div
+              onClick={() => setShowWhyResult(!showWhyResult)}
+              className="flex items-center justify-between cursor-pointer select-none"
+            >
+              <h4 className="text-xs font-mono font-extrabold text-text-primary uppercase tracking-wider flex items-center space-x-2">
+                <Info className="w-4 h-4 text-accent-purple stroke-[2.5]" />
+                <span>WHY THIS RESULT?</span>
               </h4>
-              <button
-                onClick={() => setShowDeepMath(!showDeepMath)}
-                className="text-xs font-mono text-primary flex items-center space-x-1"
-              >
-                <span>{showDeepMath ? "Hide" : "View"} Mathematical Statevector</span>
-                {showDeepMath ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+              <button className="p-1 rounded border border-border text-text-primary hover:bg-surface-2">
+                {showWhyResult ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
               </button>
             </div>
 
-            <p className="text-xs leading-relaxed text-text-secondary bg-surface-0 p-4 rounded-xl border border-border font-sans">
-              {simResult.explanation}
-            </p>
+            {showWhyResult && (
+              <div className="p-4 rounded-lg bg-surface-1 border-2 border-border text-xs leading-relaxed text-text-secondary font-sans animate-fadeIn">
+                <div className="font-bold text-text-primary mb-1 font-display text-sm">
+                  {verdict.startsWith("PASS")
+                    ? "Channel Intact: Quantum Non-Locality Preserved"
+                    : "Channel Perturbation Detected: Entanglement Collapsed"}
+                </div>
+                {simResult.explanation}
+              </div>
+            )}
+          </Card>
 
-            {showDeepMath && (
-              <div className="p-4 rounded-xl bg-surface-0 border border-border font-mono text-[11px] text-text-muted space-y-2 animate-fadeIn">
-                <div>Statevector: |ψ⟩ = 1/√2 (|00⟩ + |11⟩)</div>
-                <div>Trace Distance: D(P, Q) = 1/2 ∑_x |P(x) - Q(x)| = {simResult.deviation}</div>
-                <div>Configured Channel Tolerance: ε = {simResult.threshold}</div>
-                <div>Status: {simResult.deviation > simResult.threshold ? "THRESHOLD EXCEEDED (Anomalous Disturbance)" : "BOUND SATISFIED (Channel Intact)"}</div>
+          {/* Expandable: TECHNICAL EXPLANATION (Understandable for Hackathon Judges) */}
+          <Card level={0} className="p-6 space-y-3">
+            <div
+              onClick={() => setShowTechnicalDetails(!showTechnicalDetails)}
+              className="flex items-center justify-between cursor-pointer select-none"
+            >
+              <h4 className="text-xs font-mono font-extrabold text-text-primary uppercase tracking-wider flex items-center space-x-2">
+                <Cpu className="w-4 h-4 text-primary stroke-[2.5]" />
+                <span>TECHNICAL EXPLANATION (FOR HACKATHON EVALUATORS)</span>
+              </h4>
+              <button className="p-1 rounded border border-border text-text-primary hover:bg-surface-2">
+                {showTechnicalDetails ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+
+            {showTechnicalDetails && (
+              <div className="p-4 rounded-lg bg-surface-1 border-2 border-border font-mono text-[11px] text-text-secondary space-y-2 animate-fadeIn">
+                <div className="font-bold text-text-primary border-b border-border pb-1">
+                  1. MATHEMATICAL FORMULATION
+                </div>
+                <div>Bell Entangled Statevector: |ψ⟩ = 1/√2 (|00⟩ + |11⟩)</div>
+                <div>{"Total Variation Distance (TVD): δ(P, Q) = 1/2 ∑_{x} |P(x) - Q(x)| = " + (simResult.deviation * 100).toFixed(3) + "%"}</div>
+                <div>{"Hypothesis Threshold ε: " + (simResult.threshold * 100).toFixed(1) + "%"}</div>
+
+                <div className="font-bold text-text-primary border-b border-border pt-2 pb-1">
+                  2. CYBERSECURITY RELEVANCE
+                </div>
+                <div>
+                  Classical digital signature keys and hashes can be stolen or intercepted in-transit.
+                  NeuroCraft binds certificate validation with Bell-state quantum telemetry.
+                  According to the No-Cloning Theorem, an adversary cannot intercept, clone, or tamper with an EPR pair without collapsing the superposition and exponentially increasing TVD beyond ε.
+                </div>
               </div>
             )}
           </Card>

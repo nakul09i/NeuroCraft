@@ -40,33 +40,33 @@ export const Modal: React.FC<ModalProps> = ({
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 animate-fadeIn"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className={`relative w-full ${widthClass} rounded-2xl border border-border bg-surface-elevated shadow-2xl p-6 overflow-hidden max-h-[90vh] flex flex-col`}
+        className={`relative w-full ${widthClass} rounded-xl border-2 border-border bg-surface-0 shadow-brutal-lg p-6 overflow-hidden max-h-[90vh] flex flex-col`}
       >
         {/* Header */}
         {(title || description) && (
-          <div className="flex items-start justify-between pb-4 border-b border-border/60">
+          <div className="flex items-start justify-between pb-4 border-b-2 border-border">
             <div>
               {title && (
-                <h3 className="text-base font-bold text-text-primary tracking-tight">
+                <h3 className="text-base sm:text-lg font-black font-display text-text-primary tracking-tight uppercase">
                   {title}
                 </h3>
               )}
               {description && (
-                <p className="text-xs text-text-secondary mt-0.5 leading-normal">
+                <p className="text-xs text-text-secondary mt-1 leading-normal">
                   {description}
                 </p>
               )}
             </div>
             <button
               onClick={onClose}
-              className="text-text-muted hover:text-text-primary p-1 rounded-lg hover:bg-surface-2 transition ml-4"
+              className="text-text-primary p-1.5 rounded-lg border-2 border-border bg-surface-1 hover:bg-surface-2 hover:shadow-brutal-sm active:translate-x-0.5 active:translate-y-0.5 transition ml-4 shrink-0"
               aria-label="Close dialog"
             >
-              <X className="w-4 h-4" />
+              <X className="w-4 h-4 stroke-[2.5]" />
             </button>
           </div>
         )}

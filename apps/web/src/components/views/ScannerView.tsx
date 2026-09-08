@@ -107,11 +107,11 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
   };
 
   const steps = [
-    { label: "Uploading", id: 1 },
-    { label: "Identifying Format", id: 2 },
-    { label: "Safe Static Extraction", id: 3 },
-    { label: "Signature Verification", id: 4 },
-    { label: "Calculating Posture", id: 5 },
+    { label: "QUARANTINED", id: 1 },
+    { label: "METADATA", id: 2 },
+    { label: "STATIC ANALYSIS", id: 3 },
+    { label: "SIGNATURE", id: 4 },
+    { label: "RISK ASSESSMENT", id: 5 },
   ];
 
   return (
@@ -132,7 +132,7 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
 
       {/* Upload & Selection Card */}
       {!scanResult && (
-        <Card level={1} className="p-6 sm:p-10 space-y-6">
+        <Card level={0} className="p-6 sm:p-10 space-y-6">
           <div
             onDragOver={(e) => {
               e.preventDefault();
@@ -140,10 +140,10 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
             }}
             onDragLeave={() => setDragOver(false)}
             onDrop={handleFileDrop}
-            className={`border-2 border-dashed rounded-2xl p-8 sm:p-12 text-center transition-all ${
+            className={`border-2 border-dashed rounded-xl p-8 sm:p-12 text-center transition-all ${
               dragOver
-                ? "border-primary bg-primary-subtle"
-                : "border-border bg-surface-0/60 hover:border-border-strong"
+                ? "border-primary bg-primary/10 shadow-brutal"
+                : "border-border bg-surface-1 hover:bg-surface-2 hover:border-text-primary"
             }`}
           >
             <input
@@ -152,20 +152,47 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
               onChange={handleFileInput}
               className="hidden"
             />
-            <label
-              htmlFor="file-scanner-input"
-              className="flex flex-col items-center justify-center cursor-pointer"
-            >
-              <div className="w-14 h-14 rounded-2xl bg-surface-2 border border-border flex items-center justify-center text-primary mb-4 shadow-sm">
-                <Upload className="w-7 h-7" />
+            <div className="flex flex-col items-center justify-center">
+              <div className="w-14 h-14 rounded-lg bg-primary border-2 border-border flex items-center justify-center text-black mb-4 shadow-brutal-sm">
+                <Upload className="w-7 h-7 stroke-[2.5]" />
               </div>
-              <p className="text-base font-bold text-text-primary tracking-tight">
-                Drop your file here, or browse
+              <h3 className="text-xl sm:text-2xl font-black font-display text-text-primary tracking-tight uppercase">
+                ANALYZE AN UNTRUSTED ARTIFACT
+              </h3>
+              <p className="text-xs sm:text-sm text-text-secondary mt-1 font-sans">
+                Drop file here or choose from your filesystem
               </p>
-              <p className="text-xs text-text-secondary mt-1.5 max-w-md leading-relaxed">
-                PE binaries (.exe, .dll), PDF documents, APK packages, scripts, and archives. Maximum size: 100 MB.
-              </p>
-            </label>
+              <div className="mt-4">
+                <label
+                  htmlFor="file-scanner-input"
+                  className="inline-flex items-center px-4 py-2 rounded-lg bg-surface-0 border-2 border-border text-xs font-black uppercase tracking-wider text-text-primary shadow-brutal-sm hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition cursor-pointer"
+                >
+                  [ CHOOSE FILE ]
+                </label>
+              </div>
+
+              {/* Supported Format Badges */}
+              <div className="mt-6 pt-4 border-t-2 border-border flex flex-wrap items-center justify-center gap-2">
+                <span className="text-[10px] font-mono font-extrabold uppercase text-text-muted mr-1">
+                  SUPPORTED:
+                </span>
+                <span className="px-2 py-0.5 rounded border-2 border-border bg-surface-0 text-[10px] font-mono font-bold">
+                  PE (.EXE/.DLL)
+                </span>
+                <span className="px-2 py-0.5 rounded border-2 border-border bg-surface-0 text-[10px] font-mono font-bold">
+                  PDF
+                </span>
+                <span className="px-2 py-0.5 rounded border-2 border-border bg-surface-0 text-[10px] font-mono font-bold">
+                  APK
+                </span>
+                <span className="px-2 py-0.5 rounded border-2 border-border bg-surface-0 text-[10px] font-mono font-bold">
+                  SCRIPT (.PS1/.SH/.PY)
+                </span>
+                <span className="px-2 py-0.5 rounded border-2 border-border bg-surface-0 text-[10px] font-mono font-bold">
+                  ARCHIVE (.ZIP/.TAR)
+                </span>
+              </div>
+            </div>
           </div>
 
           {/* Selected File Preview & Analysis Trigger */}
@@ -218,18 +245,18 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
                   return (
                     <div
                       key={step.id}
-                      className={`p-2.5 rounded-lg border text-center transition-all ${
+                      className={`p-2.5 rounded-lg border-2 text-center transition-all ${
                         isDone
-                          ? "bg-theme-success-subtle border-theme-success-border text-theme-success-text"
+                          ? "bg-theme-success-subtle border-theme-success text-theme-success-text shadow-[2px_2px_0px_var(--border)] font-bold"
                           : isCurrent
-                          ? "bg-primary-subtle border-primary text-primary font-bold animate-pulse"
-                          : "bg-surface-0 border-border text-text-muted"
+                          ? "bg-primary text-black border-border shadow-brutal-sm font-extrabold animate-pulse"
+                          : "bg-surface-0 border-border text-text-muted opacity-75"
                       }`}
                     >
-                      <div className="text-[10px] font-mono mb-1">
-                        {isDone ? "✓ DONE" : isCurrent ? "→ IN PROGRESS" : `STEP ${step.id}`}
+                      <div className="text-[10px] font-mono mb-0.5">
+                        {isDone ? "✓ COMPLETED" : isCurrent ? "→ IN PROGRESS" : "○ PENDING"}
                       </div>
-                      <div className="text-xs truncate">{step.label}</div>
+                      <div className="text-xs truncate font-display font-black">{step.label}</div>
                     </div>
                   );
                 })}

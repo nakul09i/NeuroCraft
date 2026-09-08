@@ -120,7 +120,7 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
             strokeWidth={strokeWidth}
             strokeDasharray={circumference}
             strokeDashoffset={strokeDashoffset}
-            strokeLinecap="round"
+            strokeLinecap="butt"
             fill="transparent"
             style={{ transition: "stroke-dashoffset 0.1s linear, stroke 0.3s ease" }}
           />
@@ -135,7 +135,7 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
             stroke="var(--primary)"
             strokeWidth={strokeWidth}
             strokeDasharray={`${circumference * 0.25} ${circumference * 0.75}`}
-            strokeLinecap="round"
+            strokeLinecap="butt"
             fill="transparent"
             className="animate-spin origin-center"
           />
@@ -147,23 +147,23 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
         {loading ? (
           <span className="text-xl font-mono text-text-muted animate-pulse">...</span>
         ) : error ? (
-          <span className="text-sm font-semibold text-danger">Err</span>
+          <span className="text-sm font-black font-display text-danger">ERR</span>
         ) : targetScore !== null ? (
           <>
-            <span className="text-2xl sm:text-3xl font-black font-mono tracking-tight text-text-primary">
+            <span className="text-3xl sm:text-4xl font-black font-display tracking-tight text-text-primary">
               {validScore}
             </span>
-            <span className="text-[10px] uppercase font-bold tracking-widest text-text-muted">
+            <span className="text-[10px] uppercase font-bold font-mono tracking-widest text-text-muted">
               / 100
             </span>
           </>
         ) : (
           <>
-            <span className="text-2xl font-black font-mono text-text-muted">
+            <span className="text-3xl font-black font-display text-text-muted">
               —
             </span>
-            <span className="text-[9px] uppercase font-bold tracking-widest text-text-muted">
-              No Data
+            <span className="text-[9px] uppercase font-bold font-mono tracking-widest text-text-muted">
+              Awaiting Analysis
             </span>
           </>
         )}
