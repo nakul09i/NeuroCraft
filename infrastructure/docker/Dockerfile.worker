@@ -1,0 +1,20 @@
+# NeuroCraft Worker Dockerfile (Phase 0 Scaffold)
+FROM python:3.12-slim
+
+WORKDIR /app
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+RUN groupadd -g 10001 neurocraft && \
+    useradd -u 10001 -g neurocraft -s /bin/sh neurocraft
+
+COPY pyproject.toml .
+# Dependency install will happen in Phase 1+
+# RUN pip install --no-cache-dir .
+
+COPY . .
+
+USER neurocraft
+
+CMD ["python", "-m", "neurocraft_worker.main"]

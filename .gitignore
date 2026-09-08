@@ -1,0 +1,115 @@
+# ==============================================================================
+# NeuroCraft Git Ignore Configuration
+# ==============================================================================
+
+# Environment and Secrets (CRITICAL: Never commit real credentials or keys)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.pfx
+*.p12
+*.keystore
+id_rsa*
+secrets/
+
+# Python Cache and Virtual Environments
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.venv/
+venv/
+ENV/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Node.js and Frontend
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.next/
+out/
+.turbo/
+
+# Rust and Desktop (Tauri)
+target/
+**/*.rs.bk
+
+# Machine Learning Artifacts and Trained Model Weights
+*.onnx
+*.pt
+*.pth
+*.bin
+*.safetensors
+*.pkl
+*.joblib
+*.h5
+*.tflite
+models/checkpoints/
+models/weights/
+
+# Datasets and Large Data Stores (Keep structures and READMEs, ignore raw data)
+datasets/raw/*
+!datasets/raw/.gitkeep
+datasets/normalized/*
+!datasets/normalized/.gitkeep
+datasets/features/*
+!datasets/features/.gitkeep
+datasets/labels/*
+!datasets/labels/.gitkeep
+datasets/splits/*
+!datasets/splits/.gitkeep
+datasets/manifests/*
+!datasets/manifests/.gitkeep
+
+# Live Malware Prevention & Temporary Quarantine
+quarantine/
+tmp/
+temp/
+scratch/
+test-fixtures/quarantine/
+*.malware
+*.virus
+
+# Logs and Runtime Files
+*.log
+logs/
+*.sqlite3
+*.pid
+
+# IDE and OS Artefacts
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+*.swp
+*.swo
+*~

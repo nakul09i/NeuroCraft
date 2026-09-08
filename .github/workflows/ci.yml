@@ -1,0 +1,39 @@
+name: NeuroCraft CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  phase-0-foundation:
+    name: Phase 0 Foundation & Security Verification
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install Development Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Audit Repository for Secrets
+        run: |
+          python scripts/security/check_secrets.py
+
+      - name: Verify Foundation Architecture & Contracts
+        run: |
+          python scripts/security/verify_foundation.py
+
+      - name: Run Foundation Unit Tests
+        run: |
+          pytest tests/unit/test_foundation.py -v

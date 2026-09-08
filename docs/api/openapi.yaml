@@ -1,0 +1,278 @@
+openapi: 3.1.0
+info:
+  title: NeuroCraft API
+  version: 0.1.0
+  description: >
+    NeuroCraft is an AI-assisted, multi-layer cybersecurity platform for static file
+    analysis, cryptographic signature verification, risk synthesis, and tamper-evident provenance.
+  contact:
+    name: NeuroCraft Engineering Team
+    url: https://github.com/neurocraft/neurocraft
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+
+servers:
+  - url: http://127.0.0.1:8000
+    description: Local development server
+
+paths:
+  /api/v1/health:
+    get:
+      summary: Health check endpoint
+      description: Returns health status of API gateway, database, redis, and scanner engines.
+      operationId: getHealth
+      responses:
+        '200':
+          description: System operational
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+                  version:
+                    type: string
+                    example: "0.1.0"
+                  engines:
+                    type: object
+                    properties:
+                      clamav:
+                        type: boolean
+                        example: true
+                      yara:
+                        type: boolean
+                        example: true
+                      ml:
+                        type: boolean
+                        example: true
+
+  /api/v1/scan/upload:
+    post:
+      summary: Upload file for asynchronous scanning
+      description: Ingests an untrusted file into quarantine and dispatches background analysis.
+      operationId: uploadScanFile
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Raw file artifact to be analyzed (max 100 MB).
+                offline_mode:
+                  type: boolean
+                  default: false
+                  description: If true, disables all external threat intelligence lookups.
+      responses:
+        '202':
+          description: Scan accepted and enqueued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  task_id:
+                    type: string
+                    format: uuid
+                    example: "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"
+                  status:
+                    type: string
+                    example: "PENDING"
+        '400':
+          description: Invalid file or size limit exceeded
+        '422':
+          description: Unprocessable entity
+
+  /api/v1/scan/{task_id}:
+    get:
+      summary: Retrieve scan results
+      description: Polls status or retrieves final analysis report by task ID.
+      operationId: getScanResult
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Scan result completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScanResult'
+        '202':
+          description: Scan still in progress
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  task_id:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    example: "PROCESSING"
+        '404':
+          description: Task ID not found
+
+  /api/v1/lookup/{sha256}:
+    get:
+      summary: Fast hash lookup
+      description: Looks up pre-computed scan results by SHA-256 digest.
+      operationId: lookupHash
+      parameters:
+        - name: sha256
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[a-fA-F0-9]{64}$'
+      responses:
+        '200':
+          description: Cached scan report found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScanResult'
+        '404':
+          description: Hash not found in cache or database
+
+  /api/v1/integrity/verify:
+    post:
+      summary: Verify Merkle inclusion proof
+      description: Cryptographically verifies an inclusion proof against the provenance ledger.
+      operationId: verifyIntegrityProof
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - leaf_hash
+                - root_hash
+                - proof_hashes
+                - index
+              properties:
+                leaf_hash:
+                  type: string
+                root_hash:
+                  type: string
+                proof_hashes:
+                  type: array
+                  items:
+                    type: string
+                index:
+                  type: integer
+      responses:
+        '200':
+          description: Verification outcome
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  is_valid:
+                    type: boolean
+                  anchored:
+                    type: boolean
+
+components:
+  schemas:
+    VerdictEnum:
+      type: string
+      enum: [CLEAN, SUSPICIOUS, MALICIOUS, UNKNOWN]
+
+    SeverityEnum:
+      type: string
+      enum: [INFO, LOW, MEDIUM, HIGH, CRITICAL]
+
+    HashDigest:
+      type: object
+      required: [md5, sha1, sha256]
+      properties:
+        md5:
+          type: string
+        sha1:
+          type: string
+        sha256:
+          type: string
+        sha512:
+          type: string
+        ssdeep:
+          type: string
+
+    EvidenceItem:
+      type: object
+      required: [id, engine, rule_or_check_name, severity, description]
+      properties:
+        id:
+          type: string
+        engine:
+          type: string
+        rule_or_check_name:
+          type: string
+        severity:
+          $ref: '#/components/schemas/SeverityEnum'
+        description:
+          type: string
+        offset:
+          type: integer
+
+    RiskAssessment:
+      type: object
+      required: [overall_score, verdict, confidence]
+      properties:
+        overall_score:
+          type: number
+          minimum: 0.0
+          maximum: 100.0
+        verdict:
+          $ref: '#/components/schemas/VerdictEnum'
+        confidence:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+        deterministic_override:
+          type: boolean
+        engine_scores:
+          type: object
+          additionalProperties:
+            type: number
+
+    ScanResult:
+      type: object
+      required: [scan_id, filename, file_size_bytes, mime_type, magic_bytes, hashes, risk_assessment, scanned_at]
+      properties:
+        scan_id:
+          type: string
+        filename:
+          type: string
+        file_size_bytes:
+          type: integer
+        mime_type:
+          type: string
+        magic_bytes:
+          type: string
+        hashes:
+          $ref: '#/components/schemas/HashDigest'
+        evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/EvidenceItem'
+        risk_assessment:
+          $ref: '#/components/schemas/RiskAssessment'
+        scanned_at:
+          type: string
+          format: date-time

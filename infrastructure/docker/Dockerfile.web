@@ -1,0 +1,10 @@
+# NeuroCraft Web Frontend Dockerfile (Phase 0 Scaffold)
+FROM node:20-alpine
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+# Future frontend build steps will be added in Phase 5
+EXPOSE 3000
+CMD ["npm", "run", "start"]

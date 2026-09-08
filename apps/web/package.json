@@ -1,0 +1,14 @@
+{
+  "name": "@neurocraft/web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "NeuroCraft Web Application - Next.js client for file analysis and provenance verification",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

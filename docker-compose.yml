@@ -1,0 +1,132 @@
+# ==============================================================================
+# NeuroCraft Docker Compose (Phase 0 Scaffold)
+# Demonstrates planned free-first, open-source service orchestration.
+# Fully local execution without paid cloud dependencies.
+# ==============================================================================
+
+version: "3.9"
+
+services:
+  # ----------------------------------------------------------------------------
+  # Relational Database: PostgreSQL (Free-First)
+  # ----------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: neurocraft-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: neurocraft_user
+      POSTGRES_PASSWORD: neurocraft_password
+      POSTGRES_DB: neurocraft_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U neurocraft_user -d neurocraft_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ----------------------------------------------------------------------------
+  # Task Broker & Cache: Redis (Free-First)
+  # ----------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: neurocraft-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ----------------------------------------------------------------------------
+  # Antivirus Engine: ClamAV (Free-First, Local Pattern Matching)
+  # ----------------------------------------------------------------------------
+  clamav:
+    image: clamav/clamav:latest
+    container_name: neurocraft-clamav
+    restart: unless-stopped
+    ports:
+      - "3310:3310"
+    volumes:
+      - clamav_db:/var/lib/clamav
+    healthcheck:
+      test: ["CMD-SHELL", "clamdscan /init || exit 0"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ----------------------------------------------------------------------------
+  # Backend API Gateway: FastAPI (Planned Service)
+  # ----------------------------------------------------------------------------
+  api:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.api
+    container_name: neurocraft-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env.example
+    environment:
+      - DATABASE_URL=postgresql://neurocraft_user:neurocraft_password@postgres:5432/neurocraft_dev
+      - REDIS_URL=redis://redis:6379/0
+      - CLAMAV_HOST=clamav
+    ports:
+      - "8000:8000"
+    profiles:
+      - full-stack
+
+  # ----------------------------------------------------------------------------
+  # Background Task Worker (Planned Service)
+  # ----------------------------------------------------------------------------
+  worker:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.worker
+    container_name: neurocraft-worker
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env.example
+    environment:
+      - DATABASE_URL=postgresql://neurocraft_user:neurocraft_password@postgres:5432/neurocraft_dev
+      - REDIS_URL=redis://redis:6379/0
+      - CLAMAV_HOST=clamav
+    profiles:
+      - full-stack
+
+  # ----------------------------------------------------------------------------
+  # Web Frontend: Next.js (Planned Client)
+  # ----------------------------------------------------------------------------
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: ../../infrastructure/docker/Dockerfile.web
+    container_name: neurocraft-web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    profiles:
+      - full-stack
+
+volumes:
+  postgres_data:
+  redis_data:
+  clamav_db:
