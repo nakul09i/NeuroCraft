@@ -11,6 +11,8 @@
 
   html {
     color-scheme: light dark;
+    background: var(--bg);
+    scroll-behavior: smooth;
   }
 
   body {
@@ -21,7 +23,27 @@
     letter-spacing: -0.012em;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    min-width: 320px;
+    min-height: 100vh;
     transition: background-color 0.25s cubic-bezier(0.16, 1, 0.3, 1), color 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  ::selection {
+    background: var(--primary);
+    color: var(--text-inverse);
+  }
+
+  button, a, input, select, textarea {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 3px;
   }
 
   h1 {
@@ -118,6 +140,55 @@
 .focus-ring:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
+}
+
+.calm-ambient-bg {
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 8% 0%, var(--primary-subtle), transparent 28rem),
+    radial-gradient(circle at 96% 100%, var(--accent-purple-subtle), transparent 30rem),
+    var(--bg);
+}
+
+.calm-ambient-bg::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.3;
+  background-image: linear-gradient(to right, var(--border-subtle) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--border-subtle) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to bottom, black, transparent 72%);
+}
+
+.glass-panel {
+  background: color-mix(in srgb, var(--surface-0) 78%, transparent);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.shadow-glow {
+  box-shadow: 0 0 0 1px var(--primary-border), 0 12px 28px color-mix(in srgb, var(--primary) 22%, transparent);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* Delicate minimalist scrollbar */
@@ -279,3 +350,8 @@
   }
 }
 
+@media (max-width: 640px) {
+  .calm-ambient-bg::before {
+    background-size: 32px 32px;
+  }
+}

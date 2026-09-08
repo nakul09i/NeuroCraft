@@ -161,7 +161,8 @@ class ReconAssetRecord(Base):
 
     __tablename__ = "recon_assets"
 
-    id = Column(String(64), primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    asset_id = Column(String(64), nullable=False)
     recon_scan_id = Column(String(64), ForeignKey("recon_scans.id"), index=True, nullable=False)
     hostname = Column(String(255), nullable=False)
     asset_type = Column(String(50), nullable=False)
@@ -177,7 +178,8 @@ class ReconFindingRecord(Base):
 
     __tablename__ = "recon_findings"
 
-    id = Column(String(64), primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    finding_id = Column(String(64), nullable=False)
     recon_scan_id = Column(String(64), ForeignKey("recon_scans.id"), index=True, nullable=False)
     category = Column(String(50), nullable=False)
     title = Column(String(255), nullable=False)
@@ -235,6 +237,7 @@ class ReportRecord(Base):
     title = Column(String(255), nullable=False)
     summary = Column(Text, nullable=False)
     content_json = Column(Text, nullable=False)
+    report_hash = Column(String(64), nullable=True)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
     user = relationship("ProfileRecord", back_populates="reports")
@@ -449,7 +452,7 @@ async def save_recon_scan(recon: ReconScanResponse, user_id: str | None = None) 
 
         for asset in recon.assets:
             a_rec = ReconAssetRecord(
-                id=asset.id,
+                asset_id=asset.id,
                 recon_scan_id=recon.id,
                 hostname=asset.hostname,
                 asset_type=asset.asset_type,
@@ -461,7 +464,7 @@ async def save_recon_scan(recon: ReconScanResponse, user_id: str | None = None) 
 
         for finding in recon.findings:
             f_rec = ReconFindingRecord(
-                id=finding.id,
+                finding_id=finding.id,
                 recon_scan_id=recon.id,
                 category=finding.category,
                 title=finding.title,
@@ -570,6 +573,7 @@ async def save_report(report: ReportResponse, user_id: str | None = None) -> Rep
             title=report.title,
             summary=report.summary,
             content_json=json.dumps(report.content),
+            report_hash=report.report_hash,
             created_at=report.created_at,
         )
         session.add(rec)
@@ -600,3 +604,52 @@ async def get_reports_for_user(user_id: str | None = None, limit: int = 50) -> l
             stmt = stmt.where(ReportRecord.user_id == user_id)
         res = await session.execute(stmt)
         return list(res.scalars().all())
+
+
+async def delete_scan_for_user(scan_id: str, user_id: str | None = None) -> bool:
+    """Delete a scan record and cascade its findings and capabilities."""
+    session_factory = get_session_factory()
+    async with session_factory() as session:
+        stmt = select(ScanRecord).where(ScanRecord.scan_id == scan_id)
+        if user_id is not None:
+            stmt = stmt.where((ScanRecord.user_id == user_id) | (ScanRecord.user_id.is_(None)))
+        res = await session.execute(stmt)
+        scan = res.scalars().first()
+        if not scan:
+            return False
+        await session.delete(scan)
+        await session.commit()
+        return True
+
+
+async def delete_report_for_user(report_id: str, user_id: str | None = None) -> bool:
+    """Delete a report record."""
+    session_factory = get_session_factory()
+    async with session_factory() as session:
+        stmt = select(ReportRecord).where(ReportRecord.id == report_id)
+        if user_id is not None:
+            stmt = stmt.where((ReportRecord.user_id == user_id) | (ReportRecord.user_id.is_(None)))
+        res = await session.execute(stmt)
+        rep = res.scalars().first()
+        if not rep:
+            return False
+        await session.delete(rep)
+        await session.commit()
+        return True
+
+
+async def delete_recon_scan_for_user(recon_id: str, user_id: str | None = None) -> bool:
+    """Delete a recon scan and cascaded assets/findings."""
+    session_factory = get_session_factory()
+    async with session_factory() as session:
+        stmt = select(ReconScanRecord).where(ReconScanRecord.id == recon_id)
+        if user_id is not None:
+            stmt = stmt.where((ReconScanRecord.user_id == user_id) | (ReconScanRecord.user_id.is_(None)))
+        res = await session.execute(stmt)
+        rec = res.scalars().first()
+        if not rec:
+            return False
+        await session.delete(rec)
+        await session.commit()
+        return True
+

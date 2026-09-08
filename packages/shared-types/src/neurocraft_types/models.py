@@ -517,6 +517,12 @@ class ReportTypeEnum(str, Enum):
     TECHNICAL = "TECHNICAL"
     FORENSIC = "FORENSIC"
     COMPLIANCE = "COMPLIANCE"
+    EXECUTIVE_SUMMARY = "EXECUTIVE_SUMMARY"
+    EXECUTIVE_AUDIT = "EXECUTIVE_AUDIT"
+    TECHNICAL_DEEP_DIVE = "TECHNICAL_DEEP_DIVE"
+    CRYPTOGRAPHIC_ANALYSIS = "CRYPTOGRAPHIC_ANALYSIS"
+    FULL_SECURITY_AUDIT = "FULL_SECURITY_AUDIT"
+    COMPLIANCE_CERTIFICATE = "COMPLIANCE_CERTIFICATE"
 
 
 class ReportRequest(BaseModel):
@@ -542,4 +548,5 @@ class ReportResponse(BaseModel):
     title: str = Field(..., description="Report title")
     summary: str = Field(..., description="Executive summary of posture")
     content: dict[str, Any] = Field(..., description="Full structured audit sections")
+    report_hash: str | None = Field(default=None, description="Cryptographic SHA-256 integrity hash")
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

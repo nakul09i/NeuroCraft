@@ -44,6 +44,9 @@ from neurocraft_api.auth import (
     register_user,
 )
 from neurocraft_api.database import (
+    delete_recon_scan_for_user,
+    delete_report_for_user,
+    delete_scan_for_user,
     get_profile_by_id,
     get_quantum_simulation_by_id,
     get_quantum_simulations_for_user,
@@ -401,7 +404,7 @@ async def get_recon_scan(
         security_headers=headers_dict,
         assets=[
             {
-                "id": a.id,
+                "id": a.asset_id,
                 "hostname": a.hostname,
                 "asset_type": a.asset_type,
                 "source": a.source,
@@ -412,7 +415,7 @@ async def get_recon_scan(
         ],
         findings=[
             {
-                "id": f.id,
+                "id": f.finding_id,
                 "category": f.category,
                 "title": f.title,
                 "severity": f.severity,
@@ -645,3 +648,68 @@ async def get_dashboard_stats(
             for s in scans[:5]
         ],
     }
+
+
+# ==============================================================================
+# Delete Endpoints
+# ==============================================================================
+
+
+@app.delete(
+    "/api/v1/scans/{scan_id}",
+    tags=["Scans"],
+    summary="Delete a scan by ID",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_scan(
+    scan_id: str,
+    user: UserContext | None = Depends(get_optional_user),
+) -> None:
+    """Delete a scan record and its cascaded findings/capabilities."""
+    user_id = user.user_id if user else None
+    deleted = await delete_scan_for_user(scan_id, user_id)
+    if not deleted:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Scan '{scan_id}' not found or access denied.",
+        )
+
+
+@app.delete(
+    "/api/v1/reports/{report_id}",
+    tags=["Reports"],
+    summary="Delete a report by ID",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_report(
+    report_id: str,
+    user: UserContext | None = Depends(get_optional_user),
+) -> None:
+    """Delete a security report record."""
+    user_id = user.user_id if user else None
+    deleted = await delete_report_for_user(report_id, user_id)
+    if not deleted:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Report '{report_id}' not found or access denied.",
+        )
+
+
+@app.delete(
+    "/api/v1/recon/{recon_id}",
+    tags=["Reconnaissance"],
+    summary="Delete a recon scan by ID",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_recon(
+    recon_id: str,
+    user: UserContext | None = Depends(get_optional_user),
+) -> None:
+    """Delete a reconnaissance scan and cascaded assets/findings."""
+    user_id = user.user_id if user else None
+    deleted = await delete_recon_scan_for_user(recon_id, user_id)
+    if not deleted:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Recon scan '{recon_id}' not found or access denied.",
+        )
