@@ -1,19 +1,20 @@
-import urllib.request
-import urllib.error
 import json
 import sys
+import urllib.error
+import urllib.request
 import uuid
 
 BASE = "https://neurocraft-psi.vercel.app"
 
+
 def test_endpoint(path, method="GET", payload=None):
     url = f"{BASE}{path}"
-    req = urllib.request.Request(url, method=method)
+    req = urllib.request.Request(url, method=method)  # noqa: S310
     if payload is not None:
         req.add_header("Content-Type", "application/json")
         req.data = json.dumps(payload).encode("utf-8")
     try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
+        with urllib.request.urlopen(req, timeout=30) as resp:  # noqa: S310
             data = resp.read().decode("utf-8")
             print(f"[PASS] {method} {path} -> HTTP {resp.status} ({len(data)} bytes)")
             if path != "/":
@@ -38,13 +39,13 @@ def test_file_upload():
         f"--{boundary}\r\n"
         f'Content-Disposition: form-data; name="file"; filename="{filename}"\r\n'
         f"Content-Type: text/x-python\r\n\r\n"
-    ).encode("utf-8") + content + f"\r\n--{boundary}--\r\n".encode("utf-8")
+    ).encode() + content + f"\r\n--{boundary}--\r\n".encode()
 
-    req = urllib.request.Request(f"{BASE}/api/v1/scans", data=body, method="POST")
+    req = urllib.request.Request(f"{BASE}/api/v1/scans", data=body, method="POST")  # noqa: S310
     req.add_header("Content-Type", f"multipart/form-data; boundary={boundary}")
 
     try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
+        with urllib.request.urlopen(req, timeout=30) as resp:  # noqa: S310
             data = resp.read().decode("utf-8")
             print(f"[PASS] POST /api/v1/scans (Upload) -> HTTP {resp.status} ({len(data)} bytes)")
             parsed = json.loads(data)

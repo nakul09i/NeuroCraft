@@ -2,8 +2,10 @@
 
 import json
 import os
+from collections.abc import AsyncGenerator
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 from neurocraft_config import get_config
 from neurocraft_types import (
@@ -84,7 +86,7 @@ class ScanRecord(Base):
     risk_score = Column(Float, nullable=False)
     engine_status_json = Column(Text, nullable=False)
     raw_result_json = Column(Text, nullable=False)
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), index=True)
 
     user = relationship("ProfileRecord", back_populates="scans")
     findings = relationship("FindingRecord", back_populates="scan", cascade="all, delete-orphan")
@@ -145,7 +147,7 @@ class ReconScanRecord(Base):
     dns_json = Column(Text, default="[]")
     tls_json = Column(Text, default="{}")
     headers_json = Column(Text, default="{}")
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), index=True)
     completed_at = Column(DateTime(timezone=True), nullable=True)
 
     user = relationship("ProfileRecord", back_populates="recon_scans")
@@ -214,7 +216,7 @@ class QuantumSimulationRecord(Base):
     threshold = Column(Float, nullable=False)
     verdict = Column(String(50), nullable=False)
     explanation = Column(Text, nullable=False)
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), index=True)
 
     user = relationship("ProfileRecord", back_populates="quantum_simulations")
 
@@ -239,9 +241,31 @@ class ReportRecord(Base):
     summary = Column(Text, nullable=False)
     content_json = Column(Text, nullable=False)
     report_hash = Column(String(64), nullable=True)
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), index=True)
 
     user = relationship("ProfileRecord", back_populates="reports")
+
+
+# ==============================================================================
+# 6. Local Settings Table
+# ==============================================================================
+
+
+class SettingRecord(Base):
+    """Local user preferences and configuration settings."""
+
+    __tablename__ = "settings"
+
+    key = Column(String(64), primary_key=True)
+    user_id = Column(String(64), ForeignKey("profiles.id"), index=True, nullable=True)
+    value_json = Column(Text, nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+    )
+
+    user = relationship("ProfileRecord")
 
 
 # ==============================================================================
@@ -261,8 +285,8 @@ def get_db_url() -> str:
         or os.getenv("AWS_LAMBDA_FUNCTION_NAME")
         or os.getenv("LAMBDA_TASK_ROOT")
     )
-    if is_serverless and ("./" in url or (url.startswith("sqlite") and "/tmp" not in url)):
-        return "sqlite+aiosqlite:////tmp/neurocraft.db"
+    if is_serverless and ("./" in url or (url.startswith("sqlite") and "/tmp" not in url)):  # noqa: S108
+        return "sqlite+aiosqlite:////tmp/neurocraft.db"  # noqa: S108
 
     if url.startswith("postgresql://"):
         url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
@@ -294,7 +318,7 @@ def get_session_factory() -> async_sessionmaker[AsyncSession]:
 
 
 async def init_db(custom_url: str | None = None) -> None:
-    """Initialize database tables."""
+    """Initialize database tables safely without data loss."""
     global _engine, _session_factory
     if custom_url:
         _engine = create_async_engine(custom_url, echo=False)
@@ -303,6 +327,28 @@ async def init_db(custom_url: str | None = None) -> None:
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+
+async def close_db() -> None:
+    """Cleanly dispose database engine connections on application shutdown."""
+    global _engine, _session_factory
+    if _engine is not None:
+        await _engine.dispose()
+        _engine = None
+        _session_factory = None
+
+
+async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
+    """Dependency generator for FastAPI routes injecting an AsyncSession."""
+    session_factory = get_session_factory()
+    async with session_factory() as session:
+        try:
+            yield session
+        except Exception:
+            await session.rollback()
+            raise
+        finally:
+            await session.close()
 
 
 # ==============================================================================
@@ -661,4 +707,64 @@ async def delete_recon_scan_for_user(recon_id: str, user_id: str | None = None) 
         await session.delete(rec)
         await session.commit()
         return True
+
+
+# ==============================================================================
+# Settings Persistence Helper Functions
+# ==============================================================================
+
+
+async def save_setting(key: str, value: Any, user_id: str | None = None) -> SettingRecord:
+    """Save or update a local configuration setting."""
+    session_factory = get_session_factory()
+    async with session_factory() as session:
+        rec = await session.get(SettingRecord, key)
+        if rec:
+            rec.value_json = json.dumps(value)
+            rec.user_id = user_id
+            rec.updated_at = datetime.now(UTC)
+        else:
+            rec = SettingRecord(key=key, user_id=user_id, value_json=json.dumps(value))
+            session.add(rec)
+        await session.commit()
+        await session.refresh(rec)
+        return rec
+
+
+async def get_setting(key: str, user_id: str | None = None) -> Any | None:
+    """Fetch setting value by key."""
+    session_factory = get_session_factory()
+    async with session_factory() as session:
+        rec = await session.get(SettingRecord, key)
+        if not rec:
+            return None
+        if user_id is not None and rec.user_id is not None and rec.user_id != user_id:
+            return None
+        return json.loads(rec.value_json)
+
+
+async def delete_setting(key: str, user_id: str | None = None) -> bool:
+    """Delete setting by key."""
+    session_factory = get_session_factory()
+    async with session_factory() as session:
+        rec = await session.get(SettingRecord, key)
+        if not rec:
+            return False
+        if user_id is not None and rec.user_id is not None and rec.user_id != user_id:
+            return False
+        await session.delete(rec)
+        await session.commit()
+        return True
+
+
+async def list_settings(user_id: str | None = None) -> dict[str, Any]:
+    """List all configured settings."""
+    session_factory = get_session_factory()
+    async with session_factory() as session:
+        stmt = select(SettingRecord)
+        if user_id is not None:
+            stmt = stmt.where((SettingRecord.user_id == user_id) | (SettingRecord.user_id.is_(None)))
+        res = await session.execute(stmt)
+        return {r.key: json.loads(r.value_json) for r in res.scalars().all()}
+
 

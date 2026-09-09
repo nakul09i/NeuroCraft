@@ -26,7 +26,7 @@ class IngestionManager:
         try:
             self.quarantine_dir.mkdir(parents=True, exist_ok=True)
         except OSError:
-            self.quarantine_dir = Path("/tmp/neurocraft_quarantine")
+            self.quarantine_dir = Path("/tmp/neurocraft_quarantine")  # noqa: S108
             self.quarantine_dir.mkdir(parents=True, exist_ok=True)
 
     def prepare_quarantine_path(self, scan_id: str) -> Path:

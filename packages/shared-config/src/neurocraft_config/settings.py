@@ -6,6 +6,36 @@ from pathlib import Path
 from pydantic import BaseModel, Field
 
 
+def _load_env_file() -> None:
+    """Safely load .env file from working directory or ancestors into os.environ if not already set."""
+    cur = Path.cwd().resolve()
+    candidates = [
+        cur / ".env",
+        cur.parent / ".env",
+        cur.parent.parent / ".env",
+        Path(__file__).resolve().parent.parent.parent.parent.parent / ".env",
+    ]
+    for env_path in candidates:
+        if env_path.is_file():
+            try:
+                with open(env_path, encoding="utf-8", errors="ignore") as f:
+                    for line in f:
+                        line = line.strip()
+                        if not line or line.startswith("#") or "=" not in line:
+                            continue
+                        key, _, val = line.partition("=")
+                        key = key.strip()
+                        val = val.strip().strip("'\"")
+                        if key and key not in os.environ:
+                            os.environ[key] = val
+                break
+            except Exception:
+                pass
+
+
+_load_env_file()
+
+
 def _safe_int(key: str, default: int) -> int:
     val = os.getenv(key)
     if val is None or not val.strip():
@@ -50,8 +80,8 @@ class AppConfig(BaseModel):
         default_factory=lambda: Path(
             os.getenv(
                 "QUARANTINE_DIR",
-                "/tmp/neurocraft_quarantine" if os.getenv("VERCEL") else "./scratch/quarantine",
-            ) or ("/tmp/neurocraft_quarantine" if os.getenv("VERCEL") else "./scratch/quarantine")
+                "/tmp/neurocraft_quarantine" if os.getenv("VERCEL") else "./scratch/quarantine",  # noqa: S108
+            ) or ("/tmp/neurocraft_quarantine" if os.getenv("VERCEL") else "./scratch/quarantine")  # noqa: S108
         )
     )
     scanner_timeout_seconds: int = Field(
@@ -62,8 +92,8 @@ class AppConfig(BaseModel):
     database_url: str = Field(
         default_factory=lambda: os.getenv(
             "DATABASE_URL",
-            "sqlite+aiosqlite:////tmp/neurocraft.db" if os.getenv("VERCEL") else "sqlite+aiosqlite:///./neurocraft.db",
-        ) or ("sqlite+aiosqlite:////tmp/neurocraft.db" if os.getenv("VERCEL") else "sqlite+aiosqlite:///./neurocraft.db")
+            "sqlite+aiosqlite:////tmp/neurocraft.db" if os.getenv("VERCEL") else "sqlite+aiosqlite:///./neurocraft.db",  # noqa: S108
+        ) or ("sqlite+aiosqlite:////tmp/neurocraft.db" if os.getenv("VERCEL") else "sqlite+aiosqlite:///./neurocraft.db")  # noqa: S108
     )
     redis_url: str = Field(
         default_factory=lambda: os.getenv("REDIS_URL") or "redis://127.0.0.1:6379/0"
@@ -109,6 +139,14 @@ class AppConfig(BaseModel):
     blockchain_enabled: bool = Field(
         default_factory=lambda: _safe_bool("BLOCKCHAIN_ENABLED", False)
     )
+
+    @property
+    def is_production(self) -> bool:
+        return self.app_env.lower() in ("production", "prod")
+
+    @property
+    def is_offline(self) -> bool:
+        return self.app_env.lower() in ("offline", "local")
 
 
 def get_config() -> AppConfig:

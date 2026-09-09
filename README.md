@@ -16,14 +16,15 @@
 
 [![Python](https://img.shields.io/badge/Python-3.12%20%7C%203.14-blue?logo=python&logoColor=white)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![SQLite](https://img.shields.io/badge/SQLite-Local--First%20Async-003B57?logo=sqlite&logoColor=white)](./docs/DATABASE.md)
 [![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4+-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com)
-[![Tests](https://img.shields.io/badge/Tests-56%2F56%20Passing-brightgreen?logo=pytest&logoColor=white)](./tests)
+[![Tests](https://img.shields.io/badge/Tests-64%2F64%20Passing-brightgreen?logo=pytest&logoColor=white)](./tests)
 [![Vercel Ready](https://img.shields.io/badge/Vercel-Serverless%20Ready-black?logo=vercel&logoColor=white)](https://vercel.com)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE)
 
-[Features](#-features) • [Architecture](#-architecture) • [Getting Started](#-getting-started) • [API Reference](#-api-reference) • [Vercel Deployment](#-vercel-deployment) • [Security](#-security-principles)
+[Features](#2-core-engines--capabilities) • [Architecture](#3-architecture) • [Database Guide](./docs/DATABASE.md) • [Backend Architecture](./docs/BACKEND.md) • [Getting Started](#4-getting-started) • [API Reference](#5-api-reference) • [Security](#8-security-principles)
 
 </div>
 
@@ -93,12 +94,14 @@ flowchart TD
     subgraph Client["Presentation Layer (apps/web)"]
         UI["React 18 + TypeScript + Vite"]
         Theme["Theme Context (Light / Dark)"]
-        Nav["Sidebar & Command Palette"]
+        Nav["Sidebar, Command Palette & FAB"]
     end
 
-    subgraph Ingress["Ingress & Gateway"]
+    subgraph Ingress["Ingress & Gateway (services/api)"]
         VercelEntry["Vercel Serverless Entrypoint (api/index.py)"]
-        FastAPI["FastAPI Gateway (services/api)"]
+        FastAPI["FastAPI Gateway (neurocraft_api.main)"]
+        Middleware["Logging & Error Shielding Middleware"]
+        Routers["Modular Routers (scans, recon, trust, auth, settings)"]
     end
 
     subgraph Engines["Modular Backend Engines"]
@@ -109,21 +112,34 @@ flowchart TD
         Integrity["Integrity & Merkle Tree (services/integrity-service)"]
     end
 
-    subgraph Data["Persistence & Storage"]
-        DB[("SQLite / PostgreSQL Database")]
+    subgraph Data["Persistence Layer (services/api)"]
+        Repos["Repository Layer (ScanRepo, SettingsRepo)"]
+        Migrations["Migration Runner (schema_migrations)"]
+        DB[("Persistent SQLite (neurocraft.db) / PostgreSQL")]
         Config["Shared Config (packages/shared-config)"]
     end
 
     UI -->|HTTP / REST| FastAPI
     VercelEntry --> FastAPI
-    FastAPI --> Scanner
-    FastAPI --> Recon
-    FastAPI --> Quantum
-    FastAPI --> Risk
-    FastAPI --> Integrity
-    FastAPI --> DB
+    FastAPI --> Middleware --> Routers
+    Routers --> Scanner
+    Routers --> Recon
+    Routers --> Quantum
+    Routers --> Risk
+    Routers --> Integrity
+    Routers --> Repos --> DB
+    Migrations --> DB
     Scanner & Recon & Quantum & Risk & Integrity --> Config
 ```
+
+### Backend Foundation & Persistence Design
+* **Modular Router Decomposition**: Endpoints are partitioned into decoupled domain routers under `services/api/src/neurocraft_api/routes/` (`health`, `auth`, `scans`, `recon`, `trust`, `reports`, `dashboard`, `settings`), keeping the application factory in `main.py` clean and extensible.
+* **Centralized Error Shielding & Logging**: `middleware/errors.py` intercepts unhandled exceptions, database errors, and validation faults, formatting uniform JSON responses without exposing Python tracebacks, internal file paths, or raw SQL. `middleware/logging_middleware.py` automatically scrubs authorization tokens and sensitive credentials from server logs.
+* **Local-First Async SQLite Persistence**: Powered by SQLAlchemy 2.0 and `aiosqlite` (`sqlite+aiosqlite:///./neurocraft.db`). Enables 100% offline analysis, zero mandatory cloud databases, and non-destructive persistence across server restarts.
+* **Safe Incremental Migration Runner**: `migrations/runner.py` records applied migrations in a dedicated `schema_migrations` journal table, executing forward-only non-destructive schema updates without dropping existing tables.
+* **Strict Scan Data Isolation**: The repository layer (`repositories/scan_repo.py`) guarantees that queries for a specific scan ID retrieve only findings belonging to that scan, enforcing zero cross-scan leakage even across anonymous sessions.
+
+For in-depth architectural details, see [Backend Architecture Guide](./docs/BACKEND.md) and [Database & Migrations Guide](./docs/DATABASE.md).
 
 ---
 
@@ -203,16 +219,19 @@ All API routes are served under the `/api/v1` namespace. Interactive OpenAPI / S
 
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `GET` | `/health` | Ingress health probe. |
-| `GET` | `/api/v1/health` | Comprehensive service health status. |
-| `GET` | `/api/v1/dashboard/stats` | High-level metrics, scan counts, and recent activity. |
-| `POST` | `/api/v1/scans` | Upload and analyze a binary file (`multipart/form-data`). |
-| `GET` | `/api/v1/scans/{id}` | Retrieve detailed file scan evidence and risk score. |
+| `GET` | `/health` | Lightweight root ingress health probe. |
+| `GET` | `/api/v1/health` | Detailed service health, database connectivity, and engine status. |
+| `GET` | `/api/v1/dashboard/stats` | High-level metrics, scan totals, threat breakdown, and recent activity. |
+| `POST` | `/api/v1/scans` | Upload and analyze a binary file (`multipart/form-data`) with quarantine cleanup. |
+| `GET` | `/api/v1/scans/{id}` | Retrieve isolated file scan evidence, Merkle root, and risk score. |
 | `POST` | `/api/v1/recon` | Perform domain/website reconnaissance (`{"target": "example.com"}`). |
 | `POST` | `/api/v1/quantum/simulations` | Execute post-quantum trust simulation for an algorithm and scenario. |
-| `POST` | `/api/v1/reports` | Generate a signed JSON or Markdown security report. |
-| `POST` | `/api/v1/auth/register` | Register a new user profile. |
+| `POST` | `/api/v1/reports` | Generate a signed JSON or Markdown security audit report. |
+| `GET` | `/api/v1/settings` | Retrieve local key-value configuration and engine toggles. |
+| `PUT` | `/api/v1/settings` | Update local settings with persistent SQLite database storage. |
+| `POST` | `/api/v1/auth/signup` | Register a new local or cloud user profile. |
 | `POST` | `/api/v1/auth/login` | Authenticate and obtain a JWT bearer token. |
+| `GET` | `/api/v1/auth/me` | Retrieve the authenticated user session profile. |
 
 ### Example: Running a Static File Scan
 ```bash
@@ -255,16 +274,24 @@ vercel
 
 ## 7. Testing & Quality Assurance
 
-NeuroCraft maintains a rigorous test suite spanning unit logic, integration workflows, and security boundary defenses:
+NeuroCraft maintains a 100% passing test suite (**64/64 tests**) spanning unit logic, end-to-end integration workflows, SQLite database persistence, and security boundary defenses:
 
 ```bash
-# Run the complete test suite with pytest
+# Run the complete test suite with pytest (64 tests)
 pytest tests
 
 # Run specific test tiers
 pytest tests/unit
 pytest tests/integration
 pytest tests/security
+
+# Run the Phase 1 Backend & Persistence verification suite
+pytest tests/integration/test_step1_step2_backend_and_database.py
+
+# Run static linting and security hygiene
+ruff check .
+python scripts/security/check_secrets.py
+python scripts/security/verify_foundation.py
 
 # Run frontend type checking & build verification
 cd apps/web
@@ -273,7 +300,7 @@ npm run build
 
 ### Test Coverage Highlights
 * `tests/unit/`: File type detection, SHA-256 fingerprinting, Authenticode validation, risk engine aggregation, quantum simulation, and auth logic.
-* `tests/integration/`: End-to-end scan lifecycle, recon workflows, and tenant isolation.
+* `tests/integration/`: End-to-end scan lifecycle, recon workflows, tenant isolation, and `test_step1_step2_backend_and_database.py` (strict scan isolation, migration integrity, database persistence across restarts, centralized error handling, and settings API).
 * `tests/security/`: Path traversal fuzzing, symlink protection, decompression bomb prevention, and secret redaction.
 
 ---
@@ -283,7 +310,7 @@ npm run build
 1. **Zero Execution of Untrusted Files**: Static analysis is strictly out-of-process. Files are never executed during scanning.
 2. **Decompression Bomb Defense**: Enforces strict expansion ratio checks and recursion depth limits (default max depth: 2).
 3. **Strict Path Sanitization**: Strips path traversal characters (`../`, `..\\`) and prevents symlink escape attacks.
-4. **Offline First-Class Operation**: All core scanning, hashing, and ML capabilities work offline without internet access.
+4. **Offline First-Class Operation**: All core scanning, hashing, SQLite persistence, and ML capabilities work offline without internet access.
 5. **No Secret Commits**: Sensitive keys, credentials, and live malware binaries are barred from the repository via strict `.gitignore` rules.
 
 ---
@@ -296,8 +323,18 @@ neurocraft/
 ├── apps/
 │   ├── web/                     # React 18 + Vite + Tailwind CSS frontend
 │   └── cli/                     # Python CLI tool (future)
+├── docs/
+│   ├── BACKEND.md               # FastAPI backend architecture & router guide
+│   └── DATABASE.md              # SQLite persistence & migration runner guide
 ├── services/
 │   ├── api/                     # FastAPI HTTP REST gateway
+│   │   ├── src/neurocraft_api/
+│   │   │   ├── middleware/      # Error shielding & request logging middlewares
+│   │   │   ├── migrations/      # Incremental schema migration runner (001, 002)
+│   │   │   ├── repositories/    # Scan & settings data access with strict isolation
+│   │   │   ├── routes/          # Domain routers (scans, recon, trust, auth, settings)
+│   │   │   ├── database.py      # Async SQLAlchemy 2.0 + aiosqlite engine
+│   │   │   └── main.py          # FastAPI application factory & lifecycle
 │   ├── scanner/                 # Static binary inspection & fingerprinting
 │   ├── recon-engine/            # DNS, SSL/TLS, and security header recon
 │   ├── quantum-engine/          # Post-quantum cryptography simulation
@@ -309,7 +346,7 @@ neurocraft/
 │   ├── shared-security/         # Path sanitizers and safe extractors
 │   ├── shared-logging/          # Structured JSON logging & secret redaction
 │   └── api-client/              # Type-safe API client
-├── tests/                       # Unit, integration, and security test suites
+├── tests/                       # 64 automated unit, integration, and security tests
 ├── vercel.json                  # Production Vercel routing configuration
 ├── pyproject.toml               # Python project configuration & dependencies
 └── requirements.txt             # Locked Python dependencies
