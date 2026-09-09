@@ -32,17 +32,17 @@ const MainApp: React.FC = () => {
 
   // Dynamic document title update per active route
   const pageTitles: Record<string, string> = {
-    dashboard: "NeuroCraft — Dashboard",
-    scanner: "NeuroCraft — Check a File",
-    recon: "NeuroCraft — Check a Website",
-    quantum: "NeuroCraft — Trust Test",
-    reports: "NeuroCraft — Security Reports",
-    history: "NeuroCraft — Check History",
+    dashboard: "NeuroCraft — Overview",
+    scanner: "NeuroCraft — Analyze File",
+    recon: "NeuroCraft — Recon",
+    quantum: "NeuroCraft — Trust Verification",
+    reports: "NeuroCraft — Reports",
+    history: "NeuroCraft — History",
     settings: "NeuroCraft — Settings",
   };
 
   useEffect(() => {
-    document.title = pageTitles[activeTab] || "NeuroCraft — Know what you can trust";
+    document.title = pageTitles[activeTab] || "NeuroCraft — Detect. Verify. Prove.";
   }, [activeTab]);
 
   useEffect(() => {
@@ -68,12 +68,12 @@ const MainApp: React.FC = () => {
   };
 
   const tabBreadcrumbs: Record<string, string> = {
-    dashboard: "Security Overview",
-    scanner: "Check a File",
-    recon: "Check a Website",
-    quantum: "Trust Test",
-    reports: "Security Reports",
-    history: "Past Checks",
+    dashboard: "Overview",
+    scanner: "Analyze File",
+    recon: "Recon",
+    quantum: "Trust",
+    reports: "Reports",
+    history: "History",
     settings: "Settings",
   };
 

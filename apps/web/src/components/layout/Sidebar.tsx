@@ -71,15 +71,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const navItems = [
-    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { id: "scanner", label: "Files", icon: FileSearch },
-    { id: "recon", label: "Websites", icon: Globe2 },
-    { id: "quantum", label: "Trust Test", icon: Atom },
+    { id: "dashboard", label: "Overview", icon: LayoutDashboard },
+    { id: "scanner", label: "Analyze File", icon: FileSearch },
+    { id: "recon", label: "Recon", icon: Globe2 },
+    { id: "quantum", label: "Trust", icon: Atom },
     { id: "reports", label: "Reports", icon: FileText },
     { id: "history", label: "History", icon: History },
   ];
-
-  const favoriteItems = navItems.filter((item) => favorites.includes(item.id));
 
   return (
     <aside
@@ -90,12 +88,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
     >
       {/* Brand Header & Toggle */}
       {collapsed ? (
-        <div className="h-16 border-b border-border flex items-center justify-center relative px-2">
+        <div className="h-16 border-b border-border flex items-center justify-between px-3">
           <button
             onClick={() => onSelectTab("dashboard")}
-            className="w-9 h-9 rounded-xl bg-surface-1 border border-border flex items-center justify-center p-1.5 hover:border-primary/50 hover:scale-105 transition-all shadow-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-            title="NeuroCraft Dashboard"
-            aria-label="Go to Dashboard"
+            className="w-8 h-8 rounded-lg bg-surface-1 border border-border flex items-center justify-center p-1 hover:border-primary/50 transition-all shadow-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            title="Overview"
+            aria-label="Overview"
           >
             <svg viewBox="0 0 64 64" fill="none" className="w-5 h-5">
               <path
@@ -117,11 +115,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
           <button
             onClick={() => setCollapsed(false)}
-            className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-surface-elevated border border-border text-text-muted hover:text-text-primary hover:border-primary/50 shadow-md flex items-center justify-center transition-all z-40 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary group"
+            className="p-1.5 rounded-lg hover:bg-surface-1 text-text-muted hover:text-text-primary transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             title="Expand sidebar"
             aria-label="Expand sidebar"
           >
-            <PanelLeftOpen className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
+            <PanelLeftOpen className="w-4 h-4" />
           </button>
         </div>
       ) : (
@@ -131,7 +129,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             className="flex items-center space-x-3 cursor-pointer group overflow-hidden"
             title="NeuroCraft"
           >
-            <div className="w-8 h-8 rounded-xl bg-surface-1 border border-border flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform p-1 shadow-xs">
+            <div className="w-8 h-8 rounded-lg bg-surface-1 border border-border flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform p-1 shadow-xs">
               <svg viewBox="0 0 64 64" fill="none" className="w-5 h-5">
                 <path
                   d="M32 4L54 12V30C54 44.5 44.5 56.5 32 60C19.5 56.5 10 44.5 10 30V12L32 4Z"
@@ -155,7 +153,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 NeuroCraft
               </span>
               <span className="text-[11px] text-text-muted font-medium">
-                Know what you can trust
+                Detect. Verify. Prove.
               </span>
             </div>
           </div>
@@ -171,105 +169,44 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       )}
 
-      {/* Navigation and Favorites Body */}
-      <div className="flex-1 py-4 px-2.5 space-y-4 overflow-y-auto overflow-x-hidden">
-        {/* Favorites Section (if any pinned) */}
-        {favoriteItems.length > 0 && (
-          <div className="space-y-1">
-            {!collapsed && (
-              <div className="px-2.5 pb-1 text-[11px] font-bold uppercase tracking-wider text-text-muted flex items-center justify-between">
-                <span>Quick Access</span>
-                <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
-              </div>
-            )}
-            {favoriteItems.map((fav) => {
-              const Icon = fav.icon;
-              const isActive = activeTab === fav.id;
-              return (
-                <div key={`fav-${fav.id}`} className="relative group">
-                  <button
-                    onClick={() => onSelectTab(fav.id)}
-                    className={`w-full flex items-center rounded-xl text-sm transition-all duration-150 relative ${
-                      collapsed ? "justify-center p-2.5" : "px-3 py-2 space-x-2.5"
-                    } ${
-                      isActive
-                        ? "bg-primary-subtle text-primary font-bold border border-primary-border"
-                        : "text-text-secondary hover:text-text-primary hover:bg-surface-1 font-medium"
-                    }`}
-                  >
-                    <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-primary" : "text-amber-500"}`} />
-                    {!collapsed && <span className="truncate">{fav.label}</span>}
-                  </button>
+      {/* Primary Navigation Body */}
+      <div className="flex-1 py-4 px-2.5 space-y-1 overflow-y-auto overflow-x-hidden">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = activeTab === item.id;
 
-                  {/* Floating tooltip when collapsed */}
-                  {collapsed && (
-                    <div className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 z-50 whitespace-nowrap rounded-lg bg-surface-elevated px-2.5 py-1 text-xs font-semibold text-text-primary shadow-xl border border-border opacity-0 transition-opacity duration-150 group-hover:opacity-100">
-                      {fav.label}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Primary Navigation */}
-        <div className="space-y-1">
-          {!collapsed && (
-            <div className="px-2.5 pb-1 text-[11px] font-bold uppercase tracking-wider text-text-muted">
-              Features
-            </div>
-          )}
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-            const isFav = favorites.includes(item.id);
-
-            return (
-              <div key={item.id} className="relative group">
-                <button
-                  onClick={() => onSelectTab(item.id)}
-                  className={`w-full flex items-center rounded-xl text-[14px] cursor-pointer transition-all duration-150 text-left ${
-                    collapsed ? "justify-center p-2.5" : "px-3 py-2.5 space-x-3"
-                  } ${
-                    isActive
-                      ? "bg-primary-subtle text-primary font-bold border border-primary-border shadow-xs"
-                      : "text-text-secondary hover:text-text-primary hover:bg-surface-1 font-medium"
+          return (
+            <div key={item.id} className="relative group">
+              <button
+                onClick={() => onSelectTab(item.id)}
+                className={`w-full flex items-center rounded-xl text-[14px] cursor-pointer transition-all duration-150 text-left ${
+                  collapsed ? "justify-center p-2.5" : "px-3 py-2.5 space-x-3"
+                } ${
+                  isActive
+                    ? "bg-primary-subtle text-primary font-semibold border border-primary-border shadow-xs"
+                    : "text-text-secondary hover:text-text-primary hover:bg-surface-1 font-medium"
+                }`}
+                aria-current={isActive ? "page" : undefined}
+              >
+                <Icon
+                  className={`w-4 h-4 shrink-0 transition-colors ${
+                    isActive ? "text-primary stroke-[2.2]" : "text-text-muted stroke-[1.8] group-hover:text-text-primary"
                   }`}
-                  aria-current={isActive ? "page" : undefined}
-                >
-                  <Icon
-                    className={`w-4 h-4 shrink-0 transition-colors ${
-                      isActive ? "text-primary stroke-[2.2]" : "text-text-muted stroke-[1.8] group-hover:text-text-primary"
-                    }`}
-                  />
-                  {!collapsed && (
-                    <div className="flex items-center justify-between w-full min-w-0">
-                      <span className="truncate">{item.label}</span>
-                      <button
-                        type="button"
-                        onClick={(e) => toggleFavorite(e, item.id)}
-                        className={`p-1 rounded-md text-text-muted hover:text-amber-500 transition-opacity ${
-                          isFav ? "text-amber-500 opacity-100" : "opacity-0 group-hover:opacity-100"
-                        }`}
-                        title={isFav ? "Remove favorite" : "Pin item"}
-                      >
-                        <Star className={`w-3.5 h-3.5 ${isFav ? "fill-amber-500 text-amber-500" : ""}`} />
-                      </button>
-                    </div>
-                  )}
-                </button>
-
-                {/* Floating tooltip when collapsed */}
-                {collapsed && (
-                  <div className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 z-50 whitespace-nowrap rounded-lg bg-surface-elevated px-3 py-1.5 text-xs font-semibold text-text-primary shadow-xl border border-border opacity-0 transition-opacity duration-150 group-hover:opacity-100">
-                    {item.label}
-                  </div>
+                />
+                {!collapsed && (
+                  <span className="truncate">{item.label}</span>
                 )}
-              </div>
-            );
-          })}
-        </div>
+              </button>
+
+              {/* Floating tooltip when collapsed */}
+              {collapsed && (
+                <div className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 z-50 whitespace-nowrap rounded-lg bg-surface-elevated px-3 py-1.5 text-xs font-semibold text-text-primary shadow-xl border border-border opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+                  {item.label}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* Divider */}

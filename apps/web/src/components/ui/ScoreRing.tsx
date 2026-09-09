@@ -12,6 +12,21 @@ export interface ScoreRingProps {
   className?: string;
 }
 
+export function getScoreState(score: number | null | undefined): {
+  label: string;
+  color: string;
+  badgeVariant: "safe" | "low" | "medium" | "high" | "critical" | "neutral";
+} {
+  if (score === null || score === undefined || !Number.isFinite(score)) {
+    return { label: "Awaiting analysis", color: "var(--text-muted)", badgeVariant: "neutral" };
+  }
+  const s = Math.max(0, Math.min(100, Math.round(score)));
+  if (s >= 90) return { label: "Secure", color: "var(--success)", badgeVariant: "safe" };
+  if (s >= 70) return { label: "Mostly Secure", color: "var(--info)", badgeVariant: "low" };
+  if (s >= 40) return { label: "Review Needed", color: "var(--warning)", badgeVariant: "medium" };
+  return { label: "High Risk", color: "var(--danger)", badgeVariant: "critical" };
+}
+
 export const ScoreRing: React.FC<ScoreRingProps> = ({
   score,
   loading = false,
@@ -37,7 +52,7 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
     }
 
     let start = 0;
-    const duration = 600; // ms
+    const duration = 650; // ms
     const startTime = performance.now();
 
     const animate = (currentTime: number) => {
@@ -64,21 +79,25 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
     ? circumference - (validScore / 100) * circumference
     : circumference;
 
-  // Compute elegant semantic stroke color
+  // Compute elegant semantic stroke color based on 4-tier scale
   let strokeColor = "var(--border-strong)";
 
   if (targetScore !== null) {
     if (variant === "posture" || variant === "safety") {
-      if (validScore >= 75) {
+      if (validScore >= 90) {
         strokeColor = "var(--success)";
-      } else if (validScore >= 50) {
+      } else if (validScore >= 70) {
+        strokeColor = "var(--info)";
+      } else if (validScore >= 40) {
         strokeColor = "var(--warning)";
       } else {
         strokeColor = "var(--danger)";
       }
     } else {
-      if (validScore <= 25) {
+      if (validScore <= 10) {
         strokeColor = "var(--success)";
+      } else if (validScore <= 30) {
+        strokeColor = "var(--info)";
       } else if (validScore <= 60) {
         strokeColor = "var(--warning)";
       } else {
@@ -86,6 +105,8 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
       }
     }
   }
+
+  const stateInfo = getScoreState(targetScore);
 
   return (
     <div
@@ -157,31 +178,43 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
             </>
           ) : (
             <>
-              <span className="text-2xl font-bold text-text-muted leading-none">
-                —
+              <span className="text-2xl font-bold font-mono text-text-muted leading-none">
+                --
               </span>
-              <span className="text-[10px] text-text-muted mt-1 leading-tight max-w-[80px]">
-                No score yet
+              <span className="text-[10px] text-text-muted mt-1 leading-tight font-medium">
+                / 100
               </span>
             </>
           )}
         </div>
       </div>
 
-      {(label || sublabel) && (
-        <div className="mt-3 text-center">
-          {label && (
-            <div className="text-sm font-bold text-text-primary tracking-tight">
-              {label}
-            </div>
-          )}
-          {sublabel && (
-            <div className="text-xs text-text-secondary mt-0.5">
-              {sublabel}
-            </div>
-          )}
-        </div>
-      )}
+      <div className="mt-2.5 text-center">
+        {targetScore !== null ? (
+          <div className="text-xs font-bold uppercase tracking-wider" style={{ color: stateInfo.color }}>
+            {stateInfo.label}
+          </div>
+        ) : (
+          <div className="text-xs font-medium text-text-muted">
+            Awaiting analysis
+          </div>
+        )}
+
+        {(label || sublabel) && (
+          <div className="mt-1">
+            {label && (
+              <div className="text-xs font-semibold text-text-secondary tracking-tight">
+                {label}
+              </div>
+            )}
+            {sublabel && (
+              <div className="text-[11px] text-text-muted mt-0.5">
+                {sublabel}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

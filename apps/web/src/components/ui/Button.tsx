@@ -32,11 +32,11 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     if (size === "lg") sizeStyles = "h-12 sm:h-[52px] px-6 text-[15px] sm:text-[16px] font-bold gap-2.5 rounded-xl shadow-md";
 
     let variantStyles =
-      "bg-primary text-white hover:bg-primary-hover shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99]";
+      "bg-primary text-white hover:bg-primary-hover shadow-xs hover:shadow-sm active:scale-[0.99] cursor-pointer";
 
     if (variant === "secondary") {
       variantStyles =
-        "bg-surface-0 text-text-primary border border-border hover:bg-surface-1 hover:border-border-strong shadow-xs hover:-translate-y-0.5 active:translate-y-0";
+        "bg-surface-0 text-text-primary border border-border hover:bg-surface-1 hover:border-border-strong shadow-xs active:scale-[0.99] cursor-pointer";
     } else if (variant === "inset") {
       variantStyles =
         "bg-surface-inset text-primary font-bold border border-border-subtle hover:bg-surface-1";

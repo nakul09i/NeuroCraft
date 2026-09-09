@@ -49,10 +49,10 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
   if (!isOpen) return null;
 
   const navItems = [
-    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { id: "scanner", label: "Files", icon: FileSearch },
-    { id: "recon", label: "Websites", icon: Globe2 },
-    { id: "quantum", label: "Trust Test", icon: Atom },
+    { id: "dashboard", label: "Overview", icon: LayoutDashboard },
+    { id: "scanner", label: "Analyze File", icon: FileSearch },
+    { id: "recon", label: "Recon", icon: Globe2 },
+    { id: "quantum", label: "Trust", icon: Atom },
     { id: "reports", label: "Reports", icon: FileText },
     { id: "history", label: "History", icon: History },
   ];

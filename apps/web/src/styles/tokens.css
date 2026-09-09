@@ -69,7 +69,7 @@
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
-  --shadow-glow: 0 0 24px rgba(2, 132, 199, 0.25);
+  --shadow-glow: 0 0 16px rgba(2, 132, 199, 0.14);
 
   /* Compatibility shadow tokens */
   --neu-raised-sm: var(--shadow-sm);
@@ -92,51 +92,51 @@
   --surface-elevated: #15213b;
 
   /* Subtle Crisp Dark Borders */
-  --border: rgba(255, 255, 255, 0.1);
-  --border-subtle: rgba(255, 255, 255, 0.05);
-  --border-strong: rgba(255, 255, 255, 0.2);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-subtle: rgba(255, 255, 255, 0.04);
+  --border-strong: rgba(255, 255, 255, 0.16);
 
   /* High-Contrast Readability */
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
   --text-muted: #64748b;
-  --text-inverse: #ffffff;
+  --text-inverse: #090d16;
   --text-on-primary: #ffffff;
 
-  /* Single Unified Brand Accent (Authoritative Electric Sapphire #0284C7 / #0EA5E9) */
+  /* Single Unified Brand Accent (Authoritative Sapphire #0284C7 / #0EA5E9) */
   --primary: #0284c7;
   --primary-hover: #0369a1;
-  --primary-subtle: rgba(2, 132, 199, 0.15);
-  --primary-border: rgba(56, 189, 248, 0.35);
+  --primary-subtle: rgba(2, 132, 199, 0.12);
+  --primary-border: rgba(56, 189, 248, 0.25);
   --primary-text: #38bdf8;
 
   --accent-cyan: #38bdf8;
-  --accent-cyan-subtle: rgba(56, 189, 248, 0.15);
+  --accent-cyan-subtle: rgba(56, 189, 248, 0.12);
   --accent-purple: #a855f7;
-  --accent-purple-subtle: rgba(168, 85, 247, 0.16);
+  --accent-purple-subtle: rgba(168, 85, 247, 0.12);
 
   /* Semantic Status Colors (Dark Mode) */
   --success: #34d399;
-  --success-subtle: rgba(52, 211, 153, 0.14);
-  --success-border: rgba(52, 211, 153, 0.3);
+  --success-subtle: rgba(52, 211, 153, 0.12);
+  --success-border: rgba(52, 211, 153, 0.25);
   --success-text: #34d399;
 
   --warning: #fbbf24;
-  --warning-subtle: rgba(251, 191, 36, 0.14);
-  --warning-border: rgba(251, 191, 36, 0.3);
+  --warning-subtle: rgba(251, 191, 36, 0.12);
+  --warning-border: rgba(251, 191, 36, 0.25);
   --warning-text: #fbbf24;
 
   --danger: #f87171;
-  --danger-subtle: rgba(248, 113, 113, 0.14);
-  --danger-border: rgba(248, 113, 113, 0.3);
+  --danger-subtle: rgba(248, 113, 113, 0.12);
+  --danger-border: rgba(248, 113, 113, 0.25);
   --danger-text: #f87171;
 
   --info: #38bdf8;
-  --info-subtle: rgba(56, 189, 248, 0.14);
-  --info-border: rgba(56, 189, 248, 0.3);
+  --info-subtle: rgba(56, 189, 248, 0.12);
+  --info-border: rgba(56, 189, 248, 0.25);
   --info-text: #38bdf8;
 
-  --ring: rgba(56, 189, 248, 0.5);
+  --ring: rgba(56, 189, 248, 0.4);
 
   /* Deep Elevation Shadows & Subtle Rim Glow (Dark Mode) */
   --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
@@ -144,7 +144,7 @@
   --shadow-md: 0 4px 12px 0 rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.08);
   --shadow-lg: 0 12px 24px -4px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.1);
   --shadow-xl: 0 20px 32px -8px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.12);
-  --shadow-glow: 0 0 28px rgba(2, 132, 199, 0.45);
+  --shadow-glow: 0 0 18px rgba(2, 132, 199, 0.25);
 
   /* Compatibility shadow tokens */
   --neu-raised-sm: var(--shadow-sm);
