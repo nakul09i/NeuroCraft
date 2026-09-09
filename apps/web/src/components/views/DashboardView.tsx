@@ -177,10 +177,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
           <div className="flex flex-wrap items-center gap-3 shrink-0">
             <Button
               size="lg"
-              variant="primary"
+              variant="secondary"
               onClick={() => onNavigate("scanner")}
               className="text-base font-semibold shadow-md px-6 py-3.5"
-              icon={<Plus className="w-5 h-5" />}
+              icon={<Plus className="w-5 h-5 text-text-secondary" />}
             >
               Analyze File
             </Button>

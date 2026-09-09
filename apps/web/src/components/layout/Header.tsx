@@ -26,6 +26,7 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   return (
     <header className="h-16 border-b border-border/60 bg-bg/90 backdrop-blur-md px-4 sm:px-8 flex items-center justify-between z-20 sticky top-0 transition-colors duration-200">
+      {/* can add flex-col on small widths but has to increase navbar height to give gap */}
       <div className="flex items-center space-x-3.5">
         {onOpenMobileMenu && (
           <button
