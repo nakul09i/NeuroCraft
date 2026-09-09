@@ -40,33 +40,34 @@ export const Modal: React.FC<ModalProps> = ({
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn"
+      onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className={`relative w-full ${widthClass} rounded-xl border-2 border-border bg-surface-0 shadow-brutal-lg p-6 overflow-hidden max-h-[90vh] flex flex-col`}
+        className={`relative w-full ${widthClass} rounded-2xl border border-border bg-surface-elevated shadow-xl p-6 sm:p-7 overflow-hidden max-h-[90vh] flex flex-col animate-scaleIn`}
       >
         {/* Header */}
         {(title || description) && (
-          <div className="flex items-start justify-between pb-4 border-b-2 border-border">
+          <div className="flex items-start justify-between pb-4 border-b border-border/80">
             <div>
               {title && (
-                <h3 className="text-base sm:text-lg font-black font-display text-text-primary tracking-tight uppercase">
+                <h3 className="text-base sm:text-lg font-bold text-text-primary tracking-tight">
                   {title}
                 </h3>
               )}
               {description && (
-                <p className="text-xs text-text-secondary mt-1 leading-normal">
+                <p className="text-xs sm:text-sm text-text-secondary mt-1 leading-relaxed">
                   {description}
                 </p>
               )}
             </div>
             <button
               onClick={onClose}
-              className="text-text-primary p-1.5 rounded-lg border-2 border-border bg-surface-1 hover:bg-surface-2 hover:shadow-brutal-sm active:translate-x-0.5 active:translate-y-0.5 transition ml-4 shrink-0"
+              className="text-text-muted hover:text-text-primary p-2 rounded-xl bg-surface-1 hover:bg-surface-2 transition ml-4 shrink-0 focus-ring"
               aria-label="Close dialog"
             >
-              <X className="w-4 h-4 stroke-[2.5]" />
+              <X className="w-4 h-4 stroke-[2]" />
             </button>
           </div>
         )}

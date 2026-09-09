@@ -11,16 +11,16 @@
 
   html {
     color-scheme: light dark;
-    background: var(--bg);
+    background-color: var(--bg);
     scroll-behavior: smooth;
   }
 
   body {
     background-color: var(--bg);
     color: var(--text-primary);
-    font-family: "Geist", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     overflow-x: hidden;
-    letter-spacing: -0.012em;
+    letter-spacing: -0.011em;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     min-width: 320px;
@@ -43,94 +43,141 @@
   select:focus-visible,
   textarea:focus-visible {
     outline: 2px solid var(--primary);
-    outline-offset: 3px;
+    outline-offset: 2px;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+    letter-spacing: -0.025em;
+    font-weight: 600;
   }
 
   h1 {
-    font-family: "Geist", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
-    letter-spacing: -0.03em;
     font-weight: 700;
   }
 
-  h2, h3, h4, h5, h6 {
-    font-family: "Geist", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
-    letter-spacing: -0.02em;
-    font-weight: 600;
+  code, kbd, samp, pre {
+    font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    letter-spacing: -0.01em;
   }
 }
 
 /* ==============================================================================
-   SOFT NEUMORPHIC UTILITIES
-   Three surface levels: Base, Raised, Inset
+   MODERN SAAS SURFACE UTILITIES (Apple / Linear / Vercel Style)
    ============================================================================== */
 
+.card-base {
+  background-color: var(--surface-0);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  border-radius: 1rem;
+}
+
+.card-elevated {
+  background-color: var(--surface-elevated);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+  border-radius: 1rem;
+}
+
+.card-interactive {
+  background-color: var(--surface-0);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  border-radius: 1rem;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-interactive:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-lg);
+}
+
+.card-interactive:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-xs);
+}
+
+/* Backward-compatible neumorphic aliases mapped cleanly to refined SaaS surfaces */
 .neu-base {
   background-color: var(--bg);
 }
 
 .neu-raised {
   background-color: var(--surface-0);
-  box-shadow: var(--neu-raised-md);
   border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
   transition: box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
 }
 
 .neu-raised-sm {
   background-color: var(--surface-0);
-  box-shadow: var(--neu-raised-sm);
   border: 1px solid var(--border);
-  transition: box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+  box-shadow: var(--shadow-xs);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.neu-raised-md {
+  background-color: var(--surface-0);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .neu-raised-lg {
   background-color: var(--surface-0);
-  box-shadow: var(--neu-raised-lg);
   border: 1px solid var(--border);
-  transition: box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+  box-shadow: var(--shadow-lg);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .neu-inset {
   background-color: var(--surface-inset);
-  box-shadow: var(--neu-inset-sm);
   border: 1px solid var(--border-subtle);
-  transition: box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.neu-inset-sm {
+  background-color: var(--surface-inset);
+  border: 1px solid var(--border-subtle);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .neu-inset-md {
   background-color: var(--surface-inset);
-  box-shadow: var(--neu-inset-md);
   border: 1px solid var(--border-subtle);
-  transition: box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
-/* Interactive Neumorphic Card Hover/Active Lift */
 .neu-interactive:hover {
   transform: translateY(-2px);
-  box-shadow: var(--neu-raised-lg);
+  box-shadow: var(--shadow-lg);
   border-color: var(--border-strong);
 }
 
 .neu-interactive:active {
   transform: translateY(0);
-  box-shadow: var(--neu-raised-sm);
+  box-shadow: var(--shadow-xs);
 }
 
-/* Neumorphic Button Styling */
 .neu-button {
   background-color: var(--surface-0);
-  box-shadow: var(--neu-raised-sm);
   border: 1px solid var(--border);
+  box-shadow: var(--shadow-xs);
   transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .neu-button:hover:not(:disabled) {
+  background-color: var(--surface-1);
+  border-color: var(--border-strong);
   transform: translateY(-1px);
-  box-shadow: var(--neu-raised-md);
+  box-shadow: var(--shadow-sm);
 }
 
 .neu-button:active:not(:disabled) {
   transform: translateY(0);
-  box-shadow: var(--neu-inset-sm);
+  box-shadow: var(--shadow-xs);
 }
 
 /* Subtle, accessible focus ring */
@@ -146,8 +193,8 @@
   position: relative;
   isolation: isolate;
   background:
-    radial-gradient(circle at 8% 0%, var(--primary-subtle), transparent 28rem),
-    radial-gradient(circle at 96% 100%, var(--accent-purple-subtle), transparent 30rem),
+    radial-gradient(circle at 10% 0%, var(--primary-subtle), transparent 32rem),
+    radial-gradient(circle at 90% 100%, var(--accent-purple-subtle), transparent 32rem),
     var(--bg);
 }
 
@@ -157,29 +204,29 @@
   inset: 0;
   pointer-events: none;
   z-index: -1;
-  opacity: 0.3;
+  opacity: 0.4;
   background-image: linear-gradient(to right, var(--border-subtle) 1px, transparent 1px),
     linear-gradient(to bottom, var(--border-subtle) 1px, transparent 1px);
   background-size: 48px 48px;
-  mask-image: linear-gradient(to bottom, black, transparent 72%);
+  mask-image: linear-gradient(to bottom, black, transparent 80%);
 }
 
 .glass-panel {
-  background: color-mix(in srgb, var(--surface-0) 78%, transparent);
+  background: color-mix(in srgb, var(--surface-0) 82%, transparent);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-md);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 .shadow-glow {
-  box-shadow: 0 0 0 1px var(--primary-border), 0 12px 28px color-mix(in srgb, var(--primary) 22%, transparent);
+  box-shadow: 0 0 0 1px var(--primary-border), var(--shadow-glow);
 }
 
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
@@ -188,10 +235,10 @@
 }
 
 .animate-fadeIn {
-  animation: fadeIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-/* Delicate minimalist scrollbar */
+/* Refined minimalist scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -211,15 +258,14 @@
 }
 
 /* ==============================================================================
-   ADVANCED SAAS ANIMATIONS & DYNAMIC MICROINTERACTIONS
+   ANIMATIONS & DYNAMIC MICROINTERACTIONS
    ============================================================================== */
 
-/* Hero Typography Word Stagger */
 @keyframes wordReveal {
   0% {
     opacity: 0;
-    transform: translateY(14px);
-    filter: blur(6px);
+    transform: translateY(10px);
+    filter: blur(4px);
   }
   100% {
     opacity: 1;
@@ -229,32 +275,32 @@
 }
 
 .animate-word-1 {
-  animation: wordReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: wordReveal 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 .animate-word-2 {
-  animation: wordReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.18s forwards;
+  animation: wordReveal 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards;
   opacity: 0;
 }
 .animate-word-3 {
-  animation: wordReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.36s forwards;
+  animation: wordReveal 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards;
   opacity: 0;
 }
 .animate-subhead {
-  animation: wordReveal 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.52s forwards;
+  animation: wordReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.45s forwards;
   opacity: 0;
 }
 
-/* Laser Scan Sweep for File Analysis Cards */
+/* Laser Scan Sweep */
 @keyframes laserSweep {
   0% {
     top: 0%;
     opacity: 0;
   }
   20% {
-    opacity: 0.9;
+    opacity: 0.8;
   }
   80% {
-    opacity: 0.9;
+    opacity: 0.8;
   }
   100% {
     top: 100%;
@@ -268,7 +314,7 @@
   right: 0;
   height: 2px;
   background: linear-gradient(90deg, transparent, var(--primary), #38bdf8, transparent);
-  box-shadow: 0 0 8px #38bdf8;
+  box-shadow: 0 0 8px var(--primary);
   opacity: 0;
 }
 
@@ -280,15 +326,15 @@
 @keyframes statusBeacon {
   0% {
     transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.7);
   }
   70% {
     transform: scale(1);
-    box-shadow: 0 0 0 7px rgba(16, 185, 129, 0);
+    box-shadow: 0 0 0 6px rgba(22, 163, 74, 0);
   }
   100% {
     transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    box-shadow: 0 0 0 0 rgba(22, 163, 74, 0);
   }
 }
 
@@ -302,41 +348,12 @@
     transform: translate(0px, 0px) scale(1);
   }
   50% {
-    transform: translate(20px, -15px) scale(1.06);
+    transform: translate(15px, -10px) scale(1.04);
   }
 }
 
 .animate-mesh {
-  animation: meshFloat 12s ease-in-out infinite;
-}
-
-/* Data Conduit Pulse */
-@keyframes conduitPulse {
-  0% {
-    stroke-dashoffset: 60;
-  }
-  100% {
-    stroke-dashoffset: 0;
-  }
-}
-
-.conduit-flow {
-  stroke-dasharray: 6 6;
-  animation: conduitPulse 1.4s linear infinite;
-}
-
-/* Orbit Animation */
-@keyframes orbitSpin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.animate-orbit {
-  animation: orbitSpin 20s linear infinite;
+  animation: meshFloat 14s ease-in-out infinite;
 }
 
 /* Reduced motion preference */
@@ -347,11 +364,5 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
     transform: none !important;
-  }
-}
-
-@media (max-width: 640px) {
-  .calm-ambient-bg::before {
-    background-size: 32px 32px;
   }
 }

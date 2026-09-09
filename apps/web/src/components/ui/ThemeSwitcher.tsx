@@ -33,7 +33,7 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
 
   if (variant === "segmented") {
     return (
-      <div className={`inline-flex items-center p-1 rounded-xl neu-inset ${className}`}>
+      <div className={`inline-flex items-center p-1 rounded-xl bg-surface-1 border border-border ${className}`}>
         {themeOptions.map((opt) => {
           const isActive = theme === opt.mode;
           const Icon = opt.icon;
@@ -42,10 +42,10 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
               key={opt.mode}
               type="button"
               onClick={() => setTheme(opt.mode)}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
+              className={`flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all focus-ring ${
                 isActive
-                  ? "neu-raised-sm bg-surface-0 text-primary font-semibold"
-                  : "text-text-muted hover:text-text-primary"
+                  ? "bg-surface-0 text-primary shadow-xs"
+                  : "text-text-muted hover:text-text-primary hover:bg-surface-0/50"
               }`}
               title={`Switch to ${opt.label} mode`}
             >
@@ -66,19 +66,22 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="flex items-center space-x-2 px-3 py-2 text-xs font-medium rounded-xl neu-button text-text-secondary hover:text-text-primary transition-all focus-ring"
+        className="flex items-center space-x-2 px-3 py-2 text-xs font-medium rounded-xl bg-surface-0 border border-border hover:bg-surface-1 text-text-secondary hover:text-text-primary transition-all shadow-xs focus-ring"
         aria-label="Toggle Theme Menu"
         aria-expanded={open}
       >
         <CurrentIcon className="w-4 h-4 text-primary" />
-        <span className="hidden sm:inline capitalize text-[13px]">
+        <span className="hidden sm:inline capitalize text-[13px] font-semibold text-text-primary">
           {theme}
         </span>
         <ChevronDown className={`w-3.5 h-3.5 text-text-muted transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-40 rounded-2xl bg-surface-0 neu-raised-lg p-1.5 z-50 animate-scaleIn">
+        <div className="absolute right-0 mt-2 w-44 rounded-2xl bg-surface-elevated border border-border shadow-xl p-1.5 z-50 animate-scaleIn">
+          <div className="px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wider text-text-muted">
+            Theme Preference
+          </div>
           {themeOptions.map((opt) => {
             const isActive = theme === opt.mode;
             const Icon = opt.icon;
@@ -92,12 +95,12 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
                 }}
                 className={`w-full flex items-center justify-between px-3 py-2 text-xs rounded-xl font-medium text-left transition-colors ${
                   isActive
-                    ? "neu-inset text-primary font-semibold"
+                    ? "bg-primary-subtle text-primary font-bold border border-primary-border"
                     : "text-text-secondary hover:text-text-primary hover:bg-surface-1"
                 }`}
               >
                 <div className="flex items-center space-x-2.5">
-                  <Icon className="w-4 h-4 shrink-0" />
+                  <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-primary" : "text-text-muted"}`} />
                   <span className="text-[13px]">{opt.label}</span>
                 </div>
                 {isActive && <Check className="w-3.5 h-3.5 text-primary shrink-0" />}

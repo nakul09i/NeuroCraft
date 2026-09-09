@@ -14,50 +14,71 @@ const STORAGE_KEY = "neurocraft_theme";
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setThemeState] = useState<ThemeMode>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved === "light" || saved === "dark" || saved === "system") {
-      return saved;
-    }
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved === "light" || saved === "dark" || saved === "system") {
+        return saved;
+      }
+    } catch {}
     return "system";
   });
 
   const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">(() => {
-    if (typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      return "dark";
+    if (typeof window !== "undefined") {
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved === "dark") return "dark";
+        if (saved === "light") return "light";
+      } catch {}
+      return prefersDark ? "dark" : "light";
     }
-    return "dark"; // Default fallback
+    return "dark";
   });
 
   useEffect(() => {
     const root = document.documentElement;
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
-    const updateTheme = () => {
-      let activeTheme: "light" | "dark" = "dark";
+    const applyTheme = (isDark: boolean) => {
+      const updateDOM = () => {
+        if (isDark) {
+          root.classList.add("dark");
+        } else {
+          root.classList.remove("dark");
+        }
+        setResolvedTheme(isDark ? "dark" : "light");
+      };
 
-      if (theme === "system") {
-        activeTheme = mediaQuery.matches ? "dark" : "light";
+      // Safely use View Transition API if supported and user doesn't prefer reduced motion
+      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (typeof (document as any).startViewTransition === "function" && !prefersReducedMotion) {
+        (document as any).startViewTransition(updateDOM);
       } else {
-        activeTheme = theme;
-      }
-
-      setResolvedTheme(activeTheme);
-
-      if (activeTheme === "dark") {
-        root.classList.add("dark");
-      } else {
-        root.classList.remove("dark");
+        updateDOM();
       }
     };
 
-    updateTheme();
-    mediaQuery.addEventListener("change", updateTheme);
-    return () => mediaQuery.removeEventListener("change", updateTheme);
+    const determineAndApply = () => {
+      let isDark = false;
+      if (theme === "system") {
+        isDark = mediaQuery.matches;
+      } else {
+        isDark = theme === "dark";
+      }
+      applyTheme(isDark);
+    };
+
+    determineAndApply();
+    mediaQuery.addEventListener("change", determineAndApply);
+    return () => mediaQuery.removeEventListener("change", determineAndApply);
   }, [theme]);
 
   const setTheme = (newTheme: ThemeMode) => {
     setThemeState(newTheme);
-    localStorage.setItem(STORAGE_KEY, newTheme);
+    try {
+      localStorage.setItem(STORAGE_KEY, newTheme);
+    } catch {}
   };
 
   return (

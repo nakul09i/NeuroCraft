@@ -32,11 +32,11 @@ export const Badge: React.FC<BadgeProps> = ({
   showIcon = true,
   ...props
 }) => {
-  let sizeStyles = "px-3 py-1 text-[13px] gap-1.5 rounded-full font-medium";
+  let sizeStyles = "px-2.5 py-1 text-[12px] gap-1.5 rounded-full font-semibold";
   let iconSize = "w-3.5 h-3.5";
 
   if (size === "sm") {
-    sizeStyles = "px-2.5 py-0.5 text-[12px] gap-1 rounded-full font-medium";
+    sizeStyles = "px-2 py-0.5 text-[11px] gap-1 rounded-full font-medium";
     iconSize = "w-3 h-3";
   }
 

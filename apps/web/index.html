@@ -1,12 +1,11 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/favicon.svg" />
     <link rel="manifest" href="/site.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0C111C" />
     <title>NeuroCraft — Detect. Verify. Prove.</title>
     <meta name="description" content="AI-Assisted Multi-Engine Cybersecurity & Quantum Trust Platform for Digital Signature Verification" />
     <meta property="og:title" content="NeuroCraft — Detect. Verify. Prove." />
@@ -15,8 +14,22 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Immediate theme flash prevention -->
+    <script>
+      (function() {
+        try {
+          var saved = localStorage.getItem("neurocraft_theme");
+          var prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+          if (saved === "dark" || (!saved && prefersDark) || (saved === "system" && prefersDark)) {
+            document.documentElement.classList.add("dark");
+          } else {
+            document.documentElement.classList.remove("dark");
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
-  <body class="min-h-screen font-sans antialiased selection:bg-cyan-500/20 selection:text-cyan-400">
+  <body class="min-h-screen font-sans antialiased bg-bg text-text-primary">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

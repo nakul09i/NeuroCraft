@@ -12,9 +12,6 @@ import {
   Moon,
   Monitor,
   ArrowRight,
-  Shield,
-  Zap,
-  Play,
 } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
 
@@ -39,8 +36,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     {
       id: "act-analyze",
       category: "Quick Actions",
-      label: "Analyze File",
-      desc: "Upload and statically inspect untrusted artifact in memory",
+      label: "Check a File",
+      desc: "Upload a file and look for anything unusual safely",
       icon: FileSearch,
       action: () => {
         onNavigate("scanner");
@@ -50,8 +47,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     {
       id: "act-exposure",
       category: "Quick Actions",
-      label: "Check Exposure",
-      desc: "Run passive non-intrusive DNS, TLS, and header recon on a domain",
+      label: "Check a Website",
+      desc: "See what security information a website shares publicly",
       icon: Globe2,
       action: () => {
         onNavigate("recon");
@@ -61,8 +58,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     {
       id: "act-quantum",
       category: "Quick Actions",
-      label: "Run Quantum Simulation",
-      desc: "Execute Bell-state projection test to verify channel integrity",
+      label: "Run Trust Test",
+      desc: "Test how secure communication channels detect tampering",
       icon: Atom,
       action: () => {
         onNavigate("quantum");
@@ -72,8 +69,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     {
       id: "act-report",
       category: "Quick Actions",
-      label: "Generate Security Report",
-      desc: "Build executive audit or technical provenance certificate",
+      label: "Create Security Report",
+      desc: "Generate clean summary or detailed report",
       icon: FileText,
       action: () => {
         onNavigate("reports");
@@ -86,7 +83,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       id: "nav-dash",
       category: "Navigation",
       label: "Dashboard",
-      desc: "Security command center, posture overview & telemetry",
+      desc: "Overview of your safety score, recent checks & quick actions",
       icon: LayoutDashboard,
       action: () => {
         onNavigate("dashboard");
@@ -96,8 +93,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     {
       id: "nav-scan",
       category: "Navigation",
-      label: "File Analysis",
-      desc: "Zero-execution static quarantine & Authenticode validation",
+      label: "Files",
+      desc: "Check PDF, EXE, ZIP, scripts, and document safety",
       icon: FileSearch,
       action: () => {
         onNavigate("scanner");
@@ -107,8 +104,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     {
       id: "nav-recon",
       category: "Navigation",
-      label: "Passive Recon",
-      desc: "Public attack surface footprinting and hardening checks",
+      label: "Websites",
+      desc: "Check website status, HTTPS certificate, and public info",
       icon: Globe2,
       action: () => {
         onNavigate("recon");
@@ -118,8 +115,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     {
       id: "nav-quantum",
       category: "Navigation",
-      label: "Quantum Trust",
-      desc: "Bell-state channel tamper detection and TVD tolerance",
+      label: "Trust Test",
+      desc: "Simulate secure communication and test tamper detection",
       icon: Atom,
       action: () => {
         onNavigate("quantum");
@@ -130,7 +127,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       id: "nav-reports",
       category: "Navigation",
       label: "Security Reports",
-      desc: "Executive summary & technical forensic evidence reports",
+      desc: "View and download easy-to-read reports",
       icon: FileText,
       action: () => {
         onNavigate("reports");
@@ -140,8 +137,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     {
       id: "nav-history",
       category: "Navigation",
-      label: "Audit History",
-      desc: "Search, filter, and inspect past file scans & telemetry",
+      label: "Past Checks",
+      desc: "Search and review all your previous file and website checks",
       icon: History,
       action: () => {
         onNavigate("history");
@@ -152,7 +149,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       id: "nav-settings",
       category: "Navigation",
       label: "Settings",
-      desc: "Appearance, preferences, session credentials & invariants",
+      desc: "Appearance, theme, alerts, and account preferences",
       icon: Settings,
       action: () => {
         onNavigate("settings");
@@ -163,9 +160,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     // Appearance & System
     {
       id: "theme-light",
-      category: "System & Theme",
-      label: "Switch to Light Theme",
-      desc: "Soft cool slate surface (#EEF3F7) with tactile depth",
+      category: "Theme",
+      label: "Switch to Light Mode",
+      desc: "Clean, bright, and friendly appearance",
       icon: Sun,
       action: () => {
         setTheme("light");
@@ -174,9 +171,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     },
     {
       id: "theme-dark",
-      category: "System & Theme",
-      label: "Switch to Dark Theme",
-      desc: "Deep navy charcoal interface (#0C111C) with cyan accents",
+      category: "Theme",
+      label: "Switch to Dark Mode",
+      desc: "Comfortable deep appearance for low-light environments",
       icon: Moon,
       action: () => {
         setTheme("dark");
@@ -185,9 +182,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     },
     {
       id: "theme-system",
-      category: "System & Theme",
-      label: "Synchronize System Theme",
-      desc: "Follow operating system dark/light appearance preference",
+      category: "Theme",
+      label: "Use System Theme",
+      desc: "Match your computer's light or dark mode setting automatically",
       icon: Monitor,
       action: () => {
         setTheme("system");
@@ -238,33 +235,33 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-start justify-center pt-20 p-4 bg-black/50 backdrop-blur-sm animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-start justify-center pt-20 p-4 bg-black/60 backdrop-blur-sm animate-fadeIn"
       onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-xl rounded-3xl neu-raised-lg bg-surface-0 border border-border/80 overflow-hidden flex flex-col max-h-[75vh] animate-scaleIn"
+        className="relative w-full max-w-xl rounded-2xl bg-surface-elevated border border-border shadow-2xl overflow-hidden flex flex-col max-h-[75vh] animate-scaleIn"
       >
         {/* Inset Search Input */}
-        <div className="p-4 border-b border-border/60 bg-surface-0">
-          <div className="flex items-center px-4 py-3 rounded-2xl neu-inset">
-            <Search className="w-5 h-5 text-text-muted mr-3 shrink-0" />
+        <div className="p-4 border-b border-border bg-surface-0">
+          <div className="flex items-center px-4 py-3 rounded-xl bg-surface-1 border border-border">
+            <Search className="w-4 h-4 text-text-muted mr-3 shrink-0" />
             <input
               type="text"
               autoFocus
-              placeholder="Search tools, quick actions, or views…"
+              placeholder="Search features, actions, or pages…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="w-full bg-transparent text-base font-normal text-text-primary placeholder:text-text-muted focus:outline-none"
+              className="w-full bg-transparent text-sm font-medium text-text-primary placeholder:text-text-muted focus:outline-none"
             />
-            <kbd className="text-xs font-mono font-bold px-2 py-0.5 rounded-md neu-raised-sm text-text-muted">
+            <kbd className="text-xs font-mono font-bold px-2 py-0.5 rounded-md bg-surface-0 border border-border text-text-muted shadow-xs">
               ESC
             </kbd>
           </div>
         </div>
 
         {/* Results List */}
-        <div ref={listRef} className="flex-1 overflow-y-auto p-3 space-y-1.5">
+        <div ref={listRef} className="flex-1 overflow-y-auto p-2.5 space-y-1">
           {filteredActions.length === 0 ? (
             <div className="p-8 text-center text-sm text-text-muted">
               No matching actions found for "{query}".
@@ -279,18 +276,18 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                   key={item.id}
                   onClick={item.action}
                   onMouseEnter={() => setSelectedIndex(idx)}
-                  className={`w-full flex items-center justify-between p-3.5 rounded-2xl text-left transition-all duration-150 group ${
+                  className={`w-full flex items-center justify-between p-3 rounded-xl text-left transition-all duration-150 group ${
                     isSelected
-                      ? "neu-inset text-primary font-semibold"
-                      : "text-text-secondary hover:bg-surface-1/60 hover:text-text-primary font-medium"
+                      ? "bg-primary-subtle text-primary font-semibold border border-primary-border"
+                      : "text-text-secondary hover:bg-surface-1 hover:text-text-primary font-medium"
                   }`}
                 >
                   <div className="flex items-center space-x-3.5 overflow-hidden">
                     <div
-                      className={`p-2.5 rounded-xl shrink-0 transition-colors ${
+                      className={`p-2 rounded-lg shrink-0 transition-colors ${
                         isSelected
-                          ? "bg-primary/20 text-primary"
-                          : "neu-button text-text-muted group-hover:text-text-primary"
+                          ? "bg-primary/20 text-primary border border-primary/30"
+                          : "bg-surface-0 border border-border text-text-muted group-hover:text-text-primary shadow-xs"
                       }`}
                     >
                       <Icon className="w-4 h-4" />
@@ -300,7 +297,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                         <span className="text-sm font-bold text-text-primary truncate">
                           {item.label}
                         </span>
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-surface-2 text-text-muted uppercase">
+                        <span className="text-[10px] font-semibold px-2 py-0.2 rounded-full bg-surface-2 text-text-muted">
                           {item.category}
                         </span>
                       </div>
@@ -323,13 +320,13 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-3 bg-surface-0/60 border-t border-border/60 flex items-center justify-between text-xs text-text-muted font-mono">
+        <div className="px-5 py-3 bg-surface-1 border-t border-border flex items-center justify-between text-xs text-text-muted">
           <div className="flex items-center space-x-3">
             <span>↑↓ Navigate</span>
-            <span>↵ Execute</span>
-            <span>Esc Dismiss</span>
+            <span>↵ Open</span>
+            <span>Esc Close</span>
           </div>
-          <span>NeuroCraft Quick Console</span>
+          <span>NeuroCraft</span>
         </div>
       </div>
     </div>

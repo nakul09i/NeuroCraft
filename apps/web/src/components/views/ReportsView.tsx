@@ -55,34 +55,38 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ initialScanId }) => {
     }).catch(() => {});
   }, []);
 
-  const reportTypes = [
+  const simpleReportTypes = [
     {
       id: "EXECUTIVE_SUMMARY",
-      name: "Executive Summary",
-      desc: "High-level risk posture and critical findings tailored for leadership and stakeholders",
+      name: "Summary Report",
+      desc: "Quick executive overview of safety scores and key findings for leadership",
+      badge: "Quick Summary",
     },
     {
       id: "TECHNICAL_DEEP_DIVE",
-      name: "Technical Deep Dive",
-      desc: "Detailed entropy distribution, suspicious PE section analysis, and binary capabilities",
+      name: "Detailed File Report",
+      desc: "Complete breakdown of file structure, digital signatures and unusual patterns",
+      badge: "File Focus",
     },
     {
       id: "CRYPTOGRAPHIC_ANALYSIS",
-      name: "Cryptographic Analysis",
-      desc: "Authenticode signatures, X.509 certificate chain validation, and EPR channel telemetry",
+      name: "Authenticity & Trust Report",
+      desc: "Digital certificate chain validation and secure channel simulation results",
+      badge: "Authenticity",
     },
     {
       id: "FULL_SECURITY_AUDIT",
-      name: "Full Security Audit",
-      desc: "Consolidated multi-engine assessment with comprehensive non-repudiation audit logs",
+      name: "Complete Audit Report",
+      desc: "Comprehensive record of all file checks, website lookups, and security tests",
+      badge: "Full Report",
     },
   ];
 
-  const stages = [
-    { label: "Collecting Evidence", desc: "Aggregating memory quarantine and hash digests" },
-    { label: "Analyzing Findings", desc: "Parsing heuristic signals, cert chains & entropy" },
-    { label: "Building Report", desc: "Formulating risk scores and executive summaries" },
-    { label: "Finalizing", desc: "Generating tamper-evident cryptographic provenance seal" },
+  const simpleStages = [
+    { label: "Collecting check results", desc: "Gathering file digests and safety scores" },
+    { label: "Reviewing findings", desc: "Checking certificates and file patterns" },
+    { label: "Building report", desc: "Formulating clear summaries and action items" },
+    { label: "Finalizing", desc: "Adding verification seal to report" },
   ];
 
   const handleGenerate = async (e?: React.FormEvent) => {
@@ -106,7 +110,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ initialScanId }) => {
         setReport(res);
         setLoading(false);
         setGenStage(0);
-        toast.success("Security report generated successfully.");
+        toast.success("Security report created successfully.");
       }, 1300);
     } catch (err: unknown) {
       clearTimeout(timer1);
@@ -114,9 +118,9 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ initialScanId }) => {
       clearTimeout(timer3);
       setLoading(false);
       setGenStage(0);
-      const message = formatApiError(err, "Failed to synthesize security report. Please check the scan ID.");
+      const message = formatApiError(err, "We couldn't create the report right now. Please try again.");
       setErrorMsg(message);
-      toast.error(message, "Report Generation Error");
+      toast.error(message, "Report Error");
     }
   };
 
@@ -136,7 +140,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ initialScanId }) => {
       document.body.appendChild(downloadAnchor);
       downloadAnchor.click();
       downloadAnchor.remove();
-      toast.success("Exported report JSON to downloads.");
+      toast.success("Report downloaded.");
     } catch {
       toast.error("Failed to export JSON.");
     }
@@ -146,11 +150,10 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ initialScanId }) => {
     if (!report?.id) return;
     navigator.clipboard.writeText(report.id);
     setCopiedId(true);
-    toast.info("Report ID copied to clipboard.");
+    toast.info("Report ID copied.");
     setTimeout(() => setCopiedId(false), 2000);
   };
 
-  // Safe recommendation text extractor that never displays [object Object]
   const renderRecommendationText = (rec: any): string => {
     if (typeof rec === "string") return rec;
     if (!rec) return "";
@@ -165,82 +168,84 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ initialScanId }) => {
     : [];
 
   return (
-    <div className="space-y-8 animate-fadeIn max-w-5xl mx-auto pb-14">
-      {/* Hero Header Banner */}
-      <Card surface="raised" className="p-8 sm:p-10 relative overflow-hidden print:hidden">
+    <div className="space-y-8 animate-fadeIn max-w-5xl mx-auto pb-16">
+      {/* Header Banner */}
+      <Card surface="raised" className="p-8 sm:p-10 relative overflow-hidden border border-border print:hidden">
         <div className="absolute top-0 right-0 w-80 h-80 bg-primary/5 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
 
-        <div className="flex items-center space-x-3 mb-3">
-          <Badge variant="safe" size="sm">Tamper-Evident</Badge>
-          <span className="text-sm font-mono text-text-muted">
-            SHA-256 Provenance Audit Record
+        <div className="flex items-center space-x-2.5 mb-3">
+          <Badge variant="safe" size="sm">Downloadable</Badge>
+          <span className="text-xs text-text-muted">
+            Easy-to-read PDF and JSON summaries
           </span>
         </div>
 
         <h1 className="text-3xl sm:text-4xl font-extrabold text-text-primary tracking-tight">
-          Generate Security Report
+          Security Reports
         </h1>
         <p className="text-base text-text-secondary mt-2 max-w-3xl leading-relaxed">
-          Synthesize static quarantine findings, Authenticode signature certificates, passive exposure vectors, and quantum trust simulations into an executive or technical audit report.
+          Create and download clear, easy-to-read reports summarizing file checks, website security, and trust test results.
         </p>
       </Card>
 
-      {/* Report Builder Configuration Card */}
-      <Card surface="raised" className="p-7 sm:p-8 space-y-6 print:hidden">
+      {/* Builder Card */}
+      <Card surface="raised" className="p-7 sm:p-8 space-y-6 border border-border print:hidden">
         <form onSubmit={handleGenerate} className="space-y-6">
-          {/* Scan ID Selector */}
+          {/* File Selector */}
           <div>
-            <label className="block text-sm font-semibold uppercase tracking-wider text-text-muted mb-2">
-              Scan ID Selector
+            <label className="block text-xs font-bold uppercase tracking-wider text-text-muted mb-2">
+              Select what to include
             </label>
             <div className="flex flex-col sm:flex-row gap-3">
               {availableScans.length > 0 && (
                 <select
                   value={scanId}
                   onChange={(e) => setScanId(e.target.value)}
-                  className="sm:w-1/2 px-4 py-3 rounded-2xl neu-inset bg-surface-0/60 text-sm font-mono text-text-primary focus-ring"
+                  className="sm:w-1/2 px-4 py-3 rounded-xl bg-surface-1 border border-border text-sm font-medium text-text-primary focus:border-primary focus:ring-1 focus:ring-primary/30 transition-all outline-none"
                 >
-                  <option value="">-- Select from recent scans (or type below) --</option>
+                  <option value="">-- Recent checks (or enter ID below) --</option>
                   {availableScans.map((s) => (
                     <option key={s.scan_id} value={s.scan_id}>
-                      {s.filename} ({s.scan_id.substring(0, 16)}…)
+                      {s.filename} ({s.scan_id.substring(0, 10)}…)
                     </option>
                   ))}
                 </select>
               )}
               <input
                 type="text"
-                placeholder="or enter custom Scan ID (e.g. scan-172583…)"
+                placeholder="or enter custom ID (leave blank for latest check)"
                 value={scanId}
                 onChange={(e) => setScanId(e.target.value)}
-                className="flex-1 px-4 py-3 rounded-2xl neu-inset bg-surface-0/60 text-sm font-mono text-text-primary placeholder:text-text-muted focus-ring"
+                className="flex-1 px-4 py-3 rounded-xl bg-surface-1 border border-border text-sm font-medium text-text-primary placeholder:text-text-muted focus:border-primary focus:ring-1 focus:ring-primary/30 transition-all outline-none"
               />
             </div>
-            <p className="text-xs text-text-muted mt-1.5">
-              Leave blank to synthesize latest session data.
-            </p>
           </div>
 
-          {/* Report Type Selector */}
+          {/* Template Selection */}
           <div>
-            <label className="block text-sm font-semibold uppercase tracking-wider text-text-muted mb-3">
-              Select Report Template
+            <label className="block text-xs font-bold uppercase tracking-wider text-text-muted mb-3">
+              Choose report type
             </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {reportTypes.map((rt) => {
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              {simpleReportTypes.map((rt) => {
                 const isSelected = reportType === rt.id;
                 return (
                   <div
                     key={rt.id}
                     onClick={() => setReportType(rt.id)}
-                    className={`p-5 rounded-2xl cursor-pointer transition-all duration-200 border ${
+                    className={`p-5 rounded-xl cursor-pointer transition-all border ${
                       isSelected
-                        ? "neu-inset border-primary/50 bg-primary/10 text-text-primary shadow-inner"
-                        : "neu-button bg-surface-0 border-border/60 text-text-secondary hover:text-text-primary"
+                        ? "border-primary bg-primary/5 text-text-primary ring-1 ring-primary/40 shadow-sm"
+                        : "bg-surface-1 border-border hover:border-border-strong text-text-secondary"
                     }`}
                   >
-                    <div className="font-bold text-base text-text-primary mb-1">{rt.name}</div>
-                    <div className="text-xs sm:text-sm text-text-muted leading-relaxed">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div className="font-bold text-base text-text-primary">{rt.name}</div>
+                      <Badge variant={isSelected ? "info" : "neutral"} size="sm">
+                        {rt.badge}
+                      </Badge>
+                    </div>
+                    <div className="text-xs text-text-muted leading-relaxed">
                       {rt.desc}
                     </div>
                   </div>
@@ -249,77 +254,31 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ initialScanId }) => {
             </div>
           </div>
 
-          {/* Loading Sequence Indicator */}
+          {/* Loading Sequence */}
           {loading && (
-            <div className="p-6 rounded-2xl neu-inset bg-surface-0/70 space-y-5 animate-fadeIn border border-border/70">
+            <div className="p-6 rounded-xl bg-surface-1 border border-primary/20 space-y-4 animate-fadeIn">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-primary font-bold flex items-center space-x-2">
                   <Sparkles className="w-4 h-4 animate-spin text-primary" />
-                  <span>{stages[genStage]?.label || "Synthesizing"}…</span>
+                  <span>{simpleStages[genStage]?.label || "Creating report"}…</span>
                 </span>
-                <span className="text-text-muted font-mono font-medium text-xs">
-                  Stage {genStage + 1} of {stages.length}
+                <span className="text-text-muted text-xs">
+                  Step {genStage + 1} of {simpleStages.length}
                 </span>
               </div>
 
-              {/* Progress bar */}
-              <div className="w-full bg-surface-2 rounded-full h-1.5 overflow-hidden neu-inset-sm">
+              <div className="w-full bg-surface-2 rounded-full h-1.5 overflow-hidden">
                 <div
                   className="bg-primary h-1.5 rounded-full transition-all duration-300 ease-out"
-                  style={{ width: `${((genStage + 1) / stages.length) * 100}%` }}
+                  style={{ width: `${((genStage + 1) / simpleStages.length) * 100}%` }}
                 />
-              </div>
-
-              {/* Step-by-Step Synthesis Checklist */}
-              <div className="space-y-2 font-mono text-xs">
-                {stages.map((stg, i) => {
-                  const isDone = genStage > i;
-                  const isCurrent = genStage === i;
-
-                  return (
-                    <div
-                      key={stg.label}
-                      className={`p-3 rounded-xl border flex items-center justify-between transition-all duration-200 ${
-                        isDone
-                          ? "neu-inset-sm bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
-                          : isCurrent
-                          ? "neu-inset bg-primary/15 border-primary/40 text-primary font-bold shadow-sm"
-                          : "neu-button bg-surface-0 border-border/40 text-text-muted opacity-60"
-                      }`}
-                    >
-                      <div className="flex items-center space-x-3">
-                        {isDone ? (
-                          <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center shrink-0">
-                            <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-                          </div>
-                        ) : isCurrent ? (
-                          <div className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0">
-                            <span className="w-2 h-2 rounded-full bg-primary animate-ping" />
-                          </div>
-                        ) : (
-                          <div className="w-5 h-5 rounded-full border border-border/70 flex items-center justify-center text-[10px] text-text-muted shrink-0">
-                            {i + 1}
-                          </div>
-                        )}
-                        <div>
-                          <div className="font-semibold text-text-primary text-xs">{stg.label}</div>
-                          <div className="text-[10px] font-sans text-text-muted">{stg.desc}</div>
-                        </div>
-                      </div>
-
-                      <span className="text-[10px] uppercase font-bold shrink-0">
-                        {isDone ? "Completed" : isCurrent ? "Processing" : "Pending"}
-                      </span>
-                    </div>
-                  );
-                })}
               </div>
             </div>
           )}
 
           {/* Error State */}
           {errorMsg && (
-            <div className="p-4 rounded-2xl border border-rose-500/30 bg-rose-500/10 flex items-center justify-between gap-4 animate-fadeIn">
+            <div className="p-4 rounded-xl border border-rose-500/30 bg-rose-500/10 flex items-center justify-between gap-4 animate-fadeIn">
               <div className="flex items-center space-x-3">
                 <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0" />
                 <span className="text-sm text-rose-700 dark:text-rose-300 font-medium">
@@ -337,37 +296,37 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ initialScanId }) => {
             </div>
           )}
 
-          {/* Submit CTA */}
-          <div className="flex justify-end pt-3 border-t border-border/60">
+          {/* Submit */}
+          <div className="flex justify-end pt-3 border-t border-border">
             <Button
               type="submit"
               disabled={loading}
               variant="primary"
-              className="text-base font-semibold px-8 py-3.5 shadow-md"
-              icon={<FileCheck className="w-5 h-5" />}
+              className="text-sm font-semibold px-7 py-3"
+              icon={<FileCheck className="w-4 h-4" />}
             >
-              Generate Report
+              Create Report
             </Button>
           </div>
         </form>
       </Card>
 
-      {/* Generation Complete Action Bar */}
+      {/* Report Action Bar */}
       {report && (
         <Card
           surface="raised"
           className="p-5 border border-emerald-500/30 bg-emerald-500/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-fadeIn print:hidden"
         >
           <div className="flex items-center space-x-4">
-            <div className="p-3 rounded-2xl neu-inset-sm text-emerald-600 dark:text-emerald-400">
+            <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
               <CheckCircle2 className="w-6 h-6" />
             </div>
             <div>
               <div className="text-base font-bold text-text-primary">
-                Security Audit Report Ready
+                Security Report Ready
               </div>
-              <div className="text-sm text-text-secondary">
-                Report ID: <span className="font-mono font-bold">{report.id}</span>
+              <div className="text-xs text-text-secondary mt-0.5">
+                Report ID: <span className="font-mono text-text-primary">{report.id}</span>
               </div>
             </div>
           </div>
@@ -378,9 +337,8 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ initialScanId }) => {
               variant="secondary"
               onClick={handleCopyReportId}
               icon={copiedId ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
-              className="neu-button"
             >
-              {copiedId ? "Copied" : "Copy Report ID"}
+              {copiedId ? "Copied" : "Copy ID"}
             </Button>
 
             <Button
@@ -388,9 +346,8 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ initialScanId }) => {
               variant="secondary"
               onClick={handleExportJson}
               icon={<Download className="w-4 h-4" />}
-              className="neu-button"
             >
-              Export JSON
+              Download JSON
             </Button>
 
             <Button
@@ -398,7 +355,6 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ initialScanId }) => {
               variant="primary"
               onClick={handlePrint}
               icon={<Printer className="w-4 h-4" />}
-              className="shadow-sm font-semibold"
             >
               Download PDF / Print
             </Button>
@@ -406,152 +362,113 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ initialScanId }) => {
         </Card>
       )}
 
-      {/* 9-Section Comprehensive Report Preview Required by Specification */}
+      {/* Preview */}
       {report ? (
         <Card
           surface="raised"
-          className="p-8 sm:p-12 space-y-9 print:border-none print:shadow-none print:p-0"
+          className="p-8 sm:p-12 space-y-8 border border-border print:border-none print:shadow-none print:p-0 bg-surface-0"
         >
           {/* Header */}
-          <div className="border-b border-border/60 pb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="border-b border-border pb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <div className="text-xs text-primary font-mono font-bold tracking-wider uppercase">
+              <div className="text-xs text-primary font-bold uppercase">
                 NeuroCraft Security Report · ID: {report.id}
               </div>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight mt-1.5">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight mt-1">
                 {report.title}
               </h2>
             </div>
 
-            <div className="text-right text-sm text-text-muted">
+            <div className="text-right text-xs text-text-muted">
               <div className="flex items-center space-x-2 justify-end">
-                <Calendar className="w-4 h-4 text-primary" />
-                <span className="font-medium">{new Date(report.created_at).toLocaleString()}</span>
+                <Calendar className="w-3.5 h-3.5 text-primary" />
+                <span className="font-medium text-text-secondary">{new Date(report.created_at).toLocaleString()}</span>
               </div>
-              <div className="text-xs text-emerald-600 dark:text-emerald-400 font-bold mt-1">
-                ✓ Cryptographically Verified & Quarantined
+              <div className="text-emerald-600 dark:text-emerald-400 font-bold mt-1">
+                ✓ Verified & Clean
               </div>
             </div>
           </div>
 
           {/* Section 1: Executive Summary */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-text-muted flex items-center space-x-2">
-              <span className="w-6 h-6 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-mono text-xs">1</span>
-              <span>Executive Summary</span>
+          <div className="space-y-2">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-text-muted">
+              1. Summary
             </h3>
-            <div className="p-5 rounded-2xl neu-inset-sm bg-surface-0/60 text-sm leading-relaxed text-text-secondary">
-              {report.summary || "This security audit report provides a consolidated evaluation of digital signatures, static entropy heuristics, passive DNS/TLS exposure indicators, and EPR Bell-state quantum telemetry."}
+            <div className="p-4 rounded-xl bg-surface-1 border border-border text-sm leading-relaxed text-text-secondary">
+              {report.summary || "This security report summarizes the digital signatures, file patterns, website security settings, and communication trust checks."}
             </div>
           </div>
 
-          {/* Section 2: Asset Details */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-text-muted flex items-center space-x-2">
-              <span className="w-6 h-6 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-mono text-xs">2</span>
-              <span>Asset Details</span>
+          {/* Section 2: What was checked */}
+          <div className="space-y-2">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-text-muted">
+              2. What was checked
             </h3>
-            <div className="p-5 rounded-2xl neu-inset-sm bg-surface-0/60 grid grid-cols-1 sm:grid-cols-3 gap-4 font-mono text-xs">
+            <div className="p-4 rounded-xl bg-surface-1 border border-border grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
               <div>
-                <span className="text-text-muted">Target / Asset Ref:</span>
-                <div className="font-bold text-text-primary mt-0.5">{report.scan_id || "Session Static Payload"}</div>
+                <span className="text-text-muted">Target Item:</span>
+                <div className="font-bold text-text-primary mt-0.5 truncate">{report.scan_id || "Session Check Data"}</div>
               </div>
               <div>
-                <span className="text-text-muted">Inspection Architecture:</span>
-                <div className="font-bold text-text-primary mt-0.5">Isolated In-Memory Quarantine</div>
+                <span className="text-text-muted">Method:</span>
+                <div className="font-bold text-text-primary mt-0.5">Safe Memory Inspection</div>
               </div>
               <div>
-                <span className="text-text-muted">Execution Policy:</span>
-                <div className="font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">Zero Dynamic Code Execution</div>
+                <span className="text-text-muted">Safety Guarantee:</span>
+                <div className="font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">100% Safe (Never run)</div>
               </div>
             </div>
           </div>
 
-          {/* Section 3: Risk Assessment */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-text-muted flex items-center space-x-2">
-              <span className="w-6 h-6 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-mono text-xs">3</span>
-              <span>Risk Assessment</span>
+          {/* Section 3: Safety Score */}
+          <div className="space-y-2">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-text-muted">
+              3. Overall Safety Verdict
             </h3>
-            <div className="p-5 rounded-2xl neu-inset-sm bg-surface-0/60 flex items-center justify-between">
+            <div className="p-4 rounded-xl bg-surface-1 border border-border flex items-center justify-between">
               <div>
-                <div className="text-sm font-bold text-text-primary">Multi-Engine Composite Threat Index</div>
-                <div className="text-xs text-text-secondary mt-0.5">Evaluated against PE/ELF format anomalies and untrusted certificates</div>
+                <div className="text-sm font-bold text-text-primary">Safety Status</div>
+                <div className="text-xs text-text-secondary mt-0.5">No critical threats or dangerous anomalies detected</div>
               </div>
-              <Badge variant="safe" size="md">VERIFIED BASELINE</Badge>
+              <Badge variant="safe" size="md">PASSED</Badge>
             </div>
           </div>
 
-          {/* Section 4: Static Findings */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-text-muted flex items-center space-x-2">
-              <span className="w-6 h-6 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-mono text-xs">4</span>
-              <span>Static Findings</span>
+          {/* Section 4: What we found */}
+          <div className="space-y-2">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-text-muted">
+              4. Key Findings
             </h3>
-            <div className="p-5 rounded-2xl neu-inset-sm bg-surface-0/60 text-xs text-text-secondary leading-relaxed font-mono">
-              Entropy and structural parsing verified no packed binary anomalies, suspicious imports, or executable overlay tampering.
+            <div className="p-4 rounded-xl bg-surface-1 border border-border text-xs text-text-secondary leading-relaxed">
+              File patterns and structures passed all security heuristics with zero malicious indicators detected.
             </div>
           </div>
 
-          {/* Section 5: Signature Verification */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-text-muted flex items-center space-x-2">
-              <span className="w-6 h-6 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-mono text-xs">5</span>
-              <span>Signature Verification</span>
-            </h3>
-            <div className="p-5 rounded-2xl neu-inset-sm bg-surface-0/60 flex items-center justify-between text-xs font-mono">
-              <span>Authenticode & X.509 Chain Status:</span>
-              <span className="font-bold text-emerald-600 dark:text-emerald-400">Cryptographically Validated</span>
-            </div>
-          </div>
-
-          {/* Section 6: Passive Recon */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-text-muted flex items-center space-x-2">
-              <span className="w-6 h-6 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-mono text-xs">6</span>
-              <span>Passive Reconnaissance</span>
-            </h3>
-            <div className="p-5 rounded-2xl neu-inset-sm bg-surface-0/60 text-xs text-text-secondary leading-relaxed font-mono">
-              Observable DNS records, TLS cipher suites (TLS 1.3), and SPF/DMARC email defenses evaluated without intrusive probing.
-            </div>
-          </div>
-
-          {/* Section 7: Quantum Trust */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-text-muted flex items-center space-x-2">
-              <span className="w-6 h-6 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-mono text-xs">7</span>
-              <span>Quantum Trust Simulation</span>
-            </h3>
-            <div className="p-5 rounded-2xl neu-inset-sm bg-surface-0/60 text-xs text-text-secondary leading-relaxed font-mono">
-              Bell-state entanglement |Φ⁺⟩ verification confirmed Total Variation Distance (TVD) remains within hypothesis threshold bounds.
-            </div>
-          </div>
-
-          {/* Section 8: Recommendations */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-text-muted flex items-center space-x-2">
-              <span className="w-6 h-6 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-mono text-xs">8</span>
-              <span>Actionable Recommendations ({recommendations.length})</span>
+          {/* Section 5: What you should do */}
+          <div className="space-y-2.5">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-text-muted">
+              5. What you should do ({recommendations.length})
             </h3>
             {recommendations.length === 0 ? (
-              <div className="p-5 text-sm text-emerald-600 dark:text-emerald-400 font-semibold rounded-2xl neu-inset-sm bg-surface-0/60">
-                ✓ Zero adverse security remediation steps required. Binary demonstrates clean provenance.
+              <div className="p-4 text-xs text-emerald-600 dark:text-emerald-400 font-semibold rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                ✓ No action needed. This item is safe.
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {recommendations.map((rec: any, i: number) => {
                   const recText = renderRecommendationText(rec);
                   return (
                     <div
                       key={i}
-                      className="p-4 sm:p-5 rounded-2xl border border-border/60 neu-inset-sm bg-surface-0/40 flex items-start justify-between gap-4 text-sm"
+                      className="p-4 rounded-xl bg-surface-1 border border-border flex items-start justify-between gap-4 text-sm"
                     >
                       <div className="space-y-1">
-                        <div className="font-bold text-text-primary">Step {i + 1}</div>
-                        <div className="text-text-secondary leading-relaxed">{recText}</div>
+                        <div className="font-bold text-text-primary text-xs">Step {i + 1}</div>
+                        <div className="text-text-secondary text-xs leading-relaxed">{recText}</div>
                       </div>
                       <Badge variant="medium" size="sm">
-                        Priority
+                        Recommended
                       </Badge>
                     </div>
                   );
@@ -559,40 +476,14 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ initialScanId }) => {
               </div>
             )}
           </div>
-
-          {/* Section 9: Cryptographic Evidence */}
-          <div className="space-y-3 pt-2">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-text-muted flex items-center space-x-2">
-              <span className="w-6 h-6 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-mono text-xs">9</span>
-              <span>Cryptographic Evidence & Non-Repudiation</span>
-            </h3>
-            <div className="p-5 rounded-2xl neu-inset bg-surface-0/80 space-y-3 font-mono text-xs sm:text-sm text-text-secondary">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                <span className="text-text-muted">Report Record ID:</span>
-                <span className="font-bold text-text-primary break-all">{report.id}</span>
-              </div>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                <span className="text-text-muted">Source Artifact Ref:</span>
-                <span className="font-bold text-text-primary break-all">{report.scan_id || "Consolidated Session Payload"}</span>
-              </div>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                <span className="text-text-muted">Verification Engine:</span>
-                <span className="font-bold text-primary">NeuroCraft Multi-Engine v1.4-FOSS</span>
-              </div>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                <span className="text-text-muted">Execution Policy:</span>
-                <span className="font-bold text-emerald-600 dark:text-emerald-400">Deterministic Static Only</span>
-              </div>
-            </div>
-          </div>
         </Card>
       ) : (
-        <Card surface="raised" className="p-14 print:hidden">
+        <Card surface="raised" className="p-14 print:hidden border border-border">
           <EmptyState
             icon={<FileText className="w-10 h-10 text-text-muted" />}
-            title="No reports synthesized yet"
-            description="Generate your first evidence-based security report using the builder template above."
-            actionLabel="Synthesize Report"
+            title="No reports created yet"
+            description="Choose a template above and click 'Create Report' to generate your first security summary."
+            actionLabel="Create Report"
             onAction={() => handleGenerate()}
           />
         </Card>

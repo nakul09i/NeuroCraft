@@ -8,7 +8,7 @@ export interface ScoreRingProps {
   strokeWidth?: number; // stroke width in px (default 10)
   label?: string;
   sublabel?: string;
-  variant?: "posture" | "risk"; // posture (100 = best), risk (0 = best)
+  variant?: "posture" | "risk" | "safety"; // posture/safety (100 = best), risk (0 = best)
   className?: string;
 }
 
@@ -68,7 +68,7 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
   let strokeColor = "var(--border-strong)";
 
   if (targetScore !== null) {
-    if (variant === "posture") {
+    if (variant === "posture" || variant === "safety") {
       if (validScore >= 75) {
         strokeColor = "var(--success)";
       } else if (validScore >= 50) {
@@ -96,7 +96,7 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
       aria-label={label || "Security Score"}
       className={`relative inline-flex flex-col items-center justify-center select-none ${className}`}
     >
-      <div className="relative p-2 rounded-full neu-inset">
+      <div className="relative p-2 rounded-full bg-surface-0 border border-border shadow-xs">
         <svg width={size} height={size} className="rotate-[-90deg] transition-all">
           {/* Ambient Background Track */}
           <circle
@@ -148,20 +148,20 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
             <span className="text-xs font-semibold text-danger">Unavailable</span>
           ) : targetScore !== null ? (
             <>
-              <span className="text-4xl sm:text-5xl font-bold tracking-tight text-text-primary leading-none">
+              <span className="text-3xl sm:text-4xl font-extrabold font-mono tracking-tight text-text-primary leading-none">
                 {validScore}
               </span>
-              <span className="text-xs font-medium text-text-muted mt-1.5">
+              <span className="text-[11px] font-mono text-text-muted mt-1">
                 / 100
               </span>
             </>
           ) : (
             <>
-              <span className="text-3xl font-bold text-text-muted leading-none">
+              <span className="text-2xl font-bold text-text-muted leading-none">
                 —
               </span>
-              <span className="text-[11px] text-text-muted mt-1 leading-tight max-w-[90px]">
-                No security score available yet
+              <span className="text-[10px] text-text-muted mt-1 leading-tight max-w-[80px]">
+                No score yet
               </span>
             </>
           )}
@@ -169,14 +169,14 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
       </div>
 
       {(label || sublabel) && (
-        <div className="mt-3.5 text-center">
+        <div className="mt-3 text-center">
           {label && (
-            <div className="text-sm font-semibold text-text-primary tracking-tight">
+            <div className="text-sm font-bold text-text-primary tracking-tight">
               {label}
             </div>
           )}
           {sublabel && (
-            <div className="text-xs text-text-muted mt-0.5">
+            <div className="text-xs text-text-secondary mt-0.5">
               {sublabel}
             </div>
           )}

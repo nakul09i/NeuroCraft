@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Bell, Check, Trash2, ExternalLink, ShieldCheck, AlertTriangle, Info, AlertCircle } from "lucide-react";
+import { Bell, Check, Trash2, ShieldCheck, AlertTriangle, Info, AlertCircle } from "lucide-react";
 import { useNotifications, SecurityNotification } from "../../context/NotificationContext";
 
 interface NotificationCenterProps {
@@ -51,12 +51,12 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ onNaviga
       {/* Trigger Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2.5 rounded-xl neu-button text-text-secondary hover:text-text-primary transition-all focus-ring"
+        className="relative p-2.5 rounded-xl bg-surface-0 border border-border hover:bg-surface-1 text-text-secondary hover:text-text-primary transition-all shadow-xs focus-ring"
         aria-label={`Notifications (${unreadCount} unread)`}
       >
         <Bell className="w-4 h-4 stroke-[2]" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-cyan-500 text-slate-950 font-bold text-[10px] rounded-full flex items-center justify-center shadow-md animate-pulse">
+          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-primary text-text-inverse font-bold text-[10px] rounded-full flex items-center justify-center shadow-md animate-pulse">
             {unreadCount}
           </span>
         )}
@@ -64,14 +64,14 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ onNaviga
 
       {/* Popover Card */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-surface-0 border border-border/80 rounded-2xl neu-raised-lg p-5 z-50 shadow-2xl animate-scaleIn">
-          <div className="flex items-center justify-between border-b border-border/60 pb-3 mb-3">
+        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-surface-elevated border border-border rounded-2xl shadow-xl p-5 z-50 animate-scaleIn">
+          <div className="flex items-center justify-between border-b border-border/80 pb-3 mb-3">
             <div className="flex items-center space-x-2">
               <span className="text-sm font-bold text-text-primary">
-                Security Notifications
+                Notifications
               </span>
               {unreadCount > 0 && (
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/20 text-primary">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary-subtle text-primary border border-primary-border">
                   {unreadCount} unread
                 </span>
               )}
@@ -81,7 +81,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ onNaviga
               {unreadCount > 0 && (
                 <button
                   onClick={markAllAsRead}
-                  className="p-1.5 rounded-lg neu-button text-text-muted hover:text-text-primary text-[11px] transition-colors"
+                  className="p-1.5 rounded-lg bg-surface-1 hover:bg-surface-2 text-text-muted hover:text-text-primary text-[11px] transition-colors focus-ring"
                   title="Mark all as read"
                 >
                   <Check className="w-3.5 h-3.5" />
@@ -90,7 +90,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ onNaviga
               {notifications.length > 0 && (
                 <button
                   onClick={clearAll}
-                  className="p-1.5 rounded-lg neu-button text-text-muted hover:text-danger text-[11px] transition-colors"
+                  className="p-1.5 rounded-lg bg-surface-1 hover:bg-surface-2 text-text-muted hover:text-danger text-[11px] transition-colors focus-ring"
                   title="Clear all"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
@@ -102,7 +102,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ onNaviga
           {/* List */}
           {notifications.length === 0 ? (
             <div className="p-8 text-center text-xs text-text-muted">
-              All caught up! No active security notifications.
+              All caught up! No notifications right now.
             </div>
           ) : (
             <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
@@ -126,8 +126,8 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ onNaviga
                     onClick={() => handleNotificationClick(notif)}
                     className={`p-3 rounded-xl border transition-all cursor-pointer ${
                       notif.read
-                        ? "bg-surface-0/40 border-border/40 text-text-muted hover:bg-surface-1/50"
-                        : "neu-inset-sm bg-surface-0/70 border-primary/30 text-text-primary shadow-xs"
+                        ? "bg-surface-1/40 border-border/40 text-text-muted hover:bg-surface-1"
+                        : "bg-surface-0 border-primary/30 text-text-primary shadow-xs hover:border-primary/50"
                     }`}
                   >
                     <div className="flex items-start space-x-2.5">

@@ -1,8 +1,6 @@
 import React from "react";
 import { X, Keyboard, Shield, HelpCircle, FileSearch, Globe, Atom, FileText, CheckCircle2 } from "lucide-react";
-import { Card } from "./Card";
 import { Button } from "./Button";
-import { Badge } from "./Badge";
 
 interface HelpModalProps {
   isOpen: boolean;
@@ -13,57 +11,65 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   const shortcuts = [
-    { keys: ["⌘K", "Ctrl + K"], label: "Open Quick Search & Command Center" },
-    { keys: ["Esc"], label: "Close active modal, drawer, or search palette" },
-    { keys: ["Tab"], label: "Sequential accessible focus navigation" },
-    { keys: ["Enter"], label: "Execute selected command or confirm action" },
+    { keys: ["⌘K", "Ctrl + K"], label: "Search & Quick Commands" },
+    { keys: ["Esc"], label: "Close active popups or search" },
+    { keys: ["Tab"], label: "Navigate buttons and inputs" },
+    { keys: ["Enter"], label: "Confirm selection or action" },
   ];
 
   const coreModules = [
     {
-      name: "File Quarantine Analysis",
+      name: "File Check",
       icon: FileSearch,
-      desc: "Deterministic static analysis of untrusted files (PE, ELF, Mach-O, PDF, APK) in memory. Code is never dynamically executed.",
+      desc: "Safely inspect files in memory without ever running them, finding unusual patterns, hidden links, and digital signatures.",
     },
     {
-      name: "Passive Threat Reconnaissance",
+      name: "Website Check",
       icon: Globe,
-      desc: "Public-domain security posture audit covering DNS, TLS certificates, SPF/DMARC email hardening, and HTTP security headers without intrusive port scanning.",
+      desc: "Check public security information for any website, including HTTPS certificates and email protection.",
     },
     {
-      name: "Quantum Trust Simulation",
+      name: "Trust Test",
       icon: Atom,
-      desc: "Verification channel simulating Bell-state |Φ⁺⟩ non-locality. Detects forgery and interception by measuring Total Variation Distance (TVD).",
+      desc: "Run a simulated trust test to explore how secure communication detects tampering or eavesdropping.",
     },
     {
-      name: "Evidence-Based Reports",
+      name: "Security Reports",
       icon: FileText,
-      desc: "Synthesizes multi-engine quarantine findings, certificate chain provenance, and risk scores into tamper-evident PDF/print reports.",
+      desc: "Create clean, easy-to-read reports and summaries that you can print, download, or share.",
     },
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn">
-      <div className="relative w-full max-w-2xl bg-surface-0 border border-border/80 rounded-3xl neu-raised-lg p-7 sm:p-8 overflow-hidden max-h-[90vh] flex flex-col animate-scaleIn">
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn"
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-2xl bg-surface-elevated border border-border rounded-3xl shadow-2xl p-7 sm:p-8 overflow-hidden max-h-[90vh] flex flex-col animate-scaleIn"
+      >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-border/60 pb-4">
+        <div className="flex items-center justify-between border-b border-border/80 pb-4">
           <div className="flex items-center space-x-3">
-            <div className="p-2.5 rounded-xl neu-inset-sm text-primary">
+            <div className="p-2.5 rounded-xl bg-surface-1 text-primary border border-border">
               <HelpCircle className="w-5 h-5" />
             </div>
             <div>
               <h2 className="text-xl sm:text-2xl font-bold text-text-primary tracking-tight">
-                NeuroCraft Guide & Shortcuts
+                Guide & Keyboard Shortcuts
               </h2>
-              <p className="text-xs text-text-muted">
-                System operations, keyboard workflows, and architectural invariants
+              <p className="text-xs text-text-secondary mt-0.5">
+                Quick commands, feature explanations, and safety guarantees
               </p>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="p-2 rounded-xl neu-button text-text-muted hover:text-text-primary transition-colors"
+            className="p-2 rounded-xl bg-surface-1 hover:bg-surface-2 text-text-muted hover:text-text-primary transition-colors focus-ring"
             aria-label="Close dialog"
           >
             <X className="w-4 h-4" />
@@ -74,7 +80,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
         <div className="flex-1 overflow-y-auto py-5 space-y-6 pr-1">
           {/* Keyboard Shortcuts */}
           <div>
-            <div className="flex items-center space-x-2 text-xs font-semibold uppercase tracking-wider text-text-muted mb-3">
+            <div className="flex items-center space-x-2 text-xs font-bold uppercase tracking-wider text-text-muted mb-3">
               <Keyboard className="w-4 h-4 text-primary" />
               <span>Global Keyboard Shortcuts</span>
             </div>
@@ -83,14 +89,14 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
               {shortcuts.map((sc, i) => (
                 <div
                   key={i}
-                  className="p-3 rounded-2xl neu-inset-sm bg-surface-0/60 flex items-center justify-between text-xs"
+                  className="p-3 rounded-2xl bg-surface-1/60 border border-border-subtle flex items-center justify-between text-xs"
                 >
                   <span className="text-text-secondary font-medium">{sc.label}</span>
                   <div className="flex items-center space-x-1">
                     {sc.keys.map((k, idx) => (
                       <kbd
                         key={idx}
-                        className="px-2 py-0.5 rounded-md neu-raised-sm bg-surface-0 font-mono text-[11px] font-bold text-text-primary"
+                        className="px-2 py-0.5 rounded-md bg-surface-0 border border-border font-mono text-[11px] font-bold text-text-primary shadow-xs"
                       >
                         {k}
                       </kbd>
@@ -103,7 +109,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
 
           {/* Core Modules Overview */}
           <div>
-            <div className="flex items-center space-x-2 text-xs font-semibold uppercase tracking-wider text-text-muted mb-3">
+            <div className="flex items-center space-x-2 text-xs font-bold uppercase tracking-wider text-text-muted mb-3">
               <Shield className="w-4 h-4 text-primary" />
               <span>System Capabilities</span>
             </div>
@@ -114,9 +120,9 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                 return (
                   <div
                     key={i}
-                    className="p-3.5 rounded-2xl neu-inset-sm bg-surface-0/50 flex items-start space-x-3.5 text-xs"
+                    className="p-3.5 rounded-2xl bg-surface-1/60 border border-border-subtle flex items-start space-x-3.5 text-xs"
                   >
-                    <div className="p-2 rounded-xl neu-button text-primary shrink-0 mt-0.5">
+                    <div className="p-2 rounded-xl bg-surface-0 border border-border text-primary shrink-0 mt-0.5 shadow-xs">
                       <Icon className="w-4 h-4" />
                     </div>
                     <div>
@@ -129,22 +135,22 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
             </div>
           </div>
 
-          {/* Architectural Guarantees */}
-          <div className="p-4 rounded-2xl neu-raised-sm bg-surface-0/40 border border-border/60">
-            <div className="text-xs font-semibold text-text-primary uppercase tracking-wider mb-2 flex items-center space-x-2">
+          {/* Safety Guarantees */}
+          <div className="p-4 rounded-2xl bg-surface-1/40 border border-border/80">
+            <div className="text-xs font-bold text-text-primary uppercase tracking-wider mb-2 flex items-center space-x-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-              <span>Core Architectural Invariants</span>
+              <span>Safety & Privacy Guarantees</span>
             </div>
             <ul className="text-xs text-text-secondary space-y-1.5 list-disc pl-5 leading-relaxed">
-              <li><strong className="text-text-primary">Zero Dynamic Execution:</strong> Code is strictly parsed in-memory; binaries never run.</li>
-              <li><strong className="text-text-primary">Free-First Open Source Stack:</strong> Runs self-contained on Python 3.11+ without paid vendor APIs.</li>
-              <li><strong className="text-text-primary">Deterministic Provenance:</strong> Unsigned binaries are audited with cryptographic proof, never assumed malicious.</li>
+              <li><strong className="text-text-primary">Files Are Never Run:</strong> We only inspect file structure in a safe memory sandbox; binaries are never executed.</li>
+              <li><strong className="text-text-primary">Free & Open:</strong> Built on open security standards without paid vendor trackers or surprise fees.</li>
+              <li><strong className="text-text-primary">Clear Proof:</strong> We explain issues in plain English with optional technical details when you want them.</li>
             </ul>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="border-t border-border/60 pt-4 flex justify-end">
+        <div className="border-t border-border/80 pt-4 flex justify-end">
           <Button size="md" variant="primary" onClick={onClose} className="px-6">
             Got it
           </Button>

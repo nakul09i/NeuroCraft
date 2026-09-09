@@ -42,12 +42,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fadeIn">
-      <div className="relative w-full max-w-md bg-surface-0 border border-border/80 rounded-3xl neu-raised-lg p-8 overflow-hidden animate-scaleIn">
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn"
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-md bg-surface-elevated border border-border rounded-3xl shadow-2xl p-8 overflow-hidden animate-scaleIn"
+      >
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-6 right-6 text-text-muted hover:text-text-primary p-2 rounded-xl neu-button transition-colors"
+          className="absolute top-6 right-6 text-text-muted hover:text-text-primary p-2 rounded-xl bg-surface-1 hover:bg-surface-2 transition-colors focus-ring"
           aria-label="Close dialog"
         >
           <X className="w-4 h-4" />
@@ -58,7 +66,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           <h2 className="text-2xl sm:text-3xl font-bold text-text-primary tracking-tight">
             {isLogin ? "Sign in to NeuroCraft" : "Create Security Account"}
           </h2>
-          <p className="text-sm text-text-secondary mt-1.5">
+          <p className="text-sm text-text-secondary mt-1.5 leading-relaxed">
             {isLogin
               ? "Access persistent private scans, telemetry, and threat history"
               : "Isolated tenant with cryptographic provenance ownership"}
@@ -66,7 +74,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
         </div>
 
         {error && (
-          <div className="mb-5 p-3.5 rounded-2xl bg-danger/10 border border-danger/30 flex items-center space-x-2.5 text-danger text-xs sm:text-sm">
+          <div className="mb-5 p-3.5 rounded-2xl bg-danger/10 border border-danger/25 flex items-center space-x-2.5 text-danger text-xs sm:text-sm">
             <ShieldAlert className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
@@ -75,63 +83,63 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
         <form onSubmit={handleSubmit} className="space-y-4">
           {!isLogin && (
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-text-muted mb-1.5">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-1.5">
                 Display Name
               </label>
               <div className="relative">
-                <UserIcon className="absolute left-4 top-3.5 w-4 h-4 text-text-muted" />
+                <UserIcon className="absolute left-3.5 top-3.5 w-4 h-4 text-text-muted pointer-events-none" />
                 <input
                   type="text"
                   required
                   placeholder="Security Analyst"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3 rounded-2xl neu-inset bg-surface-0/60 text-sm text-text-primary placeholder:text-text-muted focus-ring"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-surface-inset border border-border text-sm text-text-primary placeholder:text-text-muted focus-ring shadow-xs"
                 />
               </div>
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-text-muted mb-1.5">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-1.5">
               Email Address
             </label>
             <div className="relative">
-              <Mail className="absolute left-4 top-3.5 w-4 h-4 text-text-muted" />
+              <Mail className="absolute left-3.5 top-3.5 w-4 h-4 text-text-muted pointer-events-none" />
               <input
                 type="email"
                 required
                 placeholder="analyst@enterprise.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-11 pr-4 py-3 rounded-2xl neu-inset bg-surface-0/60 text-sm text-text-primary placeholder:text-text-muted focus-ring"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-surface-inset border border-border text-sm text-text-primary placeholder:text-text-muted focus-ring shadow-xs"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-text-muted mb-1.5">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-1.5">
               Password
             </label>
             <div className="relative">
-              <Lock className="absolute left-4 top-3.5 w-4 h-4 text-text-muted" />
+              <Lock className="absolute left-3.5 top-3.5 w-4 h-4 text-text-muted pointer-events-none" />
               <input
                 type="password"
                 required
                 placeholder="••••••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-11 pr-4 py-3 rounded-2xl neu-inset bg-surface-0/60 text-sm text-text-primary placeholder:text-text-muted focus-ring"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-surface-inset border border-border text-sm text-text-primary placeholder:text-text-muted focus-ring shadow-xs"
               />
             </div>
           </div>
 
-          <div className="pt-3">
+          <div className="pt-2">
             <Button
               type="submit"
               disabled={loading}
               variant="primary"
-              className="w-full text-base font-semibold py-3.5 shadow-md"
+              className="w-full text-base font-semibold py-3 shadow-md"
             >
               {loading ? "Processing…" : isLogin ? "Sign In" : "Register"}
             </Button>

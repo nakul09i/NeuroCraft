@@ -25,7 +25,7 @@ export const Tabs: React.FC<TabsProps> = ({
   return (
     <div
       role="tablist"
-      className={`inline-flex items-center p-1 rounded-xl bg-surface-2 border border-border/80 ${className}`}
+      className={`inline-flex items-center p-1 rounded-xl bg-surface-1 border border-border ${className}`}
     >
       {items.map((tab) => {
         const isActive = activeId === tab.id;
@@ -40,7 +40,7 @@ export const Tabs: React.FC<TabsProps> = ({
             onClick={() => onChange(tab.id)}
             className={`inline-flex items-center gap-2 rounded-lg font-semibold transition-all focus-ring ${padding} ${
               isActive
-                ? "bg-surface-elevated text-text-primary shadow-sm"
+                ? "bg-surface-0 text-primary shadow-xs"
                 : "text-text-muted hover:text-text-primary hover:bg-surface-0/50"
             }`}
           >
@@ -50,8 +50,8 @@ export const Tabs: React.FC<TabsProps> = ({
               <span
                 className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
                   isActive
-                    ? "bg-primary text-text-inverse"
-                    : "bg-surface-3 text-text-secondary"
+                    ? "bg-primary-subtle text-primary border border-primary-border"
+                    : "bg-surface-2 text-text-secondary"
                 }`}
               >
                 {tab.badge}

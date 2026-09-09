@@ -33,16 +33,16 @@ const MainApp: React.FC = () => {
   // Dynamic document title update per active route
   const pageTitles: Record<string, string> = {
     dashboard: "NeuroCraft — Dashboard",
-    scanner: "NeuroCraft — File Analysis",
-    recon: "NeuroCraft — Passive Recon",
-    quantum: "NeuroCraft — Quantum Trust",
+    scanner: "NeuroCraft — Check a File",
+    recon: "NeuroCraft — Check a Website",
+    quantum: "NeuroCraft — Trust Test",
     reports: "NeuroCraft — Security Reports",
-    history: "NeuroCraft — History",
+    history: "NeuroCraft — Check History",
     settings: "NeuroCraft — Settings",
   };
 
   useEffect(() => {
-    document.title = pageTitles[activeTab] || "NeuroCraft — Detect. Verify. Prove.";
+    document.title = pageTitles[activeTab] || "NeuroCraft — Know what you can trust";
   }, [activeTab]);
 
   useEffect(() => {
@@ -54,7 +54,7 @@ const MainApp: React.FC = () => {
   const handleLogout = () => {
     api.logout();
     setUser(null);
-    toast.info("Signed out of your session.");
+    toast.info("Signed out successfully.");
   };
 
   const handleNavigateToScan = (scanId: string) => {
@@ -68,13 +68,13 @@ const MainApp: React.FC = () => {
   };
 
   const tabBreadcrumbs: Record<string, string> = {
-    dashboard: "Security Command Center",
-    scanner: "File Analysis & Digital Signatures",
-    recon: "Defensive Passive Reconnaissance",
-    quantum: "Quantum Trust Simulation",
-    reports: "Audit & Provenance Reports",
-    history: "Security Audit Trail & History",
-    settings: "Application Settings",
+    dashboard: "Security Overview",
+    scanner: "Check a File",
+    recon: "Check a Website",
+    quantum: "Trust Test",
+    reports: "Security Reports",
+    history: "Past Checks",
+    settings: "Settings",
   };
 
   return (
