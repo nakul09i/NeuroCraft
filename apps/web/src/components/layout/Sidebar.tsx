@@ -90,11 +90,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
     >
       {/* Brand Header & Toggle */}
       {collapsed ? (
-        <div className="h-16 border-b border-border flex flex-col items-center justify-center gap-1 px-2">
+        <div className="h-16 border-b border-border flex items-center justify-center relative px-2">
           <button
             onClick={() => onSelectTab("dashboard")}
             className="w-9 h-9 rounded-xl bg-surface-1 border border-border flex items-center justify-center p-1.5 hover:border-primary/50 hover:scale-105 transition-all shadow-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-            title="NeuroCraft"
+            title="NeuroCraft Dashboard"
             aria-label="Go to Dashboard"
           >
             <svg viewBox="0 0 64 64" fill="none" className="w-5 h-5">
@@ -114,6 +114,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
               />
               <circle cx="32" cy="32" r="3" fill="var(--primary)" />
             </svg>
+          </button>
+          <button
+            onClick={() => setCollapsed(false)}
+            className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-surface-elevated border border-border text-text-muted hover:text-text-primary hover:border-primary/50 shadow-md flex items-center justify-center transition-all z-40 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary group"
+            title="Expand sidebar"
+            aria-label="Expand sidebar"
+          >
+            <PanelLeftOpen className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
           </button>
         </div>
       ) : (
@@ -263,20 +271,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           })}
         </div>
       </div>
-
-      {/* Expand / Collapse Control bar when collapsed */}
-      {collapsed && (
-        <div className="p-2 border-t border-border flex justify-center">
-          <button
-            onClick={() => setCollapsed(false)}
-            className="w-full py-2 rounded-lg bg-surface-1 hover:bg-surface-2 text-text-muted hover:text-text-primary flex items-center justify-center transition border border-border"
-            title="Expand Sidebar"
-            aria-label="Expand Sidebar"
-          >
-            <PanelLeftOpen className="w-4 h-4" />
-          </button>
-        </div>
-      )}
 
       {/* Divider */}
       <div className="mx-2.5 border-t border-border" />

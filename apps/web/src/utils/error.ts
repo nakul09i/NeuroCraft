@@ -7,19 +7,25 @@
 export function formatApiError(err: unknown, fallbackMessage = "An unexpected error occurred. Please verify parameters and try again."): string {
   if (!err) return fallbackMessage;
 
+  const isInvalidString = (s: string) => {
+    const t = s.trim();
+    return !t || t === "[object Object]" || t.startsWith("[object ") || t === "{}" || t === "null" || t === "undefined";
+  };
+
   // 1. Direct string error
   if (typeof err === "string") {
-    return err.trim() || fallbackMessage;
+    if (isInvalidString(err)) return fallbackMessage;
+    return err.trim();
   }
 
   // 2. Error object with message
   if (err instanceof Error) {
-    if (err.message && err.message !== "[object Object]") {
+    if (err.message && !isInvalidString(err.message)) {
       // Clean up common network errors
       if (err.message.includes("Failed to fetch") || err.message.includes("NetworkError")) {
-        return "Network connection failed. Please ensure the NeuroCraft API server is running on port 8000.";
+        return "Network connection failed. Please ensure the NeuroCraft API server is running.";
       }
-      return err.message;
+      return err.message.trim();
     }
   }
 
@@ -32,43 +38,47 @@ export function formatApiError(err: unknown, fallbackMessage = "An unexpected er
 
     // FastAPI HTTPException { detail: ... }
     if (data.detail !== undefined) {
-      if (typeof data.detail === "string") {
-        return data.detail;
+      if (typeof data.detail === "string" && !isInvalidString(data.detail)) {
+        return data.detail.trim();
       }
       // Pydantic validation errors array: [{ loc: [...], msg: "...", type: "..." }]
       if (Array.isArray(data.detail)) {
-        return data.detail
+        const parts = data.detail
           .map((item: any) => {
-            if (typeof item === "string") return item;
-            if (item && typeof item === "object") {
+            if (typeof item === "string" && !isInvalidString(item)) return item.trim();
+            if (item && typeof item === "object" && item.msg) {
               const field = Array.isArray(item.loc) ? item.loc[item.loc.length - 1] : "field";
-              return `${field}: ${item.msg || "invalid value"}`;
+              return `${field}: ${item.msg}`;
             }
-            return String(item);
+            return "";
           })
-          .join("; ");
+          .filter(Boolean);
+        if (parts.length > 0) return parts.join("; ");
       }
       if (typeof data.detail === "object" && data.detail !== null) {
-        if (typeof data.detail.message === "string") return data.detail.message;
-        try {
-          return JSON.stringify(data.detail);
-        } catch {
-          return fallbackMessage;
+        if (typeof data.detail.message === "string" && !isInvalidString(data.detail.message)) {
+          return data.detail.message.trim();
         }
       }
     }
 
     // Standard { error: { message: "..." } } or { error: "..." }
     if (data.error !== undefined) {
-      if (typeof data.error === "string") return data.error;
-      if (typeof data.error?.message === "string") return data.error.message;
+      if (typeof data.error === "string" && !isInvalidString(data.error)) return data.error.trim();
+      if (typeof data.error?.message === "string" && !isInvalidString(data.error.message)) {
+        return data.error.message.trim();
+      }
     }
 
     // Generic { message: "..." }
-    if (typeof data.message === "string") return data.message;
+    if (typeof data.message === "string" && !isInvalidString(data.message)) {
+      return data.message.trim();
+    }
 
     // Generic { title: "..." }
-    if (typeof data.title === "string") return data.title;
+    if (typeof data.title === "string" && !isInvalidString(data.title)) {
+      return data.title.trim();
+    }
   }
 
   return fallbackMessage;

@@ -300,19 +300,28 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
           </div>
 
           {/* Action Trigger */}
-          {selectedFile && !analyzing && (
-            <div className="flex justify-end pt-4 border-t border-border">
-              <Button
-                onClick={executeAnalysis}
-                size="lg"
-                variant="primary"
-                className="text-base font-semibold px-8 py-3.5 shadow-md"
-                icon={<ArrowRight className="w-5 h-5" />}
-              >
-                Check This File
-              </Button>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-border">
+            <div className="text-xs text-text-muted">
+              {selectedFile ? (
+                <span>Selected: <strong className="text-text-primary">{selectedFile.name}</strong> ({formatBytes(selectedFile.size)})</span>
+              ) : (
+                <span>No file chosen yet — select or drop a file to start</span>
+              )}
             </div>
-          )}
+
+            <Button
+              onClick={selectedFile ? executeAnalysis : () => fileInputRef.current?.click()}
+              disabled={analyzing}
+              loading={analyzing}
+              loadingText="Analyzing File..."
+              size="lg"
+              variant="primary"
+              className="w-full sm:w-auto text-base font-bold px-8 py-3.5 shadow-md hover:shadow-glow focus-ring"
+              icon={<ArrowRight className="w-5 h-5" />}
+            >
+              Analyze File
+            </Button>
+          </div>
 
           {/* Friendly Progress Indicator */}
           {analyzing && (
@@ -388,10 +397,10 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
                 setScanResult(null);
                 setSelectedFile(null);
               }}
-              className="text-sm font-semibold text-text-secondary hover:text-text-primary flex items-center space-x-1.5 transition-colors"
+              className="text-sm font-semibold text-text-secondary hover:text-text-primary flex items-center space-x-1.5 transition-colors cursor-pointer"
             >
               <RotateCcw className="w-4 h-4" />
-              <span>Check Another File</span>
+              <span>Analyze Another File</span>
             </button>
 
             {onGenerateReport && (

@@ -23,7 +23,11 @@ class IngestionManager:
         cfg = get_config()
         self.quarantine_dir = quarantine_dir or cfg.quarantine_dir
         self.max_size_bytes = max_size_bytes or cfg.max_upload_size_bytes
-        self.quarantine_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            self.quarantine_dir.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            self.quarantine_dir = Path("/tmp/neurocraft_quarantine")
+            self.quarantine_dir.mkdir(parents=True, exist_ok=True)
 
     def prepare_quarantine_path(self, scan_id: str) -> Path:
         """Create a dedicated, isolated file path in the quarantine directory."""

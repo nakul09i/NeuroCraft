@@ -1,6 +1,7 @@
 """Database models and asynchronous persistence layer for NeuroCraft."""
 
 import json
+import os
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -255,6 +256,14 @@ def get_db_url() -> str:
     """Resolve database URL. Defaults to local SQLite for student/free-first development."""
     cfg = get_config()
     url = cfg.database_url
+    is_serverless = bool(
+        os.getenv("VERCEL")
+        or os.getenv("AWS_LAMBDA_FUNCTION_NAME")
+        or os.getenv("LAMBDA_TASK_ROOT")
+    )
+    if is_serverless and ("./" in url or (url.startswith("sqlite") and "/tmp" not in url)):
+        return "sqlite+aiosqlite:////tmp/neurocraft.db"
+
     if url.startswith("postgresql://"):
         url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
     elif url.startswith("sqlite://"):

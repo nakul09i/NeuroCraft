@@ -114,6 +114,20 @@ report_generator = ReportGenerator()
 # ==============================================================================
 
 
+@app.get("/", tags=["Root"])
+@app.get("/api", tags=["Root"])
+async def root_index() -> dict[str, Any]:
+    """Root metadata endpoint for NeuroCraft API Gateway."""
+    return {
+        "status": "ok",
+        "service": "NeuroCraft API Gateway",
+        "version": "0.1.0",
+        "tagline": "Detect. Verify. Prove.",
+        "docs_url": "/docs",
+        "health_url": "/health",
+    }
+
+
 @app.get("/health", tags=["Health"])
 async def root_health() -> dict[str, str]:
     """Basic service health check."""
@@ -713,3 +727,37 @@ async def delete_recon(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Recon scan '{recon_id}' not found or access denied.",
         )
+
+
+# ==============================================================================
+# Static SPA Frontend Serving (For unified single-process / demo hosting)
+# ==============================================================================
+
+import os
+from pathlib import Path
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+
+_candidates = [
+    Path(__file__).resolve().parent.parent.parent.parent.parent / "apps" / "web" / "dist",
+    Path("apps/web/dist"),
+    Path("dist"),
+]
+_web_dist = next((p for p in _candidates if p.is_dir() and (p / "index.html").is_file()), None)
+
+if _web_dist:
+    _assets_dir = _web_dist / "assets"
+    if _assets_dir.is_dir():
+        app.mount("/assets", StaticFiles(directory=str(_assets_dir)), name="web_assets")
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def serve_spa_frontend(full_path: str) -> Any:
+        if full_path.startswith("api/") or full_path.startswith("health") or full_path.startswith("docs"):
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="API endpoint not found.")
+        target = _web_dist / full_path
+        if target.is_file():
+            return FileResponse(target)
+        index_file = _web_dist / "index.html"
+        if index_file.is_file():
+            return FileResponse(index_file)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Page not found.")

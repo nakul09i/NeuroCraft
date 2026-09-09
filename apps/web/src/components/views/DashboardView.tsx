@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   Lock,
   Search,
+  Info,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -79,10 +80,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
   // Safe posture calculation (0 to 100)
   const calculateSafetyScore = (): number | null => {
     if (loading || hasError) return null;
-    if (stats.total_scans === 0 && stats.recon_targets === 0) return 100;
-    const penalty = (safeNumber(stats.critical_threats) * 30) + (safeNumber(stats.average_exposure) * 0.15);
-    const raw = Math.max(15, Math.min(100, Math.round(100 - penalty)));
-    return Number.isFinite(raw) ? raw : 100;
+    const totalScans = safeNumber(stats.total_scans, 0);
+    const reconTargets = safeNumber(stats.recon_targets, 0);
+    if (totalScans === 0 && reconTargets === 0) return null;
+    const threats = safeNumber(stats.critical_threats, 0);
+    const exposure = safeNumber(stats.average_exposure, 0);
+    const penalty = (threats * 30) + (exposure * 0.15);
+    const raw = Math.max(0, Math.min(100, Math.round(100 - penalty)));
+    return Number.isFinite(raw) ? raw : 0;
   };
 
   const safetyScore = calculateSafetyScore();
@@ -91,7 +96,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
   const radius = 48;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = safetyScore !== null
-    ? circumference - (safetyScore / 100) * circumference
+    ? circumference - (Math.max(0, Math.min(100, safetyScore)) / 100) * circumference
     : circumference;
 
   // Chart data formatting
@@ -99,11 +104,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
     const timeLabel = scan.created_at
       ? new Date(scan.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
       : `#${idx + 1}`;
-    const numericRisk = typeof scan.risk_score === "number" && Number.isFinite(scan.risk_score)
-      ? Math.round(scan.risk_score)
-      : 0;
+    const rawRisk = safeNumber(scan.risk_score, 0);
+    const numericRisk = Math.max(0, Math.min(100, Math.round(rawRisk)));
     return {
-      name: scan.filename.length > 14 ? `${scan.filename.substring(0, 12)}…` : scan.filename,
+      name: (scan.filename || "file").length > 14 ? `${(scan.filename || "file").substring(0, 12)}…` : (scan.filename || "file"),
       safety: 100 - numericRisk,
       time: timeLabel,
       level: scan.risk_level || "SAFE",
@@ -144,68 +148,74 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
   return (
     <div className="space-y-8 max-w-[1360px] mx-auto pb-16 animate-fadeIn">
       {/* =========================================================================
-          HERO BANNER: SIMPLE, FRIENDLY, AND DIRECT
+          HERO BANNER: NEUROCRAFT "DETECT. VERIFY. PROVE."
           ========================================================================= */}
       <Card surface="raised" className="p-7 sm:p-9 relative overflow-hidden border border-border shadow-md">
         <HeroBackground />
 
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-          {/* LEFT 60%: Friendly Headline & Value Statement */}
+          {/* LEFT 60%: Headline & Tagline */}
           <div className="lg:col-span-7 space-y-4">
-            {/* Ready Status Pill */}
+            {/* Status Pill */}
             <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-surface-1 border border-border text-xs font-semibold shadow-xs">
               <span className="w-2 h-2 rounded-full bg-emerald-500 beacon-pulse" />
-              <span className="text-emerald-600 dark:text-emerald-400 font-bold">All Systems Ready</span>
+              <span className="text-emerald-600 dark:text-emerald-400 font-bold">All Systems Operational</span>
               <span className="text-text-muted">·</span>
-              <span className="text-text-secondary text-[11px]">Zero-risk file check</span>
+              <span className="text-text-secondary text-[11px]">Detect. Verify. Prove.</span>
             </div>
 
             {/* Headline */}
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-text-primary tracking-tight leading-[1.1]">
-              Know what you can trust.
-            </h1>
+            <div>
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-text-primary tracking-tight leading-[1.08]">
+                NeuroCraft
+              </h1>
+              <p className="text-xl sm:text-2xl font-bold text-primary mt-1 tracking-tight">
+                Detect. Verify. Prove.
+              </p>
+            </div>
 
             {/* Subtitle */}
             <p className="text-base sm:text-lg text-text-secondary leading-relaxed max-w-xl font-normal">
-              Check files, websites and security information in one place — quickly, safely, and without complicated jargon.
+              Evidence-based static binary inspection, Authenticode signature verification, defensive network reconnaissance, and quantum trust channel simulation.
             </p>
 
-            {/* Simple Trust Promises */}
+            {/* Trust Badges */}
             <div className="flex flex-wrap items-center gap-2 pt-1 text-xs text-text-muted">
               <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-lg bg-surface-1 border border-border/80">
                 <Lock className="w-3.5 h-3.5 text-emerald-500" />
-                <span>100% Safe (Files are never run)</span>
+                <span>Zero Execution Mandate (100% Safe)</span>
               </span>
               <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-lg bg-surface-1 border border-border/80">
                 <ShieldCheck className="w-3.5 h-3.5 text-primary" />
-                <span>Instant Results</span>
+                <span>Deterministic Evidence</span>
               </span>
             </div>
           </div>
 
-          {/* RIGHT 40%: Visual Action Box */}
+          {/* RIGHT 40%: Primary Action Box */}
           <div className="lg:col-span-5">
             <div className="p-6 rounded-2xl bg-surface-0/95 border border-border shadow-lg space-y-3.5 backdrop-blur-md">
               <div className="flex items-center justify-between border-b border-border pb-2.5">
                 <span className="text-xs font-bold uppercase tracking-wider text-text-muted flex items-center space-x-1.5">
                   <Sparkles className="w-3.5 h-3.5 text-primary" />
-                  <span>Start a Check</span>
+                  <span>Quick Actions</span>
                 </span>
                 <span className="text-[11px] text-text-muted">
-                  Free & instant
+                  Instant analysis
                 </span>
               </div>
 
-              {/* PRIMARY ACTION: ANALYZE A FILE */}
+              {/* PRIMARY ACTION: ANALYZE FILE */}
               <button
                 onClick={() => onNavigate("scanner")}
-                className="w-full h-14 px-6 rounded-xl bg-primary hover:bg-primary-hover text-white font-bold text-base sm:text-lg shadow-md hover:shadow-glow hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99] transition-all flex items-center justify-between group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary select-none"
+                aria-label="Analyze File"
+                className="w-full h-14 px-6 rounded-xl bg-primary hover:bg-primary-hover text-white font-bold text-base sm:text-lg shadow-md hover:shadow-glow hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99] transition-all flex items-center justify-between group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary select-none cursor-pointer"
               >
                 <div className="flex items-center space-x-3">
                   <div className="p-2 rounded-lg bg-white/20 text-white flex items-center justify-center">
                     <FileSearch className="w-5 h-5" />
                   </div>
-                  <span>Analyze a File</span>
+                  <span className="tracking-tight">Analyze File</span>
                 </div>
                 <div className="flex items-center space-x-1 font-semibold text-sm bg-white/15 px-3 py-1.5 rounded-lg group-hover:bg-white/25 transition-colors">
                   <span>Start</span>
@@ -213,7 +223,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
                 </div>
               </button>
 
-              {/* SECONDARY ACTIONS: CHECK A WEBSITE & TRUST TEST */}
+              {/* SECONDARY ACTIONS: NETWORK RECON & QUANTUM TRUST */}
               <div className="grid grid-cols-2 gap-2.5 pt-1">
                 <Button
                   size="md"
@@ -222,7 +232,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
                   className="w-full justify-center text-xs font-semibold py-2.5"
                   icon={<Globe2 className="w-4 h-4 text-emerald-500" />}
                 >
-                  Check a Website
+                  Network Recon
                 </Button>
 
                 <Button
@@ -232,7 +242,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
                   className="w-full justify-center text-xs font-semibold py-2.5"
                   icon={<Atom className="w-4 h-4 text-purple-500" />}
                 >
-                  Trust Test
+                  Quantum Trust
                 </Button>
               </div>
 
@@ -241,7 +251,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
                 <span>Updated {lastUpdated}</span>
                 <button
                   onClick={loadData}
-                  className="flex items-center space-x-1 hover:text-primary transition-colors"
+                  className="flex items-center space-x-1 hover:text-primary transition-colors cursor-pointer"
                   title="Refresh status"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-primary" : ""}`} />
@@ -266,17 +276,21 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
               </span>
               <Badge
                 variant={
-                  safetyScore !== null && safetyScore >= 80
+                  safetyScore === null
+                    ? "neutral"
+                    : safetyScore >= 80
                     ? "safe"
-                    : safetyScore !== null && safetyScore >= 60
+                    : safetyScore >= 60
                     ? "medium"
                     : "high"
                 }
                 size="md"
               >
-                {safetyScore !== null && safetyScore >= 80
+                {safetyScore === null
+                  ? "NOT EVALUATED"
+                  : safetyScore >= 80
                   ? "ALL SAFE"
-                  : safetyScore !== null && safetyScore >= 60
+                  : safetyScore >= 60
                   ? "NEEDS REVIEW"
                   : "ATTENTION"}
               </Badge>
@@ -299,9 +313,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
                     cy="60"
                     r={radius}
                     stroke={
-                      safetyScore !== null && safetyScore >= 80
+                      safetyScore === null
+                        ? "var(--surface-2)"
+                        : safetyScore >= 80
                         ? "var(--success)"
-                        : safetyScore !== null && safetyScore >= 60
+                        : safetyScore >= 60
                         ? "var(--warning)"
                         : "var(--danger)"
                     }
@@ -315,7 +331,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
                 </svg>
 
                 {/* Score Number */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-1">
                   {loading ? (
                     <Skeleton width={44} height={32} />
                   ) : safetyScore !== null ? (
@@ -326,7 +342,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
                       <span className="text-[11px] font-mono text-text-muted">/ 100</span>
                     </>
                   ) : (
-                    <span className="text-2xl font-mono text-text-muted">—</span>
+                    <>
+                      <span className="text-2xl font-mono text-text-muted">—</span>
+                      <span className="text-[10px] text-text-muted font-medium">Not evaluated</span>
+                    </>
                   )}
                 </div>
               </div>
@@ -334,12 +353,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
               {/* Status Message */}
               <div className="flex-1 space-y-3 text-center sm:text-left">
                 <div className="text-2xl sm:text-3xl font-bold text-text-primary tracking-tight flex items-center justify-center sm:justify-start space-x-2">
-                  {safetyScore !== null && safetyScore >= 80 ? (
+                  {safetyScore === null ? (
+                    <>
+                      <Info className="w-7 h-7 text-primary shrink-0" />
+                      <span>No scans evaluated yet</span>
+                    </>
+                  ) : safetyScore >= 80 ? (
                     <>
                       <CheckCircle2 className="w-7 h-7 text-emerald-500 shrink-0" />
                       <span>Everything looks good</span>
                     </>
-                  ) : safetyScore !== null && safetyScore >= 60 ? (
+                  ) : safetyScore >= 60 ? (
                     <>
                       <AlertTriangle className="w-7 h-7 text-amber-500 shrink-0" />
                       <span>A few things worth checking</span>
@@ -353,7 +377,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
                 </div>
 
                 <p className="text-sm text-text-secondary leading-relaxed max-w-xl">
-                  {stats.critical_threats > 0
+                  {safetyScore === null
+                    ? "Analyze a file or run a network reconnaissance check to compute your organization's security score."
+                    : stats.critical_threats > 0
                     ? `We found ${stats.critical_threats} potential problem(s) in your recent checks that you should review.`
                     : "All your recent file checks, website lookups, and security tests look healthy and safe."}
                 </p>

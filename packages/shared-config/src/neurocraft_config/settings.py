@@ -22,7 +22,12 @@ class AppConfig(BaseModel):
         default_factory=lambda: int(os.getenv("MAX_UPLOAD_SIZE_BYTES", str(100 * 1024 * 1024)))
     )
     quarantine_dir: Path = Field(
-        default_factory=lambda: Path(os.getenv("QUARANTINE_DIR", "./scratch/quarantine"))
+        default_factory=lambda: Path(
+            os.getenv(
+                "QUARANTINE_DIR",
+                "/tmp/neurocraft_quarantine" if os.getenv("VERCEL") else "./scratch/quarantine",
+            )
+        )
     )
     scanner_timeout_seconds: int = Field(
         default_factory=lambda: int(os.getenv("SCANNER_TIMEOUT_SECONDS", "30"))
@@ -32,7 +37,7 @@ class AppConfig(BaseModel):
     database_url: str = Field(
         default_factory=lambda: os.getenv(
             "DATABASE_URL",
-            "sqlite+aiosqlite:///./neurocraft.db",
+            "sqlite+aiosqlite:////tmp/neurocraft.db" if os.getenv("VERCEL") else "sqlite+aiosqlite:///./neurocraft.db",
         )
     )
     redis_url: str = Field(

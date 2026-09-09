@@ -9,7 +9,8 @@ import {
   UserProfile,
 } from "./types";
 
-const API_BASE = "/api/v1";
+const RAW_API_BASE = import.meta.env.VITE_API_BASE_URL || "";
+const API_BASE = (RAW_API_BASE ? RAW_API_BASE.replace(/\/+$/, "") : "") + "/api/v1";
 
 function getAuthHeaders(): HeadersInit {
   const token = localStorage.getItem("nc_token");
@@ -22,6 +23,35 @@ function getAuthHeaders(): HeadersInit {
   return headers;
 }
 
+async function extractErrorMessage(res: Response, fallback: string): Promise<string> {
+  try {
+    const data = await res.json();
+    if (typeof data === "string" && data.trim()) return data.trim();
+    if (typeof data?.detail === "string" && data.detail.trim()) return data.detail.trim();
+    if (Array.isArray(data?.detail)) {
+      const parts = data.detail
+        .map((item: any) => {
+          if (typeof item === "string") return item;
+          if (item?.msg) {
+            const field = Array.isArray(item.loc) ? item.loc[item.loc.length - 1] : "field";
+            return `${field}: ${item.msg}`;
+          }
+          return "";
+        })
+        .filter(Boolean);
+      if (parts.length > 0) return parts.join("; ");
+    }
+    if (typeof data?.message === "string" && data.message.trim()) return data.message.trim();
+    if (typeof data?.error === "string" && data.error.trim()) return data.error.trim();
+    if (data?.detail && typeof data.detail === "object") {
+      if (typeof data.detail.message === "string") return data.detail.message;
+    }
+  } catch {
+    // Response body is not JSON
+  }
+  return res.statusText ? `${fallback} (${res.status} ${res.statusText})` : fallback;
+}
+
 export const api = {
   // Authentication
   async login(email: string, password: string): Promise<TokenResponse> {
@@ -31,8 +61,8 @@ export const api = {
       body: JSON.stringify({ email, password }),
     });
     if (!res.ok) {
-      const err = await res.json().catch(() => ({ detail: "Login failed" }));
-      throw new Error(err.detail || "Authentication failed");
+      const msg = await extractErrorMessage(res, "Authentication failed. Please check credentials.");
+      throw new Error(msg);
     }
     const data: TokenResponse = await res.json();
     localStorage.setItem("nc_token", data.access_token);
@@ -46,8 +76,8 @@ export const api = {
       body: JSON.stringify({ email, password, display_name }),
     });
     if (!res.ok) {
-      const err = await res.json().catch(() => ({ detail: "Signup failed" }));
-      throw new Error(err.detail || "Registration failed");
+      const msg = await extractErrorMessage(res, "Registration failed. Please try again.");
+      throw new Error(msg);
     }
     const data: TokenResponse = await res.json();
     localStorage.setItem("nc_token", data.access_token);
@@ -91,8 +121,8 @@ export const api = {
     });
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({ detail: "Scan failed" }));
-      throw new Error(err.detail || "File scan failed");
+      const msg = await extractErrorMessage(res, "File analysis could not be completed.");
+      throw new Error(msg);
     }
     return await res.json();
   },
@@ -101,7 +131,10 @@ export const api = {
     const res = await fetch(`${API_BASE}/scans/${scanId}`, {
       headers: getAuthHeaders(),
     });
-    if (!res.ok) throw new Error("Scan not found");
+    if (!res.ok) {
+      const msg = await extractErrorMessage(res, `Scan "${scanId}" was not found.`);
+      throw new Error(msg);
+    }
     return await res.json();
   },
 
@@ -124,8 +157,8 @@ export const api = {
       body: JSON.stringify({ target }),
     });
     if (!res.ok) {
-      const err = await res.json().catch(() => ({ detail: "Recon scan failed" }));
-      throw new Error(err.detail || "Reconnaissance execution failed");
+      const msg = await extractErrorMessage(res, "Network reconnaissance scan failed.");
+      throw new Error(msg);
     }
     return await res.json();
   },
@@ -158,8 +191,8 @@ export const api = {
       }),
     });
     if (!res.ok) {
-      const err = await res.json().catch(() => ({ detail: "Simulation failed" }));
-      throw new Error(err.detail || "Quantum trust simulation failed");
+      const msg = await extractErrorMessage(res, "Quantum trust simulation could not be executed.");
+      throw new Error(msg);
     }
     return await res.json();
   },
@@ -193,8 +226,8 @@ export const api = {
       }),
     });
     if (!res.ok) {
-      const err = await res.json().catch(() => ({ detail: "Report generation failed" }));
-      throw new Error(err.detail || "Security report generation failed");
+      const msg = await extractErrorMessage(res, "Could not generate the security report.");
+      throw new Error(msg);
     }
     return await res.json();
   },
@@ -215,17 +248,22 @@ export const api = {
       });
       if (res.ok) {
         const raw = await res.json();
+        const parseNum = (v: any): number => {
+          if (v === null || v === undefined) return 0;
+          const n = Number(v);
+          return Number.isFinite(n) ? n : 0;
+        };
         return {
-          total_scans: Number(raw.total_scans ?? 0),
-          critical_threats: Number(raw.critical_threats ?? raw.high_risk_findings ?? 0),
-          recon_targets: Number(raw.recon_targets ?? raw.recon_scans_count ?? 0),
-          quantum_simulations: Number(raw.quantum_simulations ?? raw.quantum_simulations_count ?? 0),
-          average_exposure: Number(raw.average_exposure ?? raw.average_risk_score ?? 0),
+          total_scans: parseNum(raw.total_scans),
+          critical_threats: parseNum(raw.critical_threats ?? raw.high_risk_findings),
+          recon_targets: parseNum(raw.recon_targets ?? raw.recon_scans_count),
+          quantum_simulations: parseNum(raw.quantum_simulations ?? raw.quantum_simulations_count),
+          average_exposure: parseNum(raw.average_exposure ?? raw.average_risk_score),
           recent_scans: Array.isArray(raw.recent_scans) ? raw.recent_scans : [],
         };
       }
     } catch {
-      // Return default stats
+      // Fallback default
     }
     return {
       total_scans: 0,
@@ -240,9 +278,12 @@ export const api = {
   // System Health
   async getHealth(): Promise<any> {
     try {
-      const res = await fetch("/health");
+      const res = await fetch(`${API_BASE}/health`);
       if (res.ok) return await res.json();
+      const rootHealth = await fetch("/health");
+      if (rootHealth.ok) return await rootHealth.json();
     } catch {}
     return { status: "ok" };
   },
 };
+
