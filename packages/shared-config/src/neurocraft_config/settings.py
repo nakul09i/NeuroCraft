@@ -6,31 +6,56 @@ from pathlib import Path
 from pydantic import BaseModel, Field
 
 
+def _safe_int(key: str, default: int) -> int:
+    val = os.getenv(key)
+    if val is None or not val.strip():
+        return default
+    try:
+        return int(val.strip())
+    except (ValueError, TypeError):
+        return default
+
+
+def _safe_float(key: str, default: float) -> float:
+    val = os.getenv(key)
+    if val is None or not val.strip():
+        return default
+    try:
+        return float(val.strip())
+    except (ValueError, TypeError):
+        return default
+
+
+def _safe_bool(key: str, default: bool) -> bool:
+    val = os.getenv(key)
+    if val is None or not val.strip():
+        return default
+    return val.strip().lower() in ("true", "1", "yes")
+
+
 class AppConfig(BaseModel):
     """Core application environment configuration."""
 
-    app_name: str = Field(default_factory=lambda: os.getenv("APP_NAME", "NeuroCraft"))
-    app_env: str = Field(default_factory=lambda: os.getenv("APP_ENV", "development"))
-    app_debug: bool = Field(
-        default_factory=lambda: os.getenv("APP_DEBUG", "true").lower() == "true"
-    )
-    app_host: str = Field(default_factory=lambda: os.getenv("APP_HOST", "127.0.0.1"))
-    app_port: int = Field(default_factory=lambda: int(os.getenv("APP_PORT", "8000")))
+    app_name: str = Field(default_factory=lambda: os.getenv("APP_NAME") or "NeuroCraft")
+    app_env: str = Field(default_factory=lambda: os.getenv("APP_ENV") or "development")
+    app_debug: bool = Field(default_factory=lambda: _safe_bool("APP_DEBUG", True))
+    app_host: str = Field(default_factory=lambda: os.getenv("APP_HOST") or "127.0.0.1")
+    app_port: int = Field(default_factory=lambda: _safe_int("APP_PORT", 8000))
 
     # Security & Quotas
     max_upload_size_bytes: int = Field(
-        default_factory=lambda: int(os.getenv("MAX_UPLOAD_SIZE_BYTES", str(100 * 1024 * 1024)))
+        default_factory=lambda: _safe_int("MAX_UPLOAD_SIZE_BYTES", 100 * 1024 * 1024)
     )
     quarantine_dir: Path = Field(
         default_factory=lambda: Path(
             os.getenv(
                 "QUARANTINE_DIR",
                 "/tmp/neurocraft_quarantine" if os.getenv("VERCEL") else "./scratch/quarantine",
-            )
+            ) or ("/tmp/neurocraft_quarantine" if os.getenv("VERCEL") else "./scratch/quarantine")
         )
     )
     scanner_timeout_seconds: int = Field(
-        default_factory=lambda: int(os.getenv("SCANNER_TIMEOUT_SECONDS", "30"))
+        default_factory=lambda: _safe_int("SCANNER_TIMEOUT_SECONDS", 30)
     )
 
     # Free-First Core Services (Defaults to zero-config local SQLite)
@@ -38,28 +63,24 @@ class AppConfig(BaseModel):
         default_factory=lambda: os.getenv(
             "DATABASE_URL",
             "sqlite+aiosqlite:////tmp/neurocraft.db" if os.getenv("VERCEL") else "sqlite+aiosqlite:///./neurocraft.db",
-        )
+        ) or ("sqlite+aiosqlite:////tmp/neurocraft.db" if os.getenv("VERCEL") else "sqlite+aiosqlite:///./neurocraft.db")
     )
     redis_url: str = Field(
-        default_factory=lambda: os.getenv("REDIS_URL", "redis://127.0.0.1:6379/0")
+        default_factory=lambda: os.getenv("REDIS_URL") or "redis://127.0.0.1:6379/0"
     )
 
     # ClamAV
-    clamav_enabled: bool = Field(
-        default_factory=lambda: os.getenv("CLAMAV_ENABLED", "true").lower() == "true"
-    )
-    clamav_host: str = Field(default_factory=lambda: os.getenv("CLAMAV_HOST", "127.0.0.1"))
-    clamav_port: int = Field(default_factory=lambda: int(os.getenv("CLAMAV_PORT", "3310")))
+    clamav_enabled: bool = Field(default_factory=lambda: _safe_bool("CLAMAV_ENABLED", True))
+    clamav_host: str = Field(default_factory=lambda: os.getenv("CLAMAV_HOST") or "127.0.0.1")
+    clamav_port: int = Field(default_factory=lambda: _safe_int("CLAMAV_PORT", 3310))
 
     # ML Settings
-    ml_engine_enabled: bool = Field(
-        default_factory=lambda: os.getenv("ML_ENGINE_ENABLED", "true").lower() == "true"
-    )
+    ml_engine_enabled: bool = Field(default_factory=lambda: _safe_bool("ML_ENGINE_ENABLED", True))
     ml_execution_provider: str = Field(
-        default_factory=lambda: os.getenv("ML_EXECUTION_PROVIDER", "CPUExecutionProvider")
+        default_factory=lambda: os.getenv("ML_EXECUTION_PROVIDER") or "CPUExecutionProvider"
     )
     ml_decision_threshold: float = Field(
-        default_factory=lambda: float(os.getenv("ML_DECISION_THRESHOLD", "0.75"))
+        default_factory=lambda: _safe_float("ML_DECISION_THRESHOLD", 0.75)
     )
 
     # Authentication & Supabase
@@ -73,7 +94,7 @@ class AppConfig(BaseModel):
             "SUPABASE_JWT_SECRET", "neurocraft-default-local-jwt-secret-for-dev-only"
         )
     )
-    jwt_algorithm: str = Field(default_factory=lambda: os.getenv("JWT_ALGORITHM", "HS256"))
+    jwt_algorithm: str = Field(default_factory=lambda: os.getenv("JWT_ALGORITHM") or "HS256")
     allowed_origins: str = Field(
         default_factory=lambda: os.getenv(
             "ALLOWED_ORIGINS",
@@ -83,10 +104,10 @@ class AppConfig(BaseModel):
 
     # Optional Decentralized & External Services
     threat_intel_enabled: bool = Field(
-        default_factory=lambda: os.getenv("THREAT_INTEL_ENABLED", "false").lower() == "true"
+        default_factory=lambda: _safe_bool("THREAT_INTEL_ENABLED", False)
     )
     blockchain_enabled: bool = Field(
-        default_factory=lambda: os.getenv("BLOCKCHAIN_ENABLED", "false").lower() == "true"
+        default_factory=lambda: _safe_bool("BLOCKCHAIN_ENABLED", False)
     )
 
 
