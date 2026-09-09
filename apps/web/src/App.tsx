@@ -105,27 +105,29 @@ const MainApp: React.FC = () => {
         {/* Scrollable View Area wrapped in ErrorBoundary */}
         <main className="flex-1 overflow-y-auto px-4 sm:px-8 py-6 pb-24 md:pb-8">
           <ErrorBoundary fallbackTitle="View Rendering Error">
-            {activeTab === "dashboard" && (
-              <DashboardView onNavigate={setActiveTab} user={user} />
-            )}
-            {activeTab === "scanner" && (
-              <ScannerView onGenerateReport={handleNavigateToReport} />
-            )}
-            {activeTab === "recon" && <ReconView />}
-            {activeTab === "quantum" && <QuantumView />}
-            {activeTab === "reports" && (
-              <ReportsView initialScanId={selectedScanId} />
-            )}
-            {activeTab === "history" && (
-              <HistoryView onNavigateToScan={handleNavigateToScan} />
-            )}
-            {activeTab === "settings" && (
-              <SettingsView
-                user={user}
-                onOpenAuth={() => setAuthModalOpen(true)}
-                onLogout={handleLogout}
-              />
-            )}
+            <div key={activeTab} className="page-enter">
+              {activeTab === "dashboard" && (
+                <DashboardView onNavigate={setActiveTab} user={user} />
+              )}
+              {activeTab === "scanner" && (
+                <ScannerView onGenerateReport={handleNavigateToReport} />
+              )}
+              {activeTab === "recon" && <ReconView />}
+              {activeTab === "quantum" && <QuantumView />}
+              {activeTab === "reports" && (
+                <ReportsView initialScanId={selectedScanId} />
+              )}
+              {activeTab === "history" && (
+                <HistoryView onNavigateToScan={handleNavigateToScan} />
+              )}
+              {activeTab === "settings" && (
+                <SettingsView
+                  user={user}
+                  onOpenAuth={() => setAuthModalOpen(true)}
+                  onLogout={handleLogout}
+                />
+              )}
+            </div>
           </ErrorBoundary>
         </main>
       </div>

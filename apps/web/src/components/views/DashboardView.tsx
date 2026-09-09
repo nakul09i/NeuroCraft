@@ -162,20 +162,23 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
   };
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-fadeIn max-w-6xl mx-auto pb-16">
+    <div className="space-y-6 sm:space-y-8 page-enter max-w-6xl mx-auto pb-16">
       {/* =========================================================================
           BLOCK 1: HERO & SECURITY STATUS (Clear Hierarchy, Single Primary Action)
           ========================================================================= */}
       <Card surface="raised" className="p-7 sm:p-9 relative overflow-hidden border border-border">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        {/* Subtle Ambient Mesh Orb (15s gentle float) */}
+        <div className="absolute -top-24 -right-24 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none animate-ambient-mesh" />
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
           {/* Left Column: Greeting, Headline, Subtitle, Actions */}
           <div className="lg:col-span-8 space-y-4">
-            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-surface-1 border border-border text-xs font-semibold">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 beacon-pulse" />
+            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-surface-1 border border-border text-xs font-semibold animate-fadeIn stagger-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 status-dot-safe" />
               <span className="text-text-secondary">{greeting}</span>
             </div>
 
-            <div>
+            <div className="animate-fadeIn stagger-2">
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-text-primary tracking-tight leading-tight">
                 {postureHeadline}
               </h1>
@@ -185,7 +188,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
             </div>
 
             {/* Primary & Secondary Actions (Clean, Not Crowded) */}
-            <div className="flex flex-wrap items-center gap-3 pt-2">
+            <div className="flex flex-wrap items-center gap-3 pt-2 animate-fadeIn stagger-3">
               <Button
                 size="lg"
                 variant="primary"
@@ -209,7 +212,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, user }
             </div>
 
             {/* Concise 4-Pill Metric Summary */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-4 border-t border-border">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-4 border-t border-border animate-fadeIn stagger-4">
               <div className="p-2.5 rounded-xl bg-surface-1 border border-border/60">
                 <div className="text-[11px] font-medium text-text-muted">Files Checked</div>
                 <div className="text-lg font-bold font-mono text-text-primary mt-0.5">{animatedScans}</div>

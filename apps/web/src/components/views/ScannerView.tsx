@@ -163,13 +163,15 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
             onDragLeave={() => setDragOver(false)}
             onDrop={handleFileDrop}
             onClick={() => fileInputRef.current?.click()}
-            className={`rounded-2xl p-10 sm:p-14 text-center cursor-pointer transition-all duration-200 border-2 border-dashed ${
+            className={`rounded-2xl p-10 sm:p-14 text-center cursor-pointer transition-all duration-200 border-2 border-dashed relative overflow-hidden group ${
               dragOver
-                ? "bg-primary-subtle border-primary shadow-inner"
+                ? "bg-primary-subtle border-primary shadow-md -translate-y-0.5 scale-[1.005]"
                 : "bg-surface-1/50 border-border hover:border-primary/50 hover:bg-surface-1"
             }`}
           >
-            <div className="w-14 h-14 rounded-2xl bg-surface-0 border border-border flex items-center justify-center mx-auto mb-4 text-primary shadow-xs">
+            <div className={`w-14 h-14 rounded-2xl bg-surface-0 border border-border flex items-center justify-center mx-auto mb-4 text-primary shadow-xs transition-transform duration-200 ${
+              dragOver ? "scale-110" : "group-hover:scale-105"
+            }`}>
               <UploadCloud className="w-7 h-7" />
             </div>
 
@@ -235,44 +237,52 @@ export const ScannerView: React.FC<ScannerViewProps> = ({
             </Button>
           </div>
 
-          {/* 4-Step Progressive Scanning State */}
+          {/* Active File Analysis: Laser Scanning Beam & Step Progression */}
           {analyzing && (
-            <div className="p-5 rounded-xl bg-surface-1 border border-border space-y-4 animate-fadeIn">
+            <div className="p-6 rounded-2xl bg-surface-1 border border-primary/30 space-y-5 animate-fadeIn relative overflow-hidden">
+              {/* Laser Scanning Line Sweeping Over Active Ingest Box */}
+              <div className="scanning-laser-beam" />
+
               <div className="flex items-center justify-between text-xs">
-                <span className="font-bold text-text-primary uppercase tracking-wider">
-                  Analyzing Security Signals
-                </span>
+                <div className="flex items-center space-x-2">
+                  <span className="w-2 h-2 rounded-full bg-primary status-dot-safe" />
+                  <span className="font-bold text-text-primary uppercase tracking-wider">
+                    Analyzing Security Signals
+                  </span>
+                </div>
                 <span className="font-mono text-primary font-bold">Step {analysisStep || 1} of 4</span>
               </div>
 
               {/* Progress Bar */}
-              <div className="w-full h-2 rounded-full bg-surface-2 overflow-hidden">
+              <div className="w-full h-1.5 rounded-full bg-surface-2 overflow-hidden">
                 <div
                   className="h-full bg-primary transition-all duration-300 ease-out"
                   style={{ width: `${(Math.max(1, analysisStep) / 4) * 100}%` }}
                 />
               </div>
 
-              {/* Steps Indicator */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+              {/* Steps Indicator with Crisp Checkmarks and Subtle Highlight */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
                 {scanSteps.map((s) => {
                   const isCurrent = analysisStep === s.step;
                   const isPast = analysisStep > s.step;
                   return (
                     <div
                       key={s.step}
-                      className={`p-2 rounded-lg border text-left transition-all ${
+                      className={`p-3 rounded-xl border text-left transition-all duration-200 ${
                         isCurrent
-                          ? "bg-surface-0 border-primary shadow-xs"
+                          ? "bg-surface-0 border-primary text-text-primary ring-1 ring-primary/30 shadow-xs"
                           : isPast
-                          ? "bg-surface-0/60 border-emerald-500/30 text-emerald-600"
-                          : "bg-surface-0/30 border-border/50 opacity-60"
+                          ? "bg-surface-0/70 border-emerald-500/30 text-text-primary"
+                          : "bg-surface-0/30 border-border/50 text-text-muted opacity-50"
                       }`}
                     >
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-text-muted">
-                        Step {s.step}
+                      <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider">
+                        <span>Step {s.step}</span>
+                        {isPast && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />}
+                        {isCurrent && <span className="w-1.5 h-1.5 rounded-full bg-primary animate-ping" />}
                       </div>
-                      <div className="text-xs font-semibold text-text-primary mt-0.5 truncate">
+                      <div className="text-xs font-semibold mt-1 truncate">
                         {s.label}
                       </div>
                     </div>

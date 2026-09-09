@@ -200,7 +200,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
               {/* Floating tooltip when collapsed */}
               {collapsed && (
-                <div className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 z-50 whitespace-nowrap rounded-lg bg-surface-elevated px-3 py-1.5 text-xs font-semibold text-text-primary shadow-xl border border-border opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+                <div className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-2.5 z-50 whitespace-nowrap rounded-lg bg-surface-elevated px-2.5 py-1.5 text-xs font-semibold text-text-primary shadow-lg border border-border opacity-0 -translate-x-1 scale-95 transition-all duration-150 group-hover:opacity-100 group-hover:translate-x-0 group-hover:scale-100">
                   {item.label}
                 </div>
               )}

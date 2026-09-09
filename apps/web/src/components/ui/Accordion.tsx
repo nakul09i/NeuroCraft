@@ -85,11 +85,16 @@ export const Accordion: React.FC<AccordionProps> = ({
         </div>
       </button>
 
-      {open && (
-        <div className={`p-4 pt-1 sm:p-5 sm:pt-2 border-t border-border animate-fadeIn ${variant === "card" ? "bg-surface-inset/40" : ""}`}>
-          {children}
+      <div
+        className="accordion-grid"
+        data-expanded={open}
+      >
+        <div className="accordion-overflow-wrapper">
+          <div className={`p-4 pt-2 sm:p-5 sm:pt-3 border-t border-border ${variant === "card" ? "bg-surface-inset/40" : ""}`}>
+            {children}
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };

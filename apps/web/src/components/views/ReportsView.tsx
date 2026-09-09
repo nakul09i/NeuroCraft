@@ -148,7 +148,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ initialScanId }) => {
     : [];
 
   return (
-    <div className="space-y-6 animate-fadeIn max-w-5xl mx-auto pb-16">
+    <div className="space-y-6 page-enter max-w-5xl mx-auto pb-16">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
         <div>

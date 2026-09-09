@@ -258,49 +258,95 @@
 }
 
 /* ==============================================================================
-   ANIMATIONS & DYNAMIC MICROINTERACTIONS
+   COHESIVE PREMIUM MOTION SYSTEM (Apple / SpaceX / Linear / Vercel)
    ============================================================================== */
 
-@keyframes wordReveal {
+/* Page Entrance */
+@keyframes pageEnter {
   0% {
     opacity: 0;
-    transform: translateY(10px);
-    filter: blur(4px);
+    transform: translateY(8px);
   }
   100% {
     opacity: 1;
     transform: translateY(0);
-    filter: blur(0);
   }
 }
 
-.animate-word-1 {
-  animation: wordReveal 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-.animate-word-2 {
-  animation: wordReveal 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards;
-  opacity: 0;
-}
-.animate-word-3 {
-  animation: wordReveal 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards;
-  opacity: 0;
-}
-.animate-subhead {
-  animation: wordReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.45s forwards;
-  opacity: 0;
+.page-enter {
+  animation: pageEnter var(--dur-medium) var(--ease-out) both;
 }
 
-/* Laser Scan Sweep */
-@keyframes laserSweep {
+.animate-fadeIn {
+  animation: pageEnter var(--dur-normal) var(--ease-out) both;
+}
+
+/* Staggered Element Entrance Helpers */
+.stagger-1 { animation-delay: 60ms; }
+.stagger-2 { animation-delay: 120ms; }
+.stagger-3 { animation-delay: 180ms; }
+.stagger-4 { animation-delay: 240ms; }
+
+/* Status Dot: Subtle Green Breath (SAFE) */
+@keyframes pulseSubtle {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.4);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.05);
+    box-shadow: 0 0 0 4px rgba(22, 163, 74, 0);
+  }
+}
+
+.status-dot-safe {
+  animation: pulseSubtle 3.5s var(--ease-in-out) infinite;
+}
+
+/* Status Dot: Controlled Attention Pulse (HIGH / CRITICAL) */
+@keyframes pulseAlert {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.6);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.08);
+    box-shadow: 0 0 0 5px rgba(220, 38, 38, 0);
+  }
+}
+
+.status-dot-alert {
+  animation: pulseAlert 2s var(--ease-in-out) infinite;
+}
+
+/* Error Feedback: Single Controlled Horizontal Shake */
+@keyframes shakeXOnce {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-2px); }
+  80% { transform: translateX(2px); }
+}
+
+.shake-once {
+  animation: shakeXOnce 0.35s var(--ease-out) 1;
+}
+
+/* Active File Analysis: Laser Scanning Beam Sweep */
+@keyframes scanBeamVertical {
   0% {
     top: 0%;
     opacity: 0;
   }
-  20% {
-    opacity: 0.8;
+  15% {
+    opacity: 1;
   }
-  80% {
-    opacity: 0.8;
+  85% {
+    opacity: 1;
   }
   100% {
     top: 100%;
@@ -308,55 +354,48 @@
   }
 }
 
-.laser-sweep-line {
+.scanning-laser-beam {
   position: absolute;
   left: 0;
   right: 0;
   height: 2px;
   background: linear-gradient(90deg, transparent, var(--primary), #38bdf8, transparent);
-  box-shadow: 0 0 8px var(--primary);
-  opacity: 0;
+  box-shadow: 0 0 10px 1px var(--primary);
+  animation: scanBeamVertical 2.2s var(--ease-in-out) infinite;
+  pointer-events: none;
 }
 
-.group:hover .laser-sweep-line {
-  animation: laserSweep 1.2s ease-in-out infinite;
-}
-
-/* Status Beacon Pulsing */
-@keyframes statusBeacon {
-  0% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.7);
-  }
-  70% {
-    transform: scale(1);
-    box-shadow: 0 0 0 6px rgba(22, 163, 74, 0);
-  }
-  100% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(22, 163, 74, 0);
-  }
-}
-
-.beacon-pulse {
-  animation: statusBeacon 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-/* Ambient Gradient Mesh Float */
-@keyframes meshFloat {
+/* Ambient Subtle Background Mesh Movement (15s Loop) */
+@keyframes ambientMesh {
   0%, 100% {
-    transform: translate(0px, 0px) scale(1);
+    transform: translate3d(0, 0, 0) scale(1);
   }
   50% {
-    transform: translate(15px, -10px) scale(1.04);
+    transform: translate3d(12px, -8px, 0) scale(1.03);
   }
 }
 
-.animate-mesh {
-  animation: meshFloat 14s ease-in-out infinite;
+.animate-ambient-mesh {
+  animation: ambientMesh var(--dur-cinematic) var(--ease-in-out) infinite;
+  will-change: transform;
 }
 
-/* Reduced motion preference */
+/* CSS Grid Smooth Accordion Expansion */
+.accordion-grid {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--dur-normal) var(--ease-out);
+}
+
+.accordion-grid[data-expanded="true"] {
+  grid-template-rows: 1fr;
+}
+
+.accordion-overflow-wrapper {
+  overflow: hidden;
+}
+
+/* Strict Reduced-Motion Compliance (Section 31) */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

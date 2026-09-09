@@ -109,7 +109,7 @@ export const QuantumView: React.FC = () => {
       : "0.0";
 
   return (
-    <div className="space-y-6 animate-fadeIn max-w-5xl mx-auto pb-16">
+    <div className="space-y-6 page-enter max-w-5xl mx-auto pb-16">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -118,7 +118,7 @@ export const QuantumView: React.FC = () => {
               Cryptographic Integrity
             </span>
             <span className="text-text-muted">•</span>
-            <Badge variant="quantum" size="sm">Post-Quantum</Badge>
+            <Badge variant="quantum" size="sm">Quantum-Inspired Simulation</Badge>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-text-primary tracking-tight">
             Trust Verification

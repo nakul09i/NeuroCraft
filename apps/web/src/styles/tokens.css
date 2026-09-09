@@ -77,6 +77,21 @@
   --neu-raised-lg: var(--shadow-lg);
   --neu-inset-sm: inset 0 1px 2px rgba(0, 0, 0, 0.05);
   --neu-inset-md: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+
+  /* ============================================================================
+     MOTION DESIGN TOKENS (Apple, Linear, SpaceX inspired)
+     ============================================================================ */
+  --dur-fast: 150ms;
+  --dur-normal: 250ms;
+  --dur-medium: 350ms;
+  --dur-emphasis: 500ms;
+  --dur-data: 900ms;
+  --dur-cinematic: 15s;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.1);
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .dark {
