@@ -17,13 +17,15 @@ import { SettingsView } from "./components/views/SettingsView";
 import { ErrorBoundary } from "./components/ui/ErrorBoundary";
 import { AuthModal } from "./components/AuthModal";
 import { HelpModal } from "./components/ui/HelpModal";
-import { api } from "./api";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import { ConnectivityProvider } from "./context/ConnectivityContext";
+import { clearUserSyncListeners } from "./services/syncService";
 import { UserProfile } from "./types";
 
 const MainApp: React.FC = () => {
   const { toast } = useToast();
+  const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<string>("dashboard");
-  const [user, setUser] = useState<UserProfile | null>(null);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [helpModalOpen, setHelpModalOpen] = useState(false);
@@ -45,15 +47,9 @@ const MainApp: React.FC = () => {
     document.title = pageTitles[activeTab] || "NeuroCraft — Detect. Verify. Prove.";
   }, [activeTab]);
 
-  useEffect(() => {
-    api.getMe().then((profile) => {
-      if (profile) setUser(profile);
-    });
-  }, []);
-
-  const handleLogout = () => {
-    api.logout();
-    setUser(null);
+  const handleLogout = async () => {
+    await logout();
+    clearUserSyncListeners();
     toast.info("Signed out successfully.");
   };
 
@@ -110,7 +106,10 @@ const MainApp: React.FC = () => {
                 <DashboardView onNavigate={setActiveTab} user={user} />
               )}
               {activeTab === "scanner" && (
-                <ScannerView onGenerateReport={handleNavigateToReport} />
+                <ScannerView
+                  selectedScanId={selectedScanId}
+                  onGenerateReport={handleNavigateToReport}
+                />
               )}
               {activeTab === "recon" && <ReconView />}
               {activeTab === "quantum" && <QuantumView />}
@@ -165,7 +164,6 @@ const MainApp: React.FC = () => {
         isOpen={authModalOpen}
         onClose={() => setAuthModalOpen(false)}
         onSuccess={(newUser) => {
-          setUser(newUser);
           toast.success(`Welcome back, ${newUser.display_name || newUser.email}`);
         }}
       />
@@ -178,7 +176,11 @@ export const App: React.FC = () => {
     <ThemeProvider>
       <ToastProvider>
         <NotificationProvider>
-          <MainApp />
+          <AuthProvider>
+            <ConnectivityProvider>
+              <MainApp />
+            </ConnectivityProvider>
+          </AuthProvider>
         </NotificationProvider>
       </ToastProvider>
     </ThemeProvider>

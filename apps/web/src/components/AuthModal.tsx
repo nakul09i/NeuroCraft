@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { X, Lock, Mail, User as UserIcon, ShieldAlert } from "lucide-react";
 import { Button } from "./ui/Button";
-import { api } from "../api";
+import { useAuth } from "../context/AuthContext";
 import { UserProfile } from "../types";
 
 interface AuthModalProps {
@@ -11,6 +11,7 @@ interface AuthModalProps {
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => {
+  const { login, signup, clearError } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,16 +24,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    clearError();
     setLoading(true);
 
     try {
-      if (isLogin) {
-        const res = await api.login(email, password);
-        onSuccess(res.user);
-      } else {
-        const res = await api.signup(email, password, displayName);
-        onSuccess(res.user);
-      }
+      const userProfile = isLogin
+        ? await login(email, password)
+        : await signup(email, password, displayName);
+      onSuccess(userProfile);
       onClose();
     } catch (err: any) {
       setError(err.message || "Authentication failed");

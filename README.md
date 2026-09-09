@@ -20,11 +20,12 @@
 [![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4+-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com)
-[![Tests](https://img.shields.io/badge/Tests-64%2F64%20Passing-brightgreen?logo=pytest&logoColor=white)](./tests)
+[![Firebase](https://img.shields.io/badge/Firebase-Auth%20%26%20Cloud%20Sync-FFCA28?logo=firebase&logoColor=black)](./docs/FIREBASE.md)
+[![Tests](https://img.shields.io/badge/Tests-134%2F134%20Passing-brightgreen?logo=pytest&logoColor=white)](./tests)
 [![Vercel Ready](https://img.shields.io/badge/Vercel-Serverless%20Ready-black?logo=vercel&logoColor=white)](https://vercel.com)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE)
 
-[Features](#2-core-engines--capabilities) • [Architecture](#3-architecture) • [Database Guide](./docs/DATABASE.md) • [Backend Architecture](./docs/BACKEND.md) • [Getting Started](#4-getting-started) • [API Reference](#5-api-reference) • [Security](#8-security-principles)
+[Features](#2-core-engines--capabilities) • [Architecture](#3-architecture) • [Database Guide](./docs/DATABASE.md) • [Firebase & Cloud Sync](./docs/FIREBASE.md) • [Backend Architecture](./docs/BACKEND.md) • [Getting Started](#4-getting-started) • [API Reference](#5-api-reference) • [Security](#8-security-principles)
 
 </div>
 
@@ -138,8 +139,9 @@ flowchart TD
 * **Local-First Async SQLite Persistence**: Powered by SQLAlchemy 2.0 and `aiosqlite` (`sqlite+aiosqlite:///./neurocraft.db`). Enables 100% offline analysis, zero mandatory cloud databases, and non-destructive persistence across server restarts.
 * **Safe Incremental Migration Runner**: `migrations/runner.py` records applied migrations in a dedicated `schema_migrations` journal table, executing forward-only non-destructive schema updates without dropping existing tables.
 * **Strict Scan Data Isolation**: The repository layer (`repositories/scan_repo.py`) guarantees that queries for a specific scan ID retrieve only findings belonging to that scan, enforcing zero cross-scan leakage even across anonymous sessions.
+* **Firebase Authentication & Cloud Sync**: Seamless cloud synchronization powered by the modern Firebase Web SDK (v11+). Scopes cloud scan metadata, reports, and user profiles to isolated tenant paths (`users/{uid}/scans/{scanId}`) with strict `firestore.rules`. Includes an offline sync queue (`nc_offline_sync_queue`) with timestamp-based conflict resolution, ensuring zero disruption to core offline file analysis.
 
-For in-depth architectural details, see [Backend Architecture Guide](./docs/BACKEND.md) and [Database & Migrations Guide](./docs/DATABASE.md).
+For in-depth architectural details, see [Backend Architecture Guide](./docs/BACKEND.md), [Database & Migrations Guide](./docs/DATABASE.md), and [Firebase & Cloud Sync Guide](./docs/FIREBASE.md).
 
 ---
 
@@ -274,10 +276,10 @@ vercel
 
 ## 7. Testing & Quality Assurance
 
-NeuroCraft maintains a 100% passing test suite (**64/64 tests**) spanning unit logic, end-to-end integration workflows, SQLite database persistence, and security boundary defenses:
+NeuroCraft maintains a 100% passing test suite (**134/134 tests**) spanning unit logic, end-to-end integration workflows, SQLite database persistence, Firebase readiness, offline synchronization, report integrity, and security boundary defenses:
 
 ```bash
-# Run the complete test suite with pytest (64 tests)
+# Run the complete test suite with pytest (134 tests)
 pytest tests
 
 # Run specific test tiers
@@ -287,6 +289,7 @@ pytest tests/security
 
 # Run the Phase 1 Backend & Persistence verification suite
 pytest tests/integration/test_step1_step2_backend_and_database.py
+pytest tests/unit/test_firebase_readiness.py
 
 # Run static linting and security hygiene
 ruff check .
@@ -299,8 +302,8 @@ npm run build
 ```
 
 ### Test Coverage Highlights
-* `tests/unit/`: File type detection, SHA-256 fingerprinting, Authenticode validation, risk engine aggregation, quantum simulation, and auth logic.
-* `tests/integration/`: End-to-end scan lifecycle, recon workflows, tenant isolation, and `test_step1_step2_backend_and_database.py` (strict scan isolation, migration integrity, database persistence across restarts, centralized error handling, and settings API).
+* `tests/unit/`: File type detection, SHA-256 fingerprinting, Authenticode validation, risk engine aggregation, quantum simulation, auth logic, and `test_firebase_readiness.py` (tenant isolation rules validation, token mapping, and environment templates).
+* `tests/integration/`: End-to-end scan lifecycle, recon workflows, tenant isolation, and `test_step1_step2_backend_and_database.py` (strict scan isolation, migration integrity, database persistence across restarts, offline scanning retention, centralized error handling, and settings API).
 * `tests/security/`: Path traversal fuzzing, symlink protection, decompression bomb prevention, and secret redaction.
 
 ---
@@ -322,10 +325,17 @@ neurocraft/
 ├── api/                         # Vercel serverless entrypoint (index.py)
 ├── apps/
 │   ├── web/                     # React 18 + Vite + Tailwind CSS frontend
+│   │   └── src/
+│   │       ├── firebase/        # Centralized Firebase SDK client config
+│   │       ├── context/         # AuthContext, ThemeContext, ToastContext
+│   │       └── services/        # Offline-first syncService
 │   └── cli/                     # Python CLI tool (future)
 ├── docs/
 │   ├── BACKEND.md               # FastAPI backend architecture & router guide
-│   └── DATABASE.md              # SQLite persistence & migration runner guide
+│   ├── DATABASE.md              # SQLite persistence & migration runner guide
+│   └── FIREBASE.md              # Firebase Auth, Firestore schema & sync guide
+├── firestore.rules              # Strict per-user Firestore security rules
+├── firebase.json                # Firebase CLI configuration
 ├── services/
 │   ├── api/                     # FastAPI HTTP REST gateway
 │   │   ├── src/neurocraft_api/

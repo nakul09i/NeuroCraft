@@ -84,12 +84,57 @@ class EngineStatusEnum(str, Enum):
 class SignatureStatusEnum(str, Enum):
     """Digital signature validation status."""
 
+    SIGNED = "SIGNED"
     VALID = "VALID"
+    INVALID = "INVALID"
     INVALID_TAMPERED = "INVALID_TAMPERED"
     SELF_SIGNED = "SELF_SIGNED"
     UNSIGNED = "UNSIGNED"
     CORRUPTED = "CORRUPTED"
     UNKNOWN = "UNKNOWN"
+    NOT_APPLICABLE = "NOT_APPLICABLE"
+
+
+class HashMatchStatusEnum(str, Enum):
+    """Result of reference hash verification."""
+
+    MATCH = "MATCH"
+    MISMATCH = "MISMATCH"
+    NOT_PROVIDED = "NOT_PROVIDED"
+    INVALID_REFERENCE = "INVALID_REFERENCE"
+
+
+class IntegrityStatusEnum(str, Enum):
+    """Deterministic cryptographic integrity evaluation status."""
+
+    VERIFIED = "VERIFIED"
+    UNCHANGED = "UNCHANGED"
+    MISMATCH = "MISMATCH"
+    SIGNED = "SIGNED"
+    UNSIGNED = "UNSIGNED"
+    UNKNOWN = "UNKNOWN"
+    NOT_APPLICABLE = "NOT_APPLICABLE"
+
+
+class TrustLevelEnum(str, Enum):
+    """Categorical trust assurance level."""
+
+    VERY_LOW = "VERY_LOW"
+    LOW = "LOW"
+    NEUTRAL = "NEUTRAL"
+    HIGH = "HIGH"
+    VERY_HIGH = "VERY_HIGH"
+
+
+class TrustEvidenceItem(BaseModel):
+    """Verifiable evidence observation for trust and integrity."""
+
+    type: str = Field(..., description="Evidence category (hash, signature, certificate, reference)")
+    algorithm: str | None = Field(default=None, description="Cryptographic algorithm if applicable")
+    value: str | None = Field(default=None, description="Observed cryptographic digest or identifier")
+    status: str = Field(..., description="Evaluation status (match, mismatch, verified, unsigned, etc.)")
+    meaning: str = Field(..., description="Human-readable forensic significance")
+    details: dict[str, Any] = Field(default_factory=dict, description="Supplementary evidence metadata")
 
 
 class CertificateInfo(BaseModel):
@@ -118,6 +163,41 @@ class DigitalSignatureInfo(BaseModel):
     digest_match: bool | None = Field(default=None, description="True if embedded digest equals calculated")
     certificates: list[CertificateInfo] = Field(default_factory=list, description="Extracted certificate chain")
     warnings: list[str] = Field(default_factory=list, description="Signature anomalies or warnings")
+
+
+class FileIntegrityReport(BaseModel):
+    """Deterministic cryptographic integrity assessment report."""
+
+    scan_id: str
+    sha256: str
+    sha512: str | None = None
+    sha1: str | None = None
+    reference_hash: str | None = None
+    hash_match_status: HashMatchStatusEnum = HashMatchStatusEnum.NOT_PROVIDED
+    signature_info: DigitalSignatureInfo | None = None
+    integrity_status: IntegrityStatusEnum
+    trust_score: float = Field(..., ge=0.0, le=100.0, description="0=untrusted/tampered, 100=cryptographically verified")
+    trust_level: TrustLevelEnum
+    confidence: ConfidenceEnum = ConfidenceEnum.HIGH
+    confidence_score: float = Field(default=0.90, ge=0.0, le=1.0)
+    evidence: list[TrustEvidenceItem] = Field(default_factory=list)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+
+class TrustAssessment(BaseModel):
+    """Separate trust evaluation distinguishing identity/provenance from risk."""
+
+    scan_id: str
+    trust_score: float = Field(..., ge=0.0, le=100.0, description="0=untrusted/tampered, 100=cryptographically verified")
+    trust_level: TrustLevelEnum
+    confidence: ConfidenceEnum
+    confidence_score: float
+    integrity_status: IntegrityStatusEnum
+    risk_level: VerdictLevel
+    risk_score: float
+    evidence: list[TrustEvidenceItem] = Field(default_factory=list)
+    summary: str = Field(..., description="Clear explanation of trust assessment vs risk")
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class HashDigest(BaseModel):
@@ -157,6 +237,7 @@ class Finding(BaseModel):
         default_factory=dict, description="Observed structural evidence"
     )
     source_engine: str = Field(..., description="Originating scanner sub-engine")
+    weight: float = Field(default=0.0, description="Risk weight contribution")
     recommendation: str | None = Field(None, description="Actionable analyst recommendation")
     metadata: dict[str, Any] = Field(
         default_factory=dict, description="Supplementary engine metadata"
@@ -208,10 +289,16 @@ class ScanFileMetadata(BaseModel):
 
 
 class ScanVerdict(BaseModel):
-    """Consolidated risk score and level."""
+    """Consolidated risk score, categorical level, and calibrated confidence."""
 
     level: VerdictLevel
     score: float = Field(..., ge=0.0, le=100.0)
+    confidence: ConfidenceEnum = Field(
+        default=ConfidenceEnum.HIGH, description="Overall analytic confidence level"
+    )
+    confidence_score: float = Field(
+        default=0.95, ge=0.0, le=1.0, description="Calibrated numeric confidence"
+    )
     category_scores: dict[str, float | None] = Field(default_factory=dict)
 
 
@@ -260,6 +347,9 @@ class ScanResponse(BaseModel):
 
     scan_id: str
     user_id: str | None = Field(default=None, description="Owner user ID if authenticated")
+    status: str = Field(
+        default="completed", description="Analysis status (completed, limited, failed)"
+    )
     file: ScanFileMetadata
     verdict: ScanVerdict
     engines: dict[str, str]
@@ -267,6 +357,9 @@ class ScanResponse(BaseModel):
     capabilities: list[Capability] = Field(default_factory=list)
     signature_info: DigitalSignatureInfo | None = Field(
         default=None, description="Digital signature verification metadata"
+    )
+    integrity_summary: FileIntegrityReport | None = Field(
+        default=None, description="Cryptographic integrity and trust summary"
     )
     metadata: dict[str, Any] = Field(default_factory=dict)
 
@@ -276,6 +369,9 @@ class ScanResult(BaseModel):
 
     scan_id: str
     user_id: str | None = Field(default=None, description="Owner user ID if authenticated")
+    status: str = Field(
+        default="completed", description="Scan operational status (completed, limited, failed)"
+    )
     filename: str
     file_size_bytes: int
     mime_type: str
@@ -287,6 +383,9 @@ class ScanResult(BaseModel):
     capabilities: list[Capability] = Field(default_factory=list)
     signature_info: DigitalSignatureInfo | None = Field(
         default=None, description="Digital signature analysis results"
+    )
+    integrity: FileIntegrityReport | None = Field(
+        default=None, description="Cryptographic integrity and trust assessment"
     )
     engines: dict[str, EngineStatusEnum] = Field(default_factory=dict)
     risk_verdict: ScanVerdict
@@ -300,6 +399,7 @@ class ScanResult(BaseModel):
         return ScanResponse(
             scan_id=self.scan_id,
             user_id=self.user_id,
+            status=self.status,
             file=ScanFileMetadata(
                 name=self.filename,
                 size=self.file_size_bytes,
@@ -315,6 +415,7 @@ class ScanResult(BaseModel):
             findings=self.findings,
             capabilities=self.capabilities,
             signature_info=self.signature_info,
+            integrity_summary=self.integrity,
             metadata={
                 "magic_bytes": self.magic_bytes,
                 "scanned_at": self.scanned_at.isoformat(),
@@ -416,6 +517,7 @@ class ReconAsset(BaseModel):
     source: str = Field(..., description="Data source (DNS, TLS, HTTP)")
     status: str = Field(default="ACTIVE", description="Asset operational status")
     metadata: dict[str, Any] = Field(default_factory=dict, description="Observed asset metadata")
+    observed_at: datetime = Field(default_factory=lambda: datetime.now(UTC), description="Observation timestamp")
 
 
 class ReconFinding(BaseModel):
@@ -428,12 +530,19 @@ class ReconFinding(BaseModel):
     confidence: ConfidenceEnum = Field(..., description="Analytic confidence")
     evidence: dict[str, Any] = Field(default_factory=dict, description="Observed structural evidence")
     recommendation: str = Field(..., description="Remediation guidance")
+    source: str = Field(default="RECON", description="Observation source (e.g. DNS, TLS, HEADERS, ROBOTS)")
+    observed_at: datetime = Field(default_factory=lambda: datetime.now(UTC), description="Observation timestamp")
 
 
 class ReconScanRequest(BaseModel):
     """Defensive reconnaissance scan request."""
 
     target: str = Field(..., description="Target domain or hostname (e.g. example.com)")
+    authorization_confirmed: bool = Field(
+        default=False,
+        description="User confirmation of assessment authorization for defensive reconnaissance",
+    )
+    target_type: str = Field(default="DOMAIN", description="Target type (DOMAIN, HOSTNAME, IP_ADDRESS)")
 
 
 class ReconScanResponse(BaseModel):
@@ -442,9 +551,13 @@ class ReconScanResponse(BaseModel):
     id: str = Field(..., description="Recon scan identifier")
     user_id: str | None = Field(default=None, description="Owner user ID")
     target: str = Field(..., description="Scanned target hostname")
-    status: str = Field(..., description="Scan status (COMPLETED, FAILED)")
+    target_type: str = Field(default="DOMAIN", description="Target classification")
+    authorization_confirmed: bool = Field(default=True, description="Authorization state")
+    status: str = Field(..., description="Scan status (COMPLETED, FAILED, LIMITED)")
     exposure_score: float = Field(..., description="Calculated exposure score (0.0=minimal, 100.0=critical)")
     exposure_level: VerdictLevel = Field(..., description="Exposure level assessment")
+    confidence: ConfidenceEnum = Field(default=ConfidenceEnum.HIGH, description="Overall scan confidence")
+    confidence_score: float = Field(default=0.90, description="Confidence score 0.0 to 1.0")
     dns_records: list[DnsRecord] = Field(default_factory=list, description="Resolved DNS records")
     tls_info: TlsCertificateInfo | None = Field(default=None, description="TLS certificate metadata")
     security_headers: HttpSecurityHeaders | None = Field(
@@ -452,6 +565,16 @@ class ReconScanResponse(BaseModel):
     )
     assets: list[ReconAsset] = Field(default_factory=list, description="Discovered infrastructure assets")
     findings: list[ReconFinding] = Field(default_factory=list, description="Exposure findings")
+    technologies: list[dict[str, Any]] = Field(
+        default_factory=list, description="Passively observed web technologies and banners"
+    )
+    rdap_info: dict[str, Any] | None = Field(
+        default=None, description="Passive domain registration/RDAP information"
+    )
+    cached: bool = Field(default=False, description="True if response was served from cache")
+    limitations: list[str] = Field(
+        default_factory=list, description="Documented operational limitations during scan"
+    )
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     completed_at: datetime | None = Field(default=None)
 

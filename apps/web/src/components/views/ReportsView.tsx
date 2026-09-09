@@ -104,26 +104,31 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ initialScanId }) => {
     }
   };
 
-  const handlePrint = () => {
-    window.print();
+  const [downloadingFormat, setDownloadingFormat] = useState<string | null>(null);
+
+  const handleDownloadReport = async (format: "pdf" | "csv" | "json") => {
+    if (!report?.id) return;
+    setDownloadingFormat(format);
+    try {
+      const blob = await api.exportReport(report.id, format);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `neurocraft_report_${report.id.substring(0, 10)}.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success(`${format.toUpperCase()} report downloaded.`);
+    } catch {
+      toast.error(`Failed to export ${format.toUpperCase()} report.`);
+    } finally {
+      setDownloadingFormat(null);
+    }
   };
 
-  const handleExportJson = () => {
-    if (!report) return;
-    try {
-      const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(
-        JSON.stringify(report, null, 2)
-      )}`;
-      const downloadAnchor = document.createElement("a");
-      downloadAnchor.setAttribute("href", jsonString);
-      downloadAnchor.setAttribute("download", `neurocraft_report_${report.id}.json`);
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
-      toast.success("JSON report downloaded.");
-    } catch {
-      toast.error("Failed to export JSON.");
-    }
+  const handlePrint = () => {
+    window.print();
   };
 
   const handleCopyReportId = () => {
@@ -168,22 +173,41 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ initialScanId }) => {
         </div>
 
         {report && (
-          <div className="flex items-center space-x-2.5 shrink-0">
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <Button
+              variant="secondary"
+              size="sm"
+              loading={downloadingFormat === "pdf"}
+              onClick={() => handleDownloadReport("pdf")}
+              icon={<Download className="w-4 h-4" />}
+            >
+              Export PDF
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              loading={downloadingFormat === "csv"}
+              onClick={() => handleDownloadReport("csv")}
+              icon={<Download className="w-4 h-4" />}
+            >
+              Export CSV
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              loading={downloadingFormat === "json"}
+              onClick={() => handleDownloadReport("json")}
+              icon={<Download className="w-4 h-4" />}
+            >
+              Export JSON
+            </Button>
             <Button
               variant="secondary"
               size="sm"
               onClick={handlePrint}
               icon={<Printer className="w-4 h-4" />}
             >
-              Print PDF
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleExportJson}
-              icon={<Download className="w-4 h-4" />}
-            >
-              Export JSON
+              Print
             </Button>
           </div>
         )}

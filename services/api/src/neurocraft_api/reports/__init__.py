@@ -1,11 +1,11 @@
-"""Consolidated security report generation engine.
+"""Consolidated security report generation and export package.
 
 Synthesizes static file analysis, digital signature verification, passive reconnaissance,
 and quantum trust simulations into an explainable, audit-ready security report.
-Strictly differentiates:
-- Observed Evidence
-- Analytical Inference
-- Simulated Environments
+Provides multi-format export capabilities:
+- PDF (Zero-dependency vector layout)
+- CSV (RFC 4180 spreadsheet table)
+- JSON (Sanitized structural payload)
 """
 
 import json
@@ -26,6 +26,9 @@ from neurocraft_api.database import (
     get_scan_by_id_and_user,
     save_report,
 )
+from neurocraft_api.reports.csv_exporter import export_scan_as_csv
+from neurocraft_api.reports.json_exporter import export_scan_as_json
+from neurocraft_api.reports.pdf_builder import export_scan_as_pdf, generate_report_pdf
 
 logger = get_logger("neurocraft.reports")
 
@@ -212,3 +215,12 @@ class ReportGenerator:
             recs.append("Continue regular security monitoring and cryptographic key rotation.")
 
         return recs
+
+
+__all__ = [
+    "ReportGenerator",
+    "export_scan_as_csv",
+    "export_scan_as_json",
+    "export_scan_as_pdf",
+    "generate_report_pdf",
+]

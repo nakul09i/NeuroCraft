@@ -1,22 +1,20 @@
-"""Defensive, passive reconnaissance engine.
+"""Defensive, passive reconnaissance engine coordinator.
 
-Analyzes public digital exposure of an authorized domain/target:
-- DNS records (A, AAAA, MX, NS, TXT, SPF, DMARC)
-- TLS certificate metadata (issuer, subject, SAN, cipher suite, expiry)
-- HTTP/HTTPS security headers (HSTS, CSP, X-Frame-Options, nosniff, Referrer-Policy)
-- Public technology & version banner disclosure
+Orchestrates passive digital surface intelligence:
+- DNS records (A, AAAA, MX, NS, TXT, CNAME, SPF, DMARC)
+- TLS certificate metadata & cipher suites
+- HTTP/HTTPS security headers (HSTS, CSP, X-Frame-Options, nosniff)
+- Public technology & version indicators
+- Robots.txt and sitemap.xml disclosures
+- Public RDAP registration metadata
 
-STRICT DEFENSIVE RULE: Zero brute-force, zero exploitation, zero intrusive scanning.
+STRICT DEFENSIVE RULE: Zero brute-force, zero exploitation, zero port flooding, zero crawling.
 """
 
-import socket
-import ssl
 import uuid
 from datetime import UTC, datetime
-from urllib.parse import urlparse
+from typing import Any
 
-import dns.resolver
-import httpx
 from neurocraft_logging import get_logger
 from neurocraft_types import (
     ConfidenceEnum,
@@ -30,382 +28,211 @@ from neurocraft_types import (
     VerdictLevel,
 )
 
+from neurocraft_recon.modules import (
+    ReconCache,
+    detect_technologies,
+    inspect_dns,
+    inspect_http_headers,
+    inspect_rdap,
+    inspect_robots_and_sitemap,
+    inspect_tls,
+)
+from neurocraft_recon.ssrf import (
+    SSRFSecurityError,
+    normalize_target,
+    validate_target_safety,
+)
+
 logger = get_logger("neurocraft.recon")
 
 
 class ReconEngine:
     """Defensive, passive digital exposure analyzer."""
 
-    def __init__(self, timeout_seconds: float = 5.0):
+    def __init__(
+        self,
+        timeout_seconds: float = 3.5,
+        cache_ttl_seconds: int = 600,
+        allow_private: bool = False,
+    ):
         self.timeout = timeout_seconds
+        self.allow_private = allow_private
+        self.cache = ReconCache(default_ttl_seconds=cache_ttl_seconds)
 
-    async def scan_target(self, target: str, user_id: str | None = None) -> ReconScanResponse:
+    async def scan_target(
+        self,
+        target: str,
+        user_id: str | None = None,
+        authorization_confirmed: bool = True,
+        bypass_cache: bool = False,
+    ) -> ReconScanResponse:
         """Execute passive reconnaissance on an authorized domain or hostname."""
-        clean_target = self._normalize_target(target)
+        if not authorization_confirmed:
+            raise ValueError(
+                "Explicit authorization confirmation is required before reconnaissance."
+            )
+
+        # 1. SSRF Validation and perimeter safety checks
+        clean_target, target_type, resolved_ips = validate_target_safety(
+            target, allow_private=self.allow_private, timeout_seconds=self.timeout
+        )
+
+        # 2. Check Cache
+        if not bypass_cache:
+            cached_res = self.cache.get(clean_target)
+            if cached_res is not None:
+                # Return cached report with user_id and cached flag
+                cached_res.user_id = user_id
+                cached_res.cached = True
+                return cached_res
+
         recon_id = f"recon-{uuid.uuid4().hex[:12]}"
         created_at = datetime.now(UTC)
+        limitations: list[str] = []
 
-        logger.info(f"Initiating passive reconnaissance for target: {clean_target}")
+        logger.info(
+            f"Initiating passive reconnaissance for target: {clean_target} (type={target_type})"
+        )
 
+        assets: list[ReconAsset] = []
+        findings: list[ReconFinding] = []
         dns_records: list[DnsRecord] = []
         tls_info: TlsCertificateInfo | None = None
         security_headers: HttpSecurityHeaders | None = None
-        assets: list[ReconAsset] = []
-        findings: list[ReconFinding] = []
+        technologies: list[dict[str, Any]] = []
+        rdap_info: dict[str, Any] | None = None
 
-        # 1. Passive DNS Inspection
-        dns_records, dns_assets, dns_findings = self._inspect_dns(clean_target)
-        assets.extend(dns_assets)
-        findings.extend(dns_findings)
+        # Add initially resolved IPs as assets if available
+        for rip in resolved_ips:
+            assets.append(
+                ReconAsset(
+                    id=f"asset-{uuid.uuid4().hex[:8]}",
+                    hostname=rip,
+                    asset_type="RESOLVED_IP",
+                    source="DNS_PRE_RESOLUTION",
+                    status="ACTIVE",
+                    observed_at=created_at,
+                )
+            )
 
-        # 2. Passive TLS Certificate Inspection
-        tls_info, tls_assets, tls_findings = self._inspect_tls(clean_target)
-        assets.extend(tls_assets)
-        findings.extend(tls_findings)
+        # 3. Passive DNS Inspection
+        try:
+            dns_records, dns_assets, dns_findings = inspect_dns(
+                clean_target, timeout_seconds=self.timeout
+            )
+            assets.extend(dns_assets)
+            findings.extend(dns_findings)
+        except Exception as err:
+            logger.warning(f"DNS inspection error for {clean_target}: {err}")
+            limitations.append("DNS resolution encountered an error or target is offline.")
 
-        # 3. Passive HTTP Security Headers & Banner Inspection
-        security_headers, header_findings = await self._inspect_http_headers(clean_target)
-        findings.extend(header_findings)
+        # 4. Passive TLS Certificate Inspection
+        try:
+            tls_info, tls_assets, tls_findings = inspect_tls(
+                clean_target, timeout_seconds=self.timeout
+            )
+            assets.extend(tls_assets)
+            findings.extend(tls_findings)
+        except Exception as err:
+            logger.warning(f"TLS inspection error for {clean_target}: {err}")
+            limitations.append("TLS handshake could not be established on port 443.")
 
-        # 4. Calculate Deterministic Exposure Score (0.0 to 100.0)
+        # 5. Passive HTTP Security Headers & Banner Inspection
+        raw_hdrs: dict[str, str] = {}
+        sample_html: str = ""
+        try:
+            security_headers, hdr_findings, raw_hdrs, sample_html = await inspect_http_headers(
+                clean_target, timeout_seconds=self.timeout
+            )
+            findings.extend(hdr_findings)
+        except SSRFSecurityError as ssrf_err:
+            logger.warning(f"SSRF violation during HTTP inspection: {ssrf_err}")
+            raise
+        except Exception as err:
+            logger.warning(f"HTTP header inspection error for {clean_target}: {err}")
+            limitations.append("HTTP/HTTPS web service did not respond to passive requests.")
+
+        # 6. Passive Technology & Banner Detection
+        try:
+            technologies = detect_technologies(raw_hdrs, sample_html)
+        except Exception as err:
+            logger.debug(f"Technology detection error for {clean_target}: {err}")
+
+        # 7. Passive Robots.txt and Sitemap Inspection
+        try:
+            has_robots, has_sitemap, rob_findings, rob_meta = await inspect_robots_and_sitemap(
+                clean_target, timeout_seconds=self.timeout
+            )
+            findings.extend(rob_findings)
+        except Exception as err:
+            logger.debug(f"Robots inspection error for {clean_target}: {err}")
+
+        # 8. Passive RDAP Lookup
+        try:
+            rdap_info = await inspect_rdap(
+                clean_target, target_type=target_type, timeout_seconds=self.timeout
+            )
+        except Exception as err:
+            logger.debug(f"RDAP lookup error for {clean_target}: {err}")
+
+        # 9. Deduplicate Assets by (hostname, asset_type)
+        deduped_assets: list[ReconAsset] = []
+        seen_assets: set[tuple[str, str]] = set()
+        for a in assets:
+            key = (a.hostname.lower(), a.asset_type.upper())
+            if key not in seen_assets:
+                seen_assets.add(key)
+                deduped_assets.append(a)
+
+        # 10. Calculate Deterministic Exposure Score & Separate Confidence
         exposure_score, exposure_level = self._calculate_exposure_score(findings)
-
-        completed_at = datetime.now(UTC)
-
-        return ReconScanResponse(
-            id=recon_id,
-            user_id=user_id,
-            target=clean_target,
-            status="COMPLETED",
-            exposure_score=exposure_score,
-            exposure_level=exposure_level,
+        confidence, confidence_score = self._calculate_confidence(
             dns_records=dns_records,
             tls_info=tls_info,
             security_headers=security_headers,
-            assets=assets,
+            limitations=limitations,
+        )
+
+        status_str = "COMPLETED"
+        if not dns_records and not tls_info and not security_headers and not resolved_ips:
+            # When nothing could be reached at all, report LIMITED
+            if limitations:
+                status_str = "COMPLETED"  # Gracefully completed passive scan with limitations
+
+        completed_at = datetime.now(UTC)
+
+        response = ReconScanResponse(
+            id=recon_id,
+            user_id=user_id,
+            target=clean_target,
+            target_type=target_type,
+            authorization_confirmed=authorization_confirmed,
+            status=status_str,
+            exposure_score=exposure_score,
+            exposure_level=exposure_level,
+            confidence=confidence,
+            confidence_score=confidence_score,
+            dns_records=dns_records,
+            tls_info=tls_info,
+            security_headers=security_headers,
+            assets=deduped_assets,
             findings=findings,
+            technologies=technologies,
+            rdap_info=rdap_info,
+            cached=False,
+            limitations=limitations,
             created_at=created_at,
             completed_at=completed_at,
         )
 
+        # Cache successful scan result
+        self.cache.set(clean_target, response)
+        return response
+
     def _normalize_target(self, target: str) -> str:
-        """Strip protocols and paths to extract pure domain/hostname."""
-        t = target.strip().lower()
-        if t.startswith("http://") or t.startswith("https://"):
-            parsed = urlparse(t)
-            t = parsed.netloc or parsed.path
-        if ":" in t:
-            t = t.split(":")[0]
-        return t.strip("/")
-
-    def _inspect_dns(
-        self, target: str
-    ) -> tuple[list[DnsRecord], list[ReconAsset], list[ReconFinding]]:
-        """Passive DNS inspection for public records."""
-        records: list[DnsRecord] = []
-        assets: list[ReconAsset] = []
-        findings: list[ReconFinding] = []
-
-        resolver = dns.resolver.Resolver()
-        resolver.timeout = self.timeout
-        resolver.lifetime = self.timeout
-
-        # Root Domain Asset
-        assets.append(
-            ReconAsset(
-                id=f"asset-{uuid.uuid4().hex[:8]}",
-                hostname=target,
-                asset_type="DOMAIN",
-                source="DNS",
-                status="ACTIVE",
-                metadata={"domain": target},
-            )
-        )
-
-        has_spf = False
-        has_dmarc = False
-
-        record_types = ["A", "AAAA", "MX", "NS", "TXT"]
-        for rtype in record_types:
-            try:
-                answers = resolver.resolve(target, rtype)
-                for ans in answers:
-                    val = ans.to_text().strip('"')
-                    records.append(DnsRecord(record_type=rtype, value=val, ttl=answers.ttl))
-
-                    # Track infrastructure assets
-                    if rtype == "A" or rtype == "AAAA":
-                        assets.append(
-                            ReconAsset(
-                                id=f"asset-{uuid.uuid4().hex[:8]}",
-                                hostname=val,
-                                asset_type="IP_ADDRESS",
-                                source="DNS_A",
-                                status="ACTIVE",
-                            )
-                        )
-                    elif rtype == "MX":
-                        mail_host = val.split()[-1].rstrip(".")
-                        assets.append(
-                            ReconAsset(
-                                id=f"asset-{uuid.uuid4().hex[:8]}",
-                                hostname=mail_host,
-                                asset_type="MAIL_SERVER",
-                                source="DNS_MX",
-                                status="ACTIVE",
-                            )
-                        )
-                    elif rtype == "NS":
-                        ns_host = val.rstrip(".")
-                        assets.append(
-                            ReconAsset(
-                                id=f"asset-{uuid.uuid4().hex[:8]}",
-                                hostname=ns_host,
-                                asset_type="NAME_SERVER",
-                                source="DNS_NS",
-                                status="ACTIVE",
-                            )
-                        )
-                    elif rtype == "TXT" and "v=spf1" in val.lower():
-                        has_spf = True
-            except Exception as err:
-                logger.debug(f"DNS {rtype} query note for {target}: {err}")
-
-        # Check DMARC
-        try:
-            dmarc_answers = resolver.resolve(f"_dmarc.{target}", "TXT")
-            for ans in dmarc_answers:
-                if "v=dmarc1" in ans.to_text().lower():
-                    has_dmarc = True
-                    records.append(DnsRecord(record_type="DMARC", value=ans.to_text().strip('"')))
-        except Exception:
-            pass
-
-        # Findings for email spoofing controls
-        if not has_spf:
-            findings.append(
-                ReconFinding(
-                    id="RECON-DNS-001",
-                    category="DNS",
-                    title="Missing SPF Record",
-                    severity=SeverityEnum.MEDIUM,
-                    confidence=ConfidenceEnum.HIGH,
-                    evidence={"domain": target, "has_spf": False},
-                    recommendation="Publish a valid SPF (v=spf1) TXT record to prevent domain email spoofing.",
-                )
-            )
-
-        if not has_dmarc:
-            findings.append(
-                ReconFinding(
-                    id="RECON-DNS-002",
-                    category="DNS",
-                    title="Missing DMARC Policy Record",
-                    severity=SeverityEnum.MEDIUM,
-                    confidence=ConfidenceEnum.HIGH,
-                    evidence={"domain": target, "has_dmarc": False},
-                    recommendation="Configure a DMARC policy at _dmarc.<domain> to reject unauthorized senders.",
-                )
-            )
-
-        return records, assets, findings
-
-    def _inspect_tls(
-        self, target: str
-    ) -> tuple[TlsCertificateInfo | None, list[ReconAsset], list[ReconFinding]]:
-        """Passive TLS certificate inspection via socket handshake."""
-        assets: list[ReconAsset] = []
-        findings: list[ReconFinding] = []
-
-        ctx = ssl.create_default_context()
-        ctx.check_hostname = False
-        ctx.verify_mode = ssl.CERT_NONE
-
-        try:
-            with socket.create_connection((target, 443), timeout=self.timeout) as sock:
-                with ctx.wrap_socket(sock, server_hostname=target) as ssock:
-                    cert_bin = ssock.getpeercert(binary_form=True)
-                    tls_version = ssock.version()
-                    cipher_tuple = ssock.cipher()
-                    cipher_suite = cipher_tuple[0] if cipher_tuple else "Unknown"
-
-                    if not cert_bin:
-                        return None, assets, findings
-
-
-                    # Parse dict format
-                    cert_dict = ssock.getpeercert()
-
-                    subject_str = ""
-                    issuer_str = ""
-                    sans: list[str] = []
-                    valid_from = None
-                    valid_to = None
-
-                    if cert_dict:
-                        subject_dict = dict(x[0] for x in cert_dict.get("subject", ()))
-                        issuer_dict = dict(x[0] for x in cert_dict.get("issuer", ()))
-                        subject_str = subject_dict.get("commonName", str(subject_dict))
-                        issuer_str = issuer_dict.get("commonName", str(issuer_dict))
-                        valid_from = cert_dict.get("notBefore")
-                        valid_to = cert_dict.get("notAfter")
-                        for san_type, san_val in cert_dict.get("subjectAltName", ()):
-                            if san_type == "DNS":
-                                sans.append(san_val)
-                                assets.append(
-                                    ReconAsset(
-                                        id=f"asset-{uuid.uuid4().hex[:8]}",
-                                        hostname=san_val,
-                                        asset_type="SAN_SUBDOMAIN",
-                                        source="TLS_CERT",
-                                        status="ACTIVE",
-                                    )
-                                )
-
-                    # Check for outdated TLS version
-                    if tls_version in ("TLSv1", "TLSv1.1"):
-                        findings.append(
-                            ReconFinding(
-                                id="RECON-TLS-001",
-                                category="TLS",
-                                title="Outdated TLS Protocol Version",
-                                severity=SeverityEnum.HIGH,
-                                confidence=ConfidenceEnum.HIGH,
-                                evidence={"tls_version": tls_version},
-                                recommendation="Disable TLS 1.0 and TLS 1.1; enforce TLS 1.2 or TLS 1.3.",
-                            )
-                        )
-
-                    return (
-                        TlsCertificateInfo(
-                            subject=subject_str,
-                            issuer=issuer_str,
-                            san=sans,
-                            valid_from=valid_from,
-                            valid_to=valid_to,
-                            cipher_suite=cipher_suite,
-                            tls_version=tls_version,
-                            is_expired=False,
-                        ),
-                        assets,
-                        findings,
-                    )
-        except Exception as err:
-            logger.debug(f"TLS inspection note for {target}: {err}")
-            return None, assets, findings
-
-    async def _inspect_http_headers(
-        self, target: str
-    ) -> tuple[HttpSecurityHeaders | None, list[ReconFinding]]:
-        """Passive analysis of HTTP/HTTPS defense-in-depth security headers."""
-        findings: list[ReconFinding] = []
-        url = f"https://{target}"
-
-        try:
-            async with httpx.AsyncClient(verify=False, timeout=self.timeout) as client:  # noqa: S501
-                resp = await client.get(url, follow_redirects=True)
-                raw_hdrs = {k.lower(): v for k, v in resp.headers.items()}
-
-                has_hsts = "strict-transport-security" in raw_hdrs
-                has_csp = "content-security-policy" in raw_hdrs
-                x_frame = raw_hdrs.get("x-frame-options")
-                has_nosniff = raw_hdrs.get("x-content-type-options", "").lower() == "nosniff"
-                referrer = raw_hdrs.get("referrer-policy")
-                server_banner = raw_hdrs.get("server")
-                powered_by = raw_hdrs.get("x-powered-by")
-
-                if not has_hsts:
-                    findings.append(
-                        ReconFinding(
-                            id="RECON-HDR-001",
-                            category="HEADERS",
-                            title="Missing HTTP Strict Transport Security (HSTS)",
-                            severity=SeverityEnum.MEDIUM,
-                            confidence=ConfidenceEnum.HIGH,
-                            evidence={"header": "Strict-Transport-Security"},
-                            recommendation="Add Strict-Transport-Security header with max-age >= 31536000 and includeSubDomains.",
-                        )
-                    )
-
-                if not has_csp:
-                    findings.append(
-                        ReconFinding(
-                            id="RECON-HDR-002",
-                            category="HEADERS",
-                            title="Missing Content Security Policy (CSP)",
-                            severity=SeverityEnum.MEDIUM,
-                            confidence=ConfidenceEnum.HIGH,
-                            evidence={"header": "Content-Security-Policy"},
-                            recommendation="Configure a robust Content-Security-Policy header to mitigate Cross-Site Scripting (XSS).",
-                        )
-                    )
-
-                if not x_frame:
-                    findings.append(
-                        ReconFinding(
-                            id="RECON-HDR-003",
-                            category="HEADERS",
-                            title="Missing X-Frame-Options (Clickjacking Exposure)",
-                            severity=SeverityEnum.LOW,
-                            confidence=ConfidenceEnum.HIGH,
-                            evidence={"header": "X-Frame-Options"},
-                            recommendation="Set X-Frame-Options to DENY or SAMEORIGIN to prevent framing and UI redressing.",
-                        )
-                    )
-
-                if not has_nosniff:
-                    findings.append(
-                        ReconFinding(
-                            id="RECON-HDR-004",
-                            category="HEADERS",
-                            title="Missing X-Content-Type-Options Header",
-                            severity=SeverityEnum.LOW,
-                            confidence=ConfidenceEnum.HIGH,
-                            evidence={"header": "X-Content-Type-Options"},
-                            recommendation="Set X-Content-Type-Options: nosniff to prevent MIME type sniffing.",
-                        )
-                    )
-
-                if server_banner:
-                    findings.append(
-                        ReconFinding(
-                            id="RECON-HDR-005",
-                            category="EXPOSURE",
-                            title="Server Banner Version Disclosure",
-                            severity=SeverityEnum.INFO,
-                            confidence=ConfidenceEnum.HIGH,
-                            evidence={"server_header": server_banner},
-                            recommendation="Suppress detailed web server version strings in production responses.",
-                        )
-                    )
-
-                if powered_by:
-                    findings.append(
-                        ReconFinding(
-                            id="RECON-HDR-006",
-                            category="EXPOSURE",
-                            title="Backend Technology Disclosure (X-Powered-By)",
-                            severity=SeverityEnum.LOW,
-                            confidence=ConfidenceEnum.HIGH,
-                            evidence={"x_powered_by": powered_by},
-                            recommendation="Remove the X-Powered-By header to obscure backend application frameworks.",
-                        )
-                    )
-
-                return (
-                    HttpSecurityHeaders(
-                        hsts=has_hsts,
-                        csp=has_csp,
-                        x_frame_options=x_frame,
-                        x_content_type_options=has_nosniff,
-                        referrer_policy=referrer,
-                        raw_headers=raw_hdrs,
-                    ),
-                    findings,
-                )
-        except Exception as exc:
-            logger.debug(f"HTTP headers inspection note for {url}: {exc}")
-            return None, findings
+        """Helper to normalize target string."""
+        clean, _ = normalize_target(target)
+        return clean
 
     def _calculate_exposure_score(
         self, findings: list[ReconFinding]
@@ -421,8 +248,23 @@ class ReconEngine:
             SeverityEnum.INFO: 2.0,
         }
 
+        # Category caps to prevent double-counting
+        category_scores: dict[str, float] = {}
+        category_caps = {
+            "DNS": 25.0,
+            "TLS": 35.0,
+            "HEADERS": 25.0,
+            "EXPOSURE": 15.0,
+        }
+
         for f in findings:
-            score += weights.get(f.severity, 0.0)
+            w = weights.get(f.severity, 0.0)
+            cat = f.category.upper()
+            category_scores[cat] = category_scores.get(cat, 0.0) + w
+
+        for cat, cat_score in category_scores.items():
+            cap = category_caps.get(cat, 50.0)
+            score += min(cat_score, cap)
 
         clamped = round(min(100.0, max(0.0, score)), 1)
 
@@ -438,3 +280,31 @@ class ReconEngine:
             level = VerdictLevel.CRITICAL
 
         return clamped, level
+
+    def _calculate_confidence(
+        self,
+        dns_records: list[DnsRecord],
+        tls_info: TlsCertificateInfo | None,
+        security_headers: HttpSecurityHeaders | None,
+        limitations: list[str],
+    ) -> tuple[ConfidenceEnum, float]:
+        """Compute separate confidence score based on passive evidence completeness."""
+        score = 0.50
+
+        if dns_records:
+            score += 0.20
+        if tls_info is not None:
+            score += 0.15
+        if security_headers is not None:
+            score += 0.15
+
+        # Penalize confidence if significant limitations were encountered
+        score -= min(0.40, len(limitations) * 0.15)
+        clamped = round(min(1.0, max(0.20, score)), 2)
+
+        if clamped >= 0.80:
+            return ConfidenceEnum.HIGH, clamped
+        elif clamped >= 0.50:
+            return ConfidenceEnum.MEDIUM, clamped
+        else:
+            return ConfidenceEnum.LOW, clamped

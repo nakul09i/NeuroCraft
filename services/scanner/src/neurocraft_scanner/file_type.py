@@ -49,6 +49,17 @@ EXTENSION_MAP: dict[str, FileTypeEnum] = {
     ".csv": FileTypeEnum.TEXT,
     ".log": FileTypeEnum.TEXT,
     ".json": FileTypeEnum.TEXT,
+    ".md": FileTypeEnum.TEXT,
+    ".py": FileTypeEnum.TEXT,
+    ".sh": FileTypeEnum.TEXT,
+    ".ps1": FileTypeEnum.TEXT,
+    ".bat": FileTypeEnum.TEXT,
+    ".cmd": FileTypeEnum.TEXT,
+    ".js": FileTypeEnum.TEXT,
+    ".html": FileTypeEnum.TEXT,
+    ".xml": FileTypeEnum.TEXT,
+    ".yaml": FileTypeEnum.TEXT,
+    ".yml": FileTypeEnum.TEXT,
 }
 
 
@@ -169,27 +180,27 @@ def detect_file_type(file_path: Path, filename: str | None = None) -> FileTypeIn
             desc = "ZIP Archive Container"
             supported = True
 
-    # 7. Images
+    # 7. Images (PNG, JPEG, GIF, BMP) - fully supported static extraction
     elif header.startswith(PNG_MAGIC):
         detected = FileTypeEnum.IMAGE
         mime = "image/png"
         desc = "PNG Image"
-        supported = False
+        supported = True
     elif header.startswith(JPEG_MAGIC):
         detected = FileTypeEnum.IMAGE
         mime = "image/jpeg"
         desc = "JPEG Image"
-        supported = False
+        supported = True
     elif header.startswith((GIF_MAGIC_87, GIF_MAGIC_89)):
         detected = FileTypeEnum.IMAGE
         mime = "image/gif"
         desc = "GIF Image"
-        supported = False
+        supported = True
     elif header.startswith(BMP_MAGIC):
         detected = FileTypeEnum.IMAGE
         mime = "image/bmp"
         desc = "BMP Image"
-        supported = False
+        supported = True
 
     # 8. Plain text / scripts
     elif is_text_content(header):

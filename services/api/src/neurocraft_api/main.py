@@ -33,8 +33,10 @@ from neurocraft_api.routes import (
     reports_router,
     scans_router,
     settings_router,
+    sync_router,
     trust_router,
 )
+from neurocraft_api.sync import run_crash_recovery
 
 logger = get_logger("neurocraft.api")
 config = get_config()
@@ -57,8 +59,15 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             logger.info(f"Applied {len(applied)} new migrations: {applied}")
         else:
             logger.info("Database schema is up to date.")
+
+        # 3. Offline-first crash recovery: recover interrupted scans and stuck sync queue items
+        recovery_stats = await run_crash_recovery()
+        logger.info(
+            f"Crash recovery executed: {recovery_stats['recovered_scans']} scans recovered, "
+            f"{recovery_stats['recovered_sync_items']} sync items reset."
+        )
     except Exception as e:
-        logger.error(f"Error during database initialization or migration: {e}", exc_info=True)
+        logger.error(f"Error during database initialization, migration, or recovery: {e}", exc_info=True)
 
     yield
 
@@ -136,6 +145,7 @@ app.include_router(trust_router)
 app.include_router(reports_router)
 app.include_router(dashboard_router)
 app.include_router(settings_router)
+app.include_router(sync_router)
 
 # ------------------------------------------------------------------------------
 # Static SPA Frontend Serving (For unified single-process / demo hosting)

@@ -3,6 +3,7 @@ import { Search, Menu, HelpCircle, User } from "lucide-react";
 import { ThemeSwitcher } from "../ui/ThemeSwitcher";
 import { NotificationCenter } from "../ui/NotificationCenter";
 import { EngineStatusPopover } from "../ui/EngineStatusPopover";
+import { SyncStatusBeacon } from "../ui/SyncStatusBeacon";
 import { UserProfile } from "../../types";
 
 export interface HeaderProps {
@@ -64,6 +65,9 @@ export const Header: React.FC<HeaderProps> = ({
             ⌘K
           </kbd>
         </button>
+
+        {/* Offline-First Sync Queue Beacon */}
+        <SyncStatusBeacon />
 
         {/* Engine Status Beacon & Popover */}
         <EngineStatusPopover />

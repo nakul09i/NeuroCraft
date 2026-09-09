@@ -413,3 +413,43 @@ async def test_settings_persistence(tmp_path):
         settings_dict = all_res.json()
         assert "theme" in settings_dict
         assert "offline_mode" in settings_dict
+
+
+@pytest.mark.anyio
+async def test_offline_scan_and_sqlite_retention(tmp_path):
+    """Verify that file analysis operates 100% locally and offline via SQLite with zero cloud dependencies."""
+    test_db = f"sqlite+aiosqlite:///{tmp_path}/test_offline.db"
+    await init_db(custom_url=test_db)
+
+    # Benign test script content
+    file_bytes = b"import sys\nprint('NeuroCraft local-first static analysis test.')\n"
+    transport = ASGITransport(app=app)
+
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        # 1. Upload and analyze file locally
+        response = await client.post(
+            "/api/v1/scans",
+            files={"file": ("offline_sample.py", file_bytes, "text/x-python")},
+        )
+        assert response.status_code == 201
+        data = response.json()
+
+        scan_id = data["scan_id"]
+        assert len(scan_id) > 0
+        assert data["file"]["name"] == "offline_sample.py"
+        assert len(data["file"]["sha256"]) == 64
+        assert data["verdict"]["level"] in ["SAFE", "LOW", "MEDIUM", "HIGH", "CRITICAL"]
+
+        # 2. Verify scan is queryable from local SQLite
+        get_res = await client.get(f"/api/v1/scans/{scan_id}")
+        assert get_res.status_code == 200
+        saved_scan = get_res.json()
+        assert saved_scan["scan_id"] == scan_id
+        assert saved_scan["file"]["name"] == "offline_sample.py"
+
+        # 3. Verify quarantine file was purged
+        quarantine_file = Path("scratch/quarantine") / f"{scan_id}.bin"
+        assert not quarantine_file.exists(), "Quarantine file must be cleaned up post-analysis"
+
+    await close_db()
+

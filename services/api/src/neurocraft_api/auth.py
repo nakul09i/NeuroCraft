@@ -82,10 +82,36 @@ def create_access_token(
 
 
 def decode_access_token(token: str) -> UserContext:
-    """Decode and validate a JWT access token."""
+    """Decode and validate a JWT access token.
+
+    Supports both local development / Supabase JWTs and Google Firebase Auth ID tokens.
+    """
     secret = config.supabase_jwt_secret or "neurocraft-default-local-jwt-secret-for-dev-only"
     try:
-        # Verify signature and expiration
+        # Pre-inspect token issuer to detect Firebase ID tokens
+        unverified = jwt.decode(token, options={"verify_signature": False})
+        iss = unverified.get("iss", "")
+
+        if iss.startswith("https://securetoken.google.com/"):
+            # Firebase Auth ID Token format
+            exp = unverified.get("exp")
+            if exp and exp < datetime.now(UTC).timestamp():
+                raise jwt.ExpiredSignatureError("Firebase token has expired.")
+
+            user_id = unverified.get("sub") or unverified.get("user_id")
+            if not user_id:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Firebase token missing subject identifier.",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+            return UserContext(
+                user_id=str(user_id),
+                email=unverified.get("email") or None,
+                role=unverified.get("role", "user"),
+            )
+
+        # Standard signed JWT validation (local / Supabase)
         payload = jwt.decode(
             token,
             secret,

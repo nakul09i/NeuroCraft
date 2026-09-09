@@ -37,6 +37,7 @@ def compute_fingerprint(
     started_at = datetime.now(UTC)
 
     sha256_hasher = hashlib.sha256()
+    sha512_hasher = hashlib.sha512()
     md5_hasher = hashlib.md5() if compute_legacy_hashes else None
     sha1_hasher = hashlib.sha1() if compute_legacy_hashes else None
 
@@ -48,6 +49,7 @@ def compute_fingerprint(
                 break
             total_bytes += len(chunk)
             sha256_hasher.update(chunk)
+            sha512_hasher.update(chunk)
             if md5_hasher:
                 md5_hasher.update(chunk)
             if sha1_hasher:
@@ -59,6 +61,7 @@ def compute_fingerprint(
 
     digest = HashDigest(
         sha256=sha256_hasher.hexdigest(),
+        sha512=sha512_hasher.hexdigest(),
         md5=md5_hasher.hexdigest() if md5_hasher else None,
         sha1=sha1_hasher.hexdigest() if sha1_hasher else None,
     )

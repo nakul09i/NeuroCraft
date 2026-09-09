@@ -1,11 +1,17 @@
 import {
   DashboardStats,
+  FileIntegrityReport,
   QuantumScenario,
   QuantumSimulationResponse,
   ReconScanResponse,
   ReportResponse,
+  ScanHistoryItem,
+  ScanReconCorrelation,
   ScanResponse,
+  SyncQueueItem,
+  SyncSummary,
   TokenResponse,
+  TrustAssessment,
   UserProfile,
 } from "./types";
 
@@ -106,9 +112,12 @@ export const api = {
   },
 
   // File Scanning
-  async uploadAndScan(file: File): Promise<ScanResponse> {
+  async uploadAndScan(file: File, referenceHash?: string): Promise<ScanResponse> {
     const formData = new FormData();
     formData.append("file", file);
+    if (referenceHash && referenceHash.trim()) {
+      formData.append("reference_hash", referenceHash.trim());
+    }
 
     const headers: Record<string, string> = {};
     const token = localStorage.getItem("nc_token");
@@ -138,28 +147,106 @@ export const api = {
     return await res.json();
   },
 
-  async listScans(): Promise<any[]> {
-    const res = await fetch(`${API_BASE}/scans`, {
+  async getScanIntegrity(scanId: string): Promise<FileIntegrityReport> {
+    const res = await fetch(`${API_BASE}/scans/${scanId}/integrity`, {
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) {
+      const msg = await extractErrorMessage(res, `Integrity assessment for "${scanId}" was not found.`);
+      throw new Error(msg);
+    }
+    return await res.json();
+  },
+
+  async getScanTrust(scanId: string): Promise<TrustAssessment> {
+    const res = await fetch(`${API_BASE}/scans/${scanId}/trust`, {
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) {
+      const msg = await extractErrorMessage(res, `Trust assessment for "${scanId}" was not found.`);
+      throw new Error(msg);
+    }
+    return await res.json();
+  },
+
+  async listScans(params?: {
+    q?: string;
+    risk_level?: string;
+    status?: string;
+    sort_by?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<ScanHistoryItem[]> {
+    const searchParams = new URLSearchParams();
+    if (params?.q) searchParams.set("q", params.q);
+    if (params?.risk_level && params.risk_level !== "ALL") searchParams.set("risk_level", params.risk_level);
+    if (params?.status && params.status !== "ALL") searchParams.set("status", params.status);
+    if (params?.sort_by) searchParams.set("sort_by", params.sort_by.toLowerCase());
+    if (typeof params?.limit === "number") searchParams.set("limit", String(params.limit));
+    if (typeof params?.offset === "number") searchParams.set("offset", String(params.offset));
+
+    const url = `${API_BASE}/scans${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
+    const res = await fetch(url, {
       headers: getAuthHeaders(),
     });
     if (!res.ok) return [];
     return await res.json();
   },
 
+  async getScanRecon(scanId: string): Promise<ScanReconCorrelation> {
+    const res = await fetch(`${API_BASE}/scans/${scanId}/recon`, {
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) {
+      return { scan_id: scanId, recon_available: false };
+    }
+    return await res.json();
+  },
+
+  async exportScanReport(scanId: string, format: "pdf" | "csv" | "json" = "pdf"): Promise<Blob> {
+    const res = await fetch(`${API_BASE}/scans/${scanId}/report?format=${format}`, {
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) {
+      const msg = await extractErrorMessage(res, `Failed to export ${format.toUpperCase()} report.`);
+      throw new Error(msg);
+    }
+    return await res.blob();
+  },
+
+  async exportReport(reportId: string, format: "pdf" | "csv" | "json" = "pdf"): Promise<Blob> {
+    const res = await fetch(`${API_BASE}/reports/${reportId}/export?format=${format}`, {
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) {
+      const msg = await extractErrorMessage(res, `Failed to export ${format.toUpperCase()} report.`);
+      throw new Error(msg);
+    }
+    return await res.blob();
+  },
+
   // Passive Reconnaissance
-  async runRecon(target: string): Promise<ReconScanResponse> {
+  async runRecon(target: string, authorizationConfirmed = true): Promise<ReconScanResponse> {
     const res = await fetch(`${API_BASE}/recon`, {
       method: "POST",
       headers: {
         ...getAuthHeaders(),
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ target }),
+      body: JSON.stringify({ target, authorization_confirmed: authorizationConfirmed }),
     });
     if (!res.ok) {
       const msg = await extractErrorMessage(res, "Network reconnaissance scan failed.");
       throw new Error(msg);
     }
+    return await res.json();
+  },
+
+  async getReconObservations(reconId: string): Promise<any> {
+    const res = await fetch(`${API_BASE}/recon/${reconId}/observations`, {
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) return { observations: [], assets: [] };
     return await res.json();
   },
 
@@ -284,6 +371,75 @@ export const api = {
       if (rootHealth.ok) return await rootHealth.json();
     } catch {}
     return { status: "ok" };
+  },
+
+  // Offline-First Sync Queue API
+  async getSyncStatus(): Promise<SyncSummary> {
+    try {
+      const res = await fetch(`${API_BASE}/sync/status`, {
+        headers: getAuthHeaders(),
+      });
+      if (res.ok) return await res.json();
+    } catch {}
+    return {
+      counts: { pending: 0, syncing: 0, synced: 0, failed: 0, retrying: 0, total: 0 },
+      pending_count: 0,
+      failed_count: 0,
+      synced_count: 0,
+      is_syncing: false,
+      status: "offline",
+    };
+  },
+
+  async listSyncQueue(statusFilter?: string, limit = 50, offset = 0): Promise<SyncQueueItem[]> {
+    try {
+      const searchParams = new URLSearchParams();
+      if (statusFilter && statusFilter !== "ALL") searchParams.set("status", statusFilter);
+      searchParams.set("limit", String(limit));
+      searchParams.set("offset", String(offset));
+
+      const res = await fetch(`${API_BASE}/sync/queue?${searchParams.toString()}`, {
+        headers: getAuthHeaders(),
+      });
+      if (res.ok) return await res.json();
+    } catch {}
+    return [];
+  },
+
+  async flushSyncQueue(): Promise<{ processed: number; synced: number; retrying: number; failed: number }> {
+    const res = await fetch(`${API_BASE}/sync/flush`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) {
+      const msg = await extractErrorMessage(res, "Failed to flush sync queue.");
+      throw new Error(msg);
+    }
+    return await res.json();
+  },
+
+  async retrySyncItem(itemId: string): Promise<SyncQueueItem> {
+    const res = await fetch(`${API_BASE}/sync/retry/${itemId}`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) {
+      const msg = await extractErrorMessage(res, `Failed to retry sync item ${itemId}.`);
+      throw new Error(msg);
+    }
+    return await res.json();
+  },
+
+  async retryAllSync(): Promise<{ retried_count: number }> {
+    const res = await fetch(`${API_BASE}/sync/retry-all`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) {
+      const msg = await extractErrorMessage(res, "Failed to retry all sync items.");
+      throw new Error(msg);
+    }
+    return await res.json();
   },
 };
 

@@ -167,6 +167,98 @@ MIGRATIONS: list[dict[str, Any]] = [
             CREATE INDEX IF NOT EXISTS ix_settings_user_id ON settings (user_id);
         """,
     },
+    {
+        "version": "003_analysis_engine_fields",
+        "description": "Add status, confidence, updated_at to scans and description, weight to findings",
+        "upgrade": """
+            ALTER TABLE scans ADD COLUMN status VARCHAR(30) DEFAULT 'completed';
+            ALTER TABLE scans ADD COLUMN confidence VARCHAR(20) DEFAULT 'HIGH';
+            ALTER TABLE scans ADD COLUMN updated_at TIMESTAMP;
+            ALTER TABLE findings ADD COLUMN description TEXT DEFAULT '';
+            ALTER TABLE findings ADD COLUMN weight FLOAT DEFAULT 0.0;
+        """,
+    },
+    {
+        "version": "004_recon_engine_enhancements",
+        "description": "Add authorization, target_type, confidence, tech, rdap to recon_scans and observed_at to findings/assets",
+        "upgrade": """
+            ALTER TABLE recon_scans ADD COLUMN authorization_confirmed BOOLEAN DEFAULT 0;
+            ALTER TABLE recon_scans ADD COLUMN target_type VARCHAR(30) DEFAULT 'DOMAIN';
+            ALTER TABLE recon_scans ADD COLUMN confidence VARCHAR(20) DEFAULT 'HIGH';
+            ALTER TABLE recon_scans ADD COLUMN confidence_score FLOAT DEFAULT 0.90;
+            ALTER TABLE recon_scans ADD COLUMN tech_json TEXT DEFAULT '[]';
+            ALTER TABLE recon_scans ADD COLUMN rdap_json TEXT DEFAULT '{}';
+            ALTER TABLE recon_scans ADD COLUMN limitations_json TEXT DEFAULT '[]';
+            ALTER TABLE recon_findings ADD COLUMN source VARCHAR(50) DEFAULT 'RECON';
+            ALTER TABLE recon_findings ADD COLUMN observed_at TIMESTAMP;
+            ALTER TABLE recon_assets ADD COLUMN observed_at TIMESTAMP;
+        """,
+    },
+    {
+        "version": "005_trust_and_integrity",
+        "description": "Create persistent file_integrity table with indexes for trust verification",
+        "upgrade": """
+            CREATE TABLE IF NOT EXISTS file_integrity (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                scan_id VARCHAR(64) UNIQUE NOT NULL REFERENCES scans(scan_id) ON DELETE CASCADE,
+                sha256 VARCHAR(64) NOT NULL,
+                sha512 VARCHAR(128),
+                sha1 VARCHAR(40),
+                reference_hash VARCHAR(128),
+                hash_match_status VARCHAR(30) NOT NULL,
+                signature_status VARCHAR(30) NOT NULL,
+                signer VARCHAR(255),
+                issuer VARCHAR(255),
+                certificate_valid BOOLEAN,
+                integrity_status VARCHAR(30) NOT NULL,
+                trust_score FLOAT NOT NULL,
+                confidence VARCHAR(20) NOT NULL DEFAULT 'HIGH',
+                confidence_score FLOAT NOT NULL DEFAULT 0.90,
+                evidence_json TEXT NOT NULL DEFAULT '[]',
+                created_at TIMESTAMP
+            );
+            CREATE INDEX IF NOT EXISTS ix_file_integrity_scan_id ON file_integrity (scan_id);
+            CREATE INDEX IF NOT EXISTS ix_file_integrity_sha256 ON file_integrity (sha256);
+        """,
+    },
+    {
+        "version": "006_history_and_reports",
+        "description": "Add performance indexes for scan history search, risk filtering, and status sorting",
+        "upgrade": """
+            CREATE INDEX IF NOT EXISTS ix_scans_risk_level ON scans (risk_level);
+            CREATE INDEX IF NOT EXISTS ix_scans_risk_score ON scans (risk_score);
+            CREATE INDEX IF NOT EXISTS ix_scans_status ON scans (status);
+            CREATE INDEX IF NOT EXISTS ix_scans_filename ON scans (filename);
+            CREATE INDEX IF NOT EXISTS ix_reports_scan_id ON reports (scan_id);
+        """,
+    },
+    {
+        "version": "007_sync_queue_and_offline_first",
+        "description": "Create persistent sync_queue table with compound indexes for offline-first replication",
+        "upgrade": """
+            CREATE TABLE IF NOT EXISTS sync_queue (
+                id VARCHAR(64) PRIMARY KEY,
+                user_id VARCHAR(64) REFERENCES profiles(id) ON DELETE CASCADE,
+                entity_type VARCHAR(50) NOT NULL,
+                entity_id VARCHAR(64) NOT NULL,
+                operation VARCHAR(20) NOT NULL DEFAULT 'CREATE',
+                payload_json TEXT,
+                status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+                attempt_count INTEGER NOT NULL DEFAULT 0,
+                max_attempts INTEGER NOT NULL DEFAULT 5,
+                last_attempt_at TIMESTAMP,
+                next_attempt_at TIMESTAMP,
+                error_message TEXT,
+                created_at TIMESTAMP NOT NULL,
+                updated_at TIMESTAMP NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS ix_sync_queue_user_id ON sync_queue (user_id);
+            CREATE INDEX IF NOT EXISTS ix_sync_queue_status ON sync_queue (status);
+            CREATE INDEX IF NOT EXISTS ix_sync_queue_entity ON sync_queue (entity_type, entity_id);
+            CREATE INDEX IF NOT EXISTS ix_sync_queue_next_attempt ON sync_queue (status, next_attempt_at);
+            CREATE INDEX IF NOT EXISTS ix_sync_queue_user_status ON sync_queue (user_id, status);
+        """,
+    },
 ]
 
 
@@ -211,7 +303,14 @@ async def run_migrations(engine: AsyncEngine | None = None) -> list[str]:
                 for statement in raw_sql.strip().split(";"):
                     stmt = statement.strip()
                     if stmt:
-                        await conn.execute(text(stmt))
+                        try:
+                            await conn.execute(text(stmt))
+                        except Exception as e:
+                            # Handle case where column was already created by create_all
+                            if "duplicate column name" in str(e).lower():
+                                logger.debug(f"Column already exists: {e}")
+                            else:
+                                raise
 
                 now_ts = datetime.now(UTC)
                 await conn.execute(

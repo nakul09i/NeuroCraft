@@ -3,7 +3,7 @@
 import json
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from neurocraft_types import ReportRequest, ReportResponse, UserContext
 
 from neurocraft_api.auth import get_optional_user
@@ -12,10 +12,17 @@ from neurocraft_api.database import (
     get_report_by_id,
     get_reports_for_user,
 )
-from neurocraft_api.reports import ReportGenerator
+from neurocraft_api.reports import (
+    ReportGenerator,
+    export_scan_as_csv,
+    export_scan_as_json,
+    export_scan_as_pdf,
+)
+from neurocraft_api.repositories.scan_repo import ScanRepository
 
 router = APIRouter(prefix="/api/v1/reports", tags=["Reports"])
 report_generator = ReportGenerator()
+scan_repo = ScanRepository()
 
 
 @router.post(
@@ -105,3 +112,127 @@ async def delete_report(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Report '{report_id}' not found or access denied.",
         )
+
+
+@router.get(
+    "/{report_id}/export",
+    summary="Export consolidated security report as PDF, CSV, or JSON",
+)
+async def export_consolidated_report(
+    report_id: str,
+    format: str = "pdf",
+    user: UserContext | None = Depends(get_optional_user),
+) -> Response:
+    """
+    Download a security report in PDF, CSV, or JSON format.
+    Enforces user isolation: only the owner can export their reports.
+    """
+    user_id = user.user_id if user else None
+    rec = await get_report_by_id(report_id, user_id)
+    if not rec:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Report '{report_id}' not found or access denied.",
+        )
+
+    safe_report_id = "".join(c for c in report_id if c.isalnum() or c in ("-", "_"))[:32]
+    fmt = format.lower().strip()
+
+    # If linked to a scan_id, use scan exporter for rich forensic details
+    if rec.scan_id:
+        scan_rec = await scan_repo.get_scan_by_id(rec.scan_id, user_id)
+        if scan_rec:
+            int_rec = await scan_repo.get_file_integrity(rec.scan_id, user_id)
+            recon_data = await scan_repo.get_scan_recon(rec.scan_id, user_id)
+
+            if fmt == "json":
+                data = export_scan_as_json(scan_rec, int_rec, recon_data)
+                return Response(
+                    content=json.dumps(data, indent=2).encode("utf-8"),
+                    media_type="application/json",
+                    headers={
+                        "Content-Disposition": f'attachment; filename="neurocraft_{safe_report_id}_report.json"'
+                    },
+                )
+            elif fmt == "csv":
+                csv_data = export_scan_as_csv(scan_rec, int_rec)
+                return Response(
+                    content=csv_data.encode("utf-8"),
+                    media_type="text/csv; charset=utf-8",
+                    headers={
+                        "Content-Disposition": f'attachment; filename="neurocraft_{safe_report_id}_report.csv"'
+                    },
+                )
+            elif fmt == "pdf":
+                pdf_bytes = export_scan_as_pdf(scan_rec, int_rec, recon_data)
+                return Response(
+                    content=pdf_bytes,
+                    media_type="application/pdf",
+                    headers={
+                        "Content-Disposition": f'attachment; filename="neurocraft_{safe_report_id}_report.pdf"'
+                    },
+                )
+
+    # Fallback / standalone consolidated report export
+    raw_content = json.loads(rec.content_json) if rec.content_json else {}
+    if fmt == "json":
+        full_json = {
+            "id": rec.id,
+            "report_id": rec.id,
+            "title": rec.title,
+            "report_type": rec.report_type,
+            "summary": rec.summary,
+            "created_at": rec.created_at.isoformat() if rec.created_at else None,
+            "content": raw_content,
+        }
+        return Response(
+            content=json.dumps(full_json, indent=2).encode("utf-8"),
+            media_type="application/json",
+            headers={
+                "Content-Disposition": f'attachment; filename="neurocraft_{safe_report_id}_report.json"'
+            },
+        )
+    elif fmt == "csv":
+        import csv
+        import io
+        buf = io.StringIO()
+        w = csv.writer(buf)
+        w.writerow(["report_id", "title", "report_type", "summary", "created_at"])
+        w.writerow([
+            rec.id,
+            rec.title,
+            rec.report_type,
+            rec.summary,
+            rec.created_at.isoformat() if rec.created_at else "",
+        ])
+        return Response(
+            content=buf.getvalue().encode("utf-8"),
+            media_type="text/csv; charset=utf-8",
+            headers={
+                "Content-Disposition": f'attachment; filename="neurocraft_{safe_report_id}_report.csv"'
+            },
+        )
+    elif fmt == "pdf":
+        from neurocraft_api.reports.pdf_builder import PdfStreamBuilder
+        pdf = PdfStreamBuilder()
+        pdf.new_page(title_suffix=rec.title)
+        pdf.add_section_header(1, "Executive Summary")
+        pdf.add_paragraph(rec.summary or "Security assessment completed.", size=9.0)
+        pdf.add_section_header(2, "Report Scope & Details")
+        pdf.add_key_value("Report ID:", rec.id)
+        pdf.add_key_value("Type:", rec.report_type)
+        if rec.created_at:
+            pdf.add_key_value("Generated At:", rec.created_at.strftime("%Y-%m-%d %H:%M:%S UTC"))
+        return Response(
+            content=pdf.build_pdf_bytes(),
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f'attachment; filename="neurocraft_{safe_report_id}_report.pdf"'
+            },
+        )
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unsupported format '{format}'. Supported formats: pdf, csv, json.",
+        )
+

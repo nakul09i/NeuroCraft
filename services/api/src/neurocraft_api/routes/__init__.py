@@ -7,6 +7,7 @@ from neurocraft_api.routes.recon import router as recon_router
 from neurocraft_api.routes.reports import router as reports_router
 from neurocraft_api.routes.scans import router as scans_router
 from neurocraft_api.routes.settings import router as settings_router
+from neurocraft_api.routes.sync import router as sync_router
 from neurocraft_api.routes.trust import router as trust_router
 
 __all__ = [
@@ -17,5 +18,6 @@ __all__ = [
     "reports_router",
     "scans_router",
     "settings_router",
+    "sync_router",
     "trust_router",
 ]

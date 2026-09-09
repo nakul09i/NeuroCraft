@@ -9,6 +9,7 @@ from typing import Any
 
 from neurocraft_config import get_config
 from neurocraft_types import (
+    ConfidenceEnum,
     QuantumSimulationResponse,
     ReconScanResponse,
     ReportResponse,
@@ -17,6 +18,7 @@ from neurocraft_types import (
 )
 from sqlalchemy import (
     BigInteger,
+    Boolean,
     Column,
     DateTime,
     Float,
@@ -27,7 +29,7 @@ from sqlalchemy import (
     select,
 )
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.orm import DeclarativeBase, relationship
+from sqlalchemy.orm import DeclarativeBase, relationship, selectinload
 
 
 class Base(DeclarativeBase):
@@ -62,6 +64,7 @@ class ProfileRecord(Base):
         "QuantumSimulationRecord", back_populates="user", cascade="all, delete-orphan"
     )
     reports = relationship("ReportRecord", back_populates="user", cascade="all, delete-orphan")
+    sync_items = relationship("SyncQueueRecord", back_populates="user", cascade="all, delete-orphan")
 
 
 # ==============================================================================
@@ -78,20 +81,30 @@ class ScanRecord(Base):
     scan_id = Column(String(64), unique=True, index=True, nullable=False)
     user_id = Column(String(64), ForeignKey("profiles.id"), index=True, nullable=True)
     sha256 = Column(String(64), index=True, nullable=False)
-    filename = Column(String(255), nullable=False)
+    filename = Column(String(255), index=True, nullable=False)
     file_size_bytes = Column(BigInteger, nullable=False)
     mime_type = Column(String(120), nullable=False)
     file_type = Column(String(50), nullable=False)
-    risk_level = Column(String(20), nullable=False)
-    risk_score = Column(Float, nullable=False)
+    status = Column(String(30), default="completed", index=True, nullable=False)
+    risk_level = Column(String(20), index=True, nullable=False)
+    risk_score = Column(Float, index=True, nullable=False)
+    confidence = Column(String(20), default="HIGH", nullable=False)
     engine_status_json = Column(Text, nullable=False)
     raw_result_json = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), index=True)
+    updated_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+    )
 
     user = relationship("ProfileRecord", back_populates="scans")
     findings = relationship("FindingRecord", back_populates="scan", cascade="all, delete-orphan")
     capabilities = relationship(
         "CapabilityRecord", back_populates="scan", cascade="all, delete-orphan"
+    )
+    integrity = relationship(
+        "FileIntegrityRecord", back_populates="scan", uselist=False, cascade="all, delete-orphan"
     )
 
 
@@ -105,9 +118,11 @@ class FindingRecord(Base):
     finding_id = Column(String(64), nullable=False)
     category = Column(String(64), nullable=False)
     title = Column(String(255), nullable=False)
+    description = Column(Text, default="", nullable=False)
     severity = Column(String(20), nullable=False)
     confidence = Column(String(20), nullable=False)
     source_engine = Column(String(64), nullable=False)
+    weight = Column(Float, default=0.0, nullable=False)
     evidence_json = Column(Text, default="{}")
 
     scan = relationship("ScanRecord", back_populates="findings")
@@ -128,6 +143,32 @@ class CapabilityRecord(Base):
     scan = relationship("ScanRecord", back_populates="capabilities")
 
 
+class FileIntegrityRecord(Base):
+    """Cryptographic file integrity, digital signature, and trust assessment."""
+
+    __tablename__ = "file_integrity"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    scan_id = Column(String(64), ForeignKey("scans.scan_id", ondelete="CASCADE"), unique=True, index=True, nullable=False)
+    sha256 = Column(String(64), nullable=False)
+    sha512 = Column(String(128), nullable=True)
+    sha1 = Column(String(40), nullable=True)
+    reference_hash = Column(String(128), nullable=True)
+    hash_match_status = Column(String(30), nullable=False)
+    signature_status = Column(String(30), nullable=False)
+    signer = Column(String(255), nullable=True)
+    issuer = Column(String(255), nullable=True)
+    certificate_valid = Column(Boolean, nullable=True)
+    integrity_status = Column(String(30), nullable=False)
+    trust_score = Column(Float, nullable=False)
+    confidence = Column(String(20), default="HIGH", nullable=False)
+    confidence_score = Column(Float, default=0.90, nullable=False)
+    evidence_json = Column(Text, default="[]", nullable=False)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), index=True)
+
+    scan = relationship("ScanRecord", back_populates="integrity")
+
+
 # ==============================================================================
 # 3. Defensive Passive Reconnaissance Tables
 # ==============================================================================
@@ -141,12 +182,19 @@ class ReconScanRecord(Base):
     id = Column(String(64), primary_key=True)
     user_id = Column(String(64), ForeignKey("profiles.id"), index=True, nullable=True)
     target = Column(String(255), index=True, nullable=False)
+    target_type = Column(String(30), default="DOMAIN", nullable=False)
+    authorization_confirmed = Column(Boolean, default=False, nullable=False)
     status = Column(String(30), nullable=False)
     exposure_score = Column(Float, nullable=False)
     exposure_level = Column(String(20), nullable=False)
+    confidence = Column(String(20), default="HIGH", nullable=False)
+    confidence_score = Column(Float, default=0.90, nullable=False)
     dns_json = Column(Text, default="[]")
     tls_json = Column(Text, default="{}")
     headers_json = Column(Text, default="{}")
+    tech_json = Column(Text, default="[]")
+    rdap_json = Column(Text, default="{}")
+    limitations_json = Column(Text, default="[]")
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), index=True)
     completed_at = Column(DateTime(timezone=True), nullable=True)
 
@@ -172,6 +220,7 @@ class ReconAssetRecord(Base):
     source = Column(String(50), nullable=False)
     status = Column(String(30), default="ACTIVE")
     metadata_json = Column(Text, default="{}")
+    observed_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
     recon_scan = relationship("ReconScanRecord", back_populates="assets")
 
@@ -190,6 +239,8 @@ class ReconFindingRecord(Base):
     confidence = Column(String(20), nullable=False)
     evidence_json = Column(Text, default="{}")
     recommendation = Column(Text, nullable=False)
+    source = Column(String(50), default="RECON")
+    observed_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
     recon_scan = relationship("ReconScanRecord", back_populates="findings")
 
@@ -269,6 +320,39 @@ class SettingRecord(Base):
 
 
 # ==============================================================================
+# 7. Persistent Local Sync Queue Table
+# ==============================================================================
+
+
+class SyncQueueRecord(Base):
+    """Persistent local synchronization queue for offline-first replication to cloud."""
+
+    __tablename__ = "sync_queue"
+
+    id = Column(String(64), primary_key=True)
+    user_id = Column(String(64), ForeignKey("profiles.id", ondelete="CASCADE"), index=True, nullable=True)
+    entity_type = Column(String(50), index=True, nullable=False)  # "scan", "report", "setting", "integrity"
+    entity_id = Column(String(64), index=True, nullable=False)
+    operation = Column(String(20), default="CREATE", nullable=False)  # "CREATE", "UPDATE", "DELETE"
+    payload_json = Column(Text, nullable=True)
+    status = Column(String(20), default="PENDING", index=True, nullable=False)  # PENDING, SYNCING, SYNCED, FAILED, RETRYING
+    attempt_count = Column(Integer, default=0, nullable=False)
+    max_attempts = Column(Integer, default=5, nullable=False)
+    last_attempt_at = Column(DateTime(timezone=True), nullable=True)
+    next_attempt_at = Column(DateTime(timezone=True), nullable=True, index=True)
+    error_message = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
+    )
+
+    user = relationship("ProfileRecord", back_populates="sync_items")
+
+
+# ==============================================================================
 # Engine & Session Management
 # ==============================================================================
 
@@ -327,6 +411,12 @@ async def init_db(custom_url: str | None = None) -> None:
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+    try:
+        from neurocraft_api.migrations.runner import run_migrations
+        await run_migrations(engine)
+    except Exception:
+        pass
 
 
 async def close_db() -> None:
@@ -413,13 +503,16 @@ async def save_scan_result(result: ScanResult, user_id: str | None = None) -> Sc
             file_size_bytes=result.file_size_bytes,
             mime_type=result.mime_type,
             file_type=result.file_type.type.value,
+            status=result.status,
             risk_level=result.risk_verdict.level.value,
             risk_score=result.risk_verdict.score,
+            confidence=result.risk_verdict.confidence.value,
             engine_status_json=json.dumps(
                 {k: (v.value if hasattr(v, "value") else str(v)) for k, v in result.engines.items()}
             ),
             raw_result_json=result.model_dump_json(),
             created_at=result.scanned_at,
+            updated_at=datetime.now(UTC),
         )
         session.add(scan_rec)
 
@@ -429,9 +522,11 @@ async def save_scan_result(result: ScanResult, user_id: str | None = None) -> Sc
                 finding_id=finding.id,
                 category=finding.category,
                 title=finding.title,
+                description=finding.description or "",
                 severity=finding.severity.value,
                 confidence=finding.confidence.value,
                 source_engine=finding.source_engine,
+                weight=finding.weight or 0.0,
                 evidence_json=json.dumps(finding.evidence),
             )
             session.add(f_rec)
@@ -446,9 +541,52 @@ async def save_scan_result(result: ScanResult, user_id: str | None = None) -> Sc
             )
             session.add(c_rec)
 
+        if result.integrity:
+            leaf_cert = (
+                result.integrity.signature_info.certificates[0]
+                if result.integrity.signature_info and result.integrity.signature_info.certificates
+                else None
+            )
+            cert_valid = not leaf_cert.is_expired if leaf_cert else None
+            signer = result.integrity.signature_info.signer_name if result.integrity.signature_info else None
+            issuer = result.integrity.signature_info.issuer_name if result.integrity.signature_info else None
+
+            int_rec = FileIntegrityRecord(
+                scan_id=result.scan_id,
+                sha256=result.integrity.sha256,
+                sha512=result.integrity.sha512,
+                sha1=result.integrity.sha1,
+                reference_hash=result.integrity.reference_hash,
+                hash_match_status=result.integrity.hash_match_status.value,
+                signature_status=(
+                    result.integrity.signature_info.status.value
+                    if result.integrity.signature_info
+                    else "UNSIGNED"
+                ),
+                signer=signer,
+                issuer=issuer,
+                certificate_valid=cert_valid,
+                integrity_status=result.integrity.integrity_status.value,
+                trust_score=result.integrity.trust_score,
+                confidence=result.integrity.confidence.value,
+                confidence_score=result.integrity.confidence_score,
+                evidence_json=json.dumps([e.model_dump() for e in result.integrity.evidence]),
+                created_at=result.integrity.created_at,
+            )
+            session.add(int_rec)
+
         await session.commit()
         await session.refresh(scan_rec)
         return scan_rec
+
+
+async def get_file_integrity_by_scan_id(scan_id: str) -> FileIntegrityRecord | None:
+    """Fetch file integrity and trust record for a scan."""
+    session_factory = get_session_factory()
+    async with session_factory() as session:
+        stmt = select(FileIntegrityRecord).where(FileIntegrityRecord.scan_id == scan_id)
+        res = await session.execute(stmt)
+        return res.scalars().first()
 
 
 async def get_scan_by_id(scan_id: str) -> ScanRecord | None:
@@ -492,14 +630,25 @@ async def save_recon_scan(recon: ReconScanResponse, user_id: str | None = None) 
             id=recon.id,
             user_id=user_id or recon.user_id,
             target=recon.target,
+            target_type=getattr(recon, "target_type", "DOMAIN"),
+            authorization_confirmed=getattr(recon, "authorization_confirmed", True),
             status=recon.status,
             exposure_score=recon.exposure_score,
             exposure_level=recon.exposure_level.value,
+            confidence=getattr(recon, "confidence", ConfidenceEnum.HIGH).value
+            if hasattr(getattr(recon, "confidence", None), "value")
+            else str(getattr(recon, "confidence", "HIGH")),
+            confidence_score=getattr(recon, "confidence_score", 0.90),
             dns_json=json.dumps([d.model_dump() for d in recon.dns_records]),
-            tls_json=json.dumps(recon.tls_info.model_dump() if recon.tls_info else {}),
-            headers_json=json.dumps(
-                recon.security_headers.model_dump() if recon.security_headers else {}
+            tls_json=json.dumps(recon.tls_info.model_dump()) if recon.tls_info else None,
+            headers_json=(
+                json.dumps(recon.security_headers.model_dump())
+                if recon.security_headers
+                else None
             ),
+            tech_json=json.dumps(getattr(recon, "technologies", [])),
+            rdap_json=json.dumps(getattr(recon, "rdap_info", {}) or {}),
+            limitations_json=json.dumps(getattr(recon, "limitations", [])),
             created_at=recon.created_at,
             completed_at=recon.completed_at,
         )
@@ -514,6 +663,7 @@ async def save_recon_scan(recon: ReconScanResponse, user_id: str | None = None) 
                 source=asset.source,
                 status=asset.status,
                 metadata_json=json.dumps(asset.metadata),
+                observed_at=getattr(asset, "observed_at", datetime.now(UTC)),
             )
             session.add(a_rec)
 
@@ -527,6 +677,8 @@ async def save_recon_scan(recon: ReconScanResponse, user_id: str | None = None) 
                 confidence=finding.confidence.value,
                 evidence_json=json.dumps(finding.evidence),
                 recommendation=finding.recommendation,
+                source=getattr(finding, "source", "RECON"),
+                observed_at=getattr(finding, "observed_at", datetime.now(UTC)),
             )
             session.add(f_rec)
 
@@ -539,7 +691,14 @@ async def get_recon_scan_by_id(recon_id: str, user_id: str | None = None) -> Rec
     """Retrieve reconnaissance scan record enforcing user isolation."""
     session_factory = get_session_factory()
     async with session_factory() as session:
-        stmt = select(ReconScanRecord).where(ReconScanRecord.id == recon_id)
+        stmt = (
+            select(ReconScanRecord)
+            .options(
+                selectinload(ReconScanRecord.assets),
+                selectinload(ReconScanRecord.findings),
+            )
+            .where(ReconScanRecord.id == recon_id)
+        )
         if user_id is not None:
             stmt = stmt.where((ReconScanRecord.user_id == user_id) | (ReconScanRecord.user_id.is_(None)))
         else:
@@ -632,6 +791,13 @@ async def save_report(report: ReportResponse, user_id: str | None = None) -> Rep
             created_at=report.created_at,
         )
         session.add(rec)
+        await enqueue_sync_record(
+            entity_type="report",
+            entity_id=report.id,
+            operation="CREATE",
+            user_id=user_id or report.user_id,
+            session=session,
+        )
         await session.commit()
         await session.refresh(rec)
         return rec
@@ -700,6 +866,8 @@ async def delete_recon_scan_for_user(recon_id: str, user_id: str | None = None) 
         stmt = select(ReconScanRecord).where(ReconScanRecord.id == recon_id)
         if user_id is not None:
             stmt = stmt.where((ReconScanRecord.user_id == user_id) | (ReconScanRecord.user_id.is_(None)))
+        else:
+            stmt = stmt.where(ReconScanRecord.user_id.is_(None))
         res = await session.execute(stmt)
         rec = res.scalars().first()
         if not rec:
@@ -726,6 +894,13 @@ async def save_setting(key: str, value: Any, user_id: str | None = None) -> Sett
         else:
             rec = SettingRecord(key=key, user_id=user_id, value_json=json.dumps(value))
             session.add(rec)
+        await enqueue_sync_record(
+            entity_type="setting",
+            entity_id=key,
+            operation="UPDATE",
+            user_id=user_id,
+            session=session,
+        )
         await session.commit()
         await session.refresh(rec)
         return rec
@@ -766,5 +941,159 @@ async def list_settings(user_id: str | None = None) -> dict[str, Any]:
             stmt = stmt.where((SettingRecord.user_id == user_id) | (SettingRecord.user_id.is_(None)))
         res = await session.execute(stmt)
         return {r.key: json.loads(r.value_json) for r in res.scalars().all()}
+
+
+# ==============================================================================
+# Sync Queue Database Operations
+# ==============================================================================
+
+
+async def enqueue_sync_record(
+    entity_type: str,
+    entity_id: str,
+    operation: str = "CREATE",
+    user_id: str | None = None,
+    payload_json: str | None = None,
+    session: AsyncSession | None = None,
+) -> SyncQueueRecord:
+    """
+    Idempotently enqueue or update a sync queue record.
+    If an existing pending or retrying sync record exists for the entity, it updates the payload and resets status to PENDING.
+    """
+    import uuid
+
+    async def _do_enqueue(s: AsyncSession) -> SyncQueueRecord:
+        now = datetime.now(UTC)
+        stmt = select(SyncQueueRecord).where(
+            SyncQueueRecord.entity_type == entity_type,
+            SyncQueueRecord.entity_id == entity_id,
+        )
+        if user_id is not None:
+            stmt = stmt.where(SyncQueueRecord.user_id == user_id)
+        else:
+            stmt = stmt.where(SyncQueueRecord.user_id.is_(None))
+
+        res = await s.execute(stmt)
+        existing = res.scalars().first()
+
+        if existing:
+            # If not yet synced or failed, update payload and reset to PENDING
+            if existing.status in ("PENDING", "RETRYING", "FAILED"):
+                existing.operation = operation
+                existing.payload_json = payload_json or existing.payload_json
+                existing.status = "PENDING"
+                existing.error_message = None
+                existing.next_attempt_at = now
+                existing.updated_at = now
+                return existing
+            elif existing.status == "SYNCED":
+                # For an update after it was synced, re-open as PENDING with UPDATE operation
+                existing.operation = "UPDATE" if operation == "CREATE" else operation
+                existing.payload_json = payload_json or existing.payload_json
+                existing.status = "PENDING"
+                existing.attempt_count = 0
+                existing.error_message = None
+                existing.next_attempt_at = now
+                existing.updated_at = now
+                return existing
+            return existing
+
+        # Create new record
+        sync_id = f"sync-{uuid.uuid4().hex[:16]}"
+        record = SyncQueueRecord(
+            id=sync_id,
+            user_id=user_id,
+            entity_type=entity_type,
+            entity_id=entity_id,
+            operation=operation,
+            payload_json=payload_json,
+            status="PENDING",
+            attempt_count=0,
+            max_attempts=5,
+            next_attempt_at=now,
+            created_at=now,
+            updated_at=now,
+        )
+        s.add(record)
+        return record
+
+    if session:
+        return await _do_enqueue(session)
+
+    session_factory = get_session_factory()
+    async with session_factory() as s:
+        async with s.begin():
+            return await _do_enqueue(s)
+
+
+async def get_pending_sync_records(
+    user_id: str | None = None,
+    limit: int = 50,
+    session: AsyncSession | None = None,
+) -> list[SyncQueueRecord]:
+    """Retrieve items in PENDING or RETRYING status whose next_attempt_at has elapsed."""
+    now = datetime.now(UTC)
+
+    async def _query(s: AsyncSession) -> list[SyncQueueRecord]:
+        stmt = (
+            select(SyncQueueRecord)
+            .where(
+                SyncQueueRecord.status.in_(["PENDING", "RETRYING"]),
+                (SyncQueueRecord.next_attempt_at.is_(None)) | (SyncQueueRecord.next_attempt_at <= now),
+            )
+            .order_by(SyncQueueRecord.created_at.asc())
+            .limit(limit)
+        )
+        if user_id is not None:
+            stmt = stmt.where((SyncQueueRecord.user_id == user_id) | (SyncQueueRecord.user_id.is_(None)))
+        res = await s.execute(stmt)
+        return list(res.scalars().all())
+
+    if session:
+        return await _query(session)
+
+    session_factory = get_session_factory()
+    async with session_factory() as s:
+        return await _query(s)
+
+
+async def get_sync_queue_summary(user_id: str | None = None) -> dict[str, Any]:
+    """Get aggregated metrics and counts for the synchronization queue."""
+    session_factory = get_session_factory()
+    async with session_factory() as s:
+        stmt = select(SyncQueueRecord)
+        if user_id is not None:
+            stmt = stmt.where((SyncQueueRecord.user_id == user_id) | (SyncQueueRecord.user_id.is_(None)))
+
+        res = await s.execute(stmt)
+        records = res.scalars().all()
+
+        counts = {
+            "pending": 0,
+            "syncing": 0,
+            "synced": 0,
+            "failed": 0,
+            "retrying": 0,
+            "total": len(records),
+        }
+        last_synced_at = None
+
+        for r in records:
+            st = (r.status or "PENDING").lower()
+            if st in counts:
+                counts[st] += 1
+            if r.status == "SYNCED":
+                if last_synced_at is None or (r.updated_at and r.updated_at > last_synced_at):
+                    last_synced_at = r.updated_at
+
+        return {
+            "counts": counts,
+            "pending_count": counts["pending"] + counts["retrying"],
+            "failed_count": counts["failed"],
+            "synced_count": counts["synced"],
+            "last_synced_at": last_synced_at.isoformat() if last_synced_at else None,
+            "is_syncing": counts["syncing"] > 0,
+        }
+
 
 

@@ -6,7 +6,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-from neurocraft_types import ConfidenceEnum, FileTypeInfo, Finding, SeverityEnum
+from neurocraft_types import ConfidenceEnum, FileTypeEnum, FileTypeInfo, Finding, SeverityEnum
 
 # Regex patterns for static string indicators
 URL_PATTERN = re.compile(rb"https?://[a-zA-Z0-9_\-\./:\?=%&+#]+", re.IGNORECASE)
@@ -121,7 +121,7 @@ def extract_generic_features(
     file_path: Path, file_type: FileTypeInfo
 ) -> tuple[dict[str, Any], list[Finding]]:
     """
-    Extract generic static features and generate baseline structural findings.
+    Extract generic static features and generate baseline structural findings with false-positive controls.
     """
     size = file_path.stat().st_size
     entropy = calculate_entropy(file_path)
@@ -138,72 +138,104 @@ def extract_generic_features(
 
     findings: list[Finding] = []
 
-    # 1. Extension Mismatch Finding
+    # 1. Extension Mismatch Finding (Calibrated: Masquerading vs Benign indicator)
     if file_type.extension_mismatch:
+        # Check if executable/code binary is disguised as a harmless document/image/text
+        is_executable = file_type.type in (FileTypeEnum.PE, FileTypeEnum.ELF, FileTypeEnum.MACH_O)
+        severity = SeverityEnum.HIGH if is_executable else SeverityEnum.LOW
+        title = (
+            "Executable Binary Masquerading as Harmless File Type"
+            if is_executable
+            else "File Extension Mismatch Detected"
+        )
+        description = (
+            f"Executable binary content detected ({file_type.type.value}) but file extension suggested a non-executable format."
+            if is_executable
+            else f"File extension differs from detected content format ({file_type.type.value}, {file_type.mime})."
+        )
+
         findings.append(
             Finding(
                 id="FIND-GEN-001",
-                category="EVASION",
-                title="File Extension Mismatch Detected",
-                description=(
-                    f"File extension does not match true content type. "
-                    f"Detected format is {file_type.type.value} ({file_type.mime})."
-                ),
-                severity=SeverityEnum.HIGH,
+                category="EVASION" if is_executable else "FORMAT_INDICATOR",
+                title=title,
+                description=description,
+                severity=severity,
                 confidence=ConfidenceEnum.HIGH,
                 evidence={
                     "detected_type": file_type.type.value,
                     "mime_type": file_type.mime,
+                    "is_executable": is_executable,
                 },
                 source_engine="generic_extractor",
-                recommendation="Investigate why the file masquerades as a different document type.",
-            )
-        )
-
-    # 2. High Entropy Finding
-    if entropy >= 7.2:
-        findings.append(
-            Finding(
-                id="FIND-GEN-002",
-                category="ENTROPY",
-                title="High Overall Entropy (Possible Packing or Encryption)",
-                description=(
-                    f"Overall file Shannon entropy is {entropy:.2f} (out of 8.0). "
-                    "Values exceeding 7.2 typically indicate packed or encrypted payloads."
+                recommendation=(
+                    "Quarantine and inspect binary executable masquerading as a document."
+                    if is_executable
+                    else "Verify file source and align file extension with format."
                 ),
-                severity=SeverityEnum.MEDIUM if entropy < 7.8 else SeverityEnum.HIGH,
-                confidence=ConfidenceEnum.MEDIUM,
-                evidence={"entropy": entropy},
-                source_engine="generic_extractor",
-                recommendation="Inspect file for binary packers, compressors, or encrypted payloads.",
             )
         )
 
-    # 3. Suspicious Command Strings Finding
+    # 2. High Entropy Finding (Strict False Positive Control: Compressed formats naturally have high entropy)
+    # Compressed formats (Images, ZIP, APK, Office OOXML, PDF) expect entropy ~7.3 - 7.9.
+    # Only flag high entropy for native uncompressed executables (PE, ELF) or unknown raw binaries.
+    naturally_compressed_formats = {
+        FileTypeEnum.IMAGE,
+        FileTypeEnum.ZIP,
+        FileTypeEnum.APK,
+        FileTypeEnum.OFFICE,
+        FileTypeEnum.PDF,
+    }
+
+    if file_type.type not in naturally_compressed_formats:
+        if entropy >= 7.4:
+            findings.append(
+                Finding(
+                    id="FIND-GEN-002",
+                    category="ENTROPY",
+                    title="High Overall Entropy (Possible Packing or Encryption)",
+                    description=(
+                        f"Overall file Shannon entropy is {entropy:.2f} (out of 8.0). "
+                        "Values exceeding 7.4 in uncompressed binaries typically indicate packed or encrypted payloads."
+                    ),
+                    severity=SeverityEnum.MEDIUM if entropy < 7.85 else SeverityEnum.HIGH,
+                    confidence=ConfidenceEnum.MEDIUM,
+                    evidence={"entropy": entropy},
+                    source_engine="generic_extractor",
+                    recommendation="Inspect binary for packers, compressors, or encrypted payloads.",
+                )
+            )
+
+    # 3. Suspicious Command Strings Finding (Context-calibrated)
+    # High-risk system modification strings
+    admin_tools = {"vssadmin", "schtasks", "reg add", "certutil", "bitsadmin"}
+    has_admin_tools = any(any(at in s.lower() for at in admin_tools) for s in suspicious_strings)
+
     if suspicious_strings:
+        severity = SeverityEnum.HIGH if has_admin_tools else SeverityEnum.LOW
         findings.append(
             Finding(
                 id="FIND-GEN-003",
                 category="COMMAND_EXECUTION",
-                title="Suspicious System Commands & Shell Indicators Present",
-                description="Embedded strings reference system command execution utilities or administrative tools.",
-                severity=SeverityEnum.MEDIUM,
+                title="System Command & Administrative Utilities Referenced",
+                description="File contains embedded references to system command execution or administrative tools.",
+                severity=severity,
                 confidence=ConfidenceEnum.MEDIUM,
-                evidence={"indicators": suspicious_strings},
+                evidence={"indicators": suspicious_strings[:10]},
                 source_engine="generic_extractor",
                 recommendation="Verify whether execution of embedded administrative commands is expected.",
             )
         )
 
-    # 4. Embedded URL Finding
-    if urls:
+    # 4. Embedded URL Finding (Informational: URLs alone are not malware)
+    if urls and len(urls) > 0:
         findings.append(
             Finding(
                 id="FIND-GEN-004",
                 category="NETWORK",
                 title="Embedded Network URLs Detected",
                 description=f"Found {len(urls)} embedded HTTP/HTTPS URLs in file contents.",
-                severity=SeverityEnum.LOW,
+                severity=SeverityEnum.INFO,
                 confidence=ConfidenceEnum.HIGH,
                 evidence={"urls": urls[:10]},
                 source_engine="generic_extractor",
